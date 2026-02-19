@@ -9,3 +9,17 @@ export interface Transaction {
 }
 
 export type TransactionInsert = Omit<Transaction, "id" | "created_at" | "user_id">;
+
+export interface Goal {
+  id: string;
+  created_at: string;
+  user_id: string;
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  deadline: string | null;
+  category: string;
+  is_completed: boolean;
+}
+
+export type GoalInsert = Omit<Goal, "id" | "created_at" | "user_id" | "is_completed">;
