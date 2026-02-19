@@ -23,3 +23,11 @@ export interface Goal {
 }
 
 export type GoalInsert = Omit<Goal, "id" | "created_at" | "user_id" | "is_completed">;
+
+export interface Profile {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  role: "user" | "admin";
+  created_at: string;
+}
