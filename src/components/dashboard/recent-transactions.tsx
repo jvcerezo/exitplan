@@ -67,7 +67,7 @@ export function RecentTransactions() {
                   </p>
                 </div>
                 <div
-                  className={`text-sm font-semibold ${
+                  className={`shrink-0 text-sm font-semibold ${
                     tx.amount > 0 ? "text-green-600" : "text-foreground"
                   }`}
                 >

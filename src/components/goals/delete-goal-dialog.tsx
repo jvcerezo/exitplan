@@ -49,11 +49,12 @@ export function DeleteGoalDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setOpen(false)}>
             Cancel
           </Button>
           <Button
             variant="destructive"
+            className="w-full sm:w-auto"
             onClick={handleDelete}
             disabled={deleteGoal.isPending}
           >

@@ -84,7 +84,7 @@ export function AddGoalDialog() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="target_amount">Target Amount</Label>
               <Input

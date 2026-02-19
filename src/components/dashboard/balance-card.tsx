@@ -10,7 +10,7 @@ export function BalanceCard() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
         {[...Array(3)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
@@ -63,7 +63,7 @@ export function BalanceCard() {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       {cards.map((card) => (
         <Card key={card.title}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">

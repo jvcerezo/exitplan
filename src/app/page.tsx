@@ -120,7 +120,7 @@ export default function LandingPage() {
               exitplan.app/dashboard
             </span>
           </div>
-          <div className="grid gap-4 p-6 md:grid-cols-3">
+          <div className="grid gap-4 p-4 sm:p-6 sm:grid-cols-2 md:grid-cols-3">
             {[
               {
                 label: "Total Balance",
@@ -208,7 +208,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-border/50">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-8 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} ExitPlan. Built for your freedom.
           </p>

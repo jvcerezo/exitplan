@@ -95,7 +95,7 @@ export default async function AdminDashboardPage() {
         <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
           Users
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2">
           <MetricCard
             title="Total Users"
             value={metrics.totalUsers.toString()}
@@ -186,17 +186,17 @@ export default async function AdminDashboardPage() {
               {metrics.recentUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between text-sm"
+                  className="flex items-center justify-between gap-4 text-sm"
                 >
-                  <div>
-                    <p className="font-medium">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">
                       {user.full_name || "No name"}
                     </p>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-muted-foreground text-xs truncate">
                       {user.email}
                     </p>
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground shrink-0">
                     {new Date(user.created_at).toLocaleDateString("en-PH", {
                       month: "short",
                       day: "numeric",
@@ -228,10 +228,10 @@ function MetricCard({
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0">
             <p className="text-sm text-muted-foreground">{title}</p>
             <p
-              className={`text-2xl font-bold ${
+              className={`text-xl sm:text-2xl font-bold truncate ${
                 accent === "green"
                   ? "text-emerald-600"
                   : accent === "red"

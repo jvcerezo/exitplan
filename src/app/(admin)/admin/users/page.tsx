@@ -98,83 +98,145 @@ export default async function AdminUsersPage() {
           {users.length === 0 ? (
             <p className="text-sm text-muted-foreground">No users yet.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left">
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">
-                      User
-                    </th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">
-                      Role
-                    </th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                      Transactions
-                    </th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                      Income
-                    </th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                      Expenses
-                    </th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                      Goals
-                    </th>
-                    <th className="pb-3 font-medium text-muted-foreground text-right">
-                      Joined
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="border-b last:border-0 hover:bg-muted/50 transition-colors"
-                    >
-                      <td className="py-3 pr-4">
-                        <div>
-                          <p className="font-medium">
-                            {user.full_name || "No name"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {user.email}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <Badge
-                          variant={
-                            user.role === "admin" ? "destructive" : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {user.role}
-                        </Badge>
-                      </td>
-                      <td className="py-3 pr-4 text-right tabular-nums">
-                        {user.transactionCount}
-                      </td>
-                      <td className="py-3 pr-4 text-right tabular-nums text-emerald-600">
-                        {formatCurrency(user.totalIncome)}
-                      </td>
-                      <td className="py-3 pr-4 text-right tabular-nums text-red-500">
-                        {formatCurrency(user.totalExpenses)}
-                      </td>
-                      <td className="py-3 pr-4 text-right tabular-nums">
-                        {user.goalCount}
-                      </td>
-                      <td className="py-3 text-right text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString("en-PH", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </td>
+            <>
+              {/* Mobile card view */}
+              <div className="space-y-3 md:hidden">
+                {users.map((user) => (
+                  <div
+                    key={user.id}
+                    className="rounded-lg border border-border/40 p-4 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">
+                          {user.full_name || "No name"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          user.role === "admin" ? "destructive" : "secondary"
+                        }
+                        className="text-xs shrink-0"
+                      >
+                        {user.role}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Transactions</p>
+                        <p className="font-medium tabular-nums">{user.transactionCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Goals</p>
+                        <p className="font-medium tabular-nums">{user.goalCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Income</p>
+                        <p className="font-medium tabular-nums text-emerald-600">
+                          {formatCurrency(user.totalIncome)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Expenses</p>
+                        <p className="font-medium tabular-nums text-red-500">
+                          {formatCurrency(user.totalExpenses)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Joined{" "}
+                      {new Date(user.created_at).toLocaleDateString("en-PH", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left">
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground">
+                        User
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground">
+                        Role
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
+                        Transactions
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
+                        Income
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
+                        Expenses
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
+                        Goals
+                      </th>
+                      <th className="pb-3 font-medium text-muted-foreground text-right">
+                        Joined
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr
+                        key={user.id}
+                        className="border-b last:border-0 hover:bg-muted/50 transition-colors"
+                      >
+                        <td className="py-3 pr-4">
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">
+                              {user.full_name || "No name"}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                              {user.email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <Badge
+                            variant={
+                              user.role === "admin" ? "destructive" : "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {user.role}
+                          </Badge>
+                        </td>
+                        <td className="py-3 pr-4 text-right tabular-nums">
+                          {user.transactionCount}
+                        </td>
+                        <td className="py-3 pr-4 text-right tabular-nums text-emerald-600">
+                          {formatCurrency(user.totalIncome)}
+                        </td>
+                        <td className="py-3 pr-4 text-right tabular-nums text-red-500">
+                          {formatCurrency(user.totalExpenses)}
+                        </td>
+                        <td className="py-3 pr-4 text-right tabular-nums">
+                          {user.goalCount}
+                        </td>
+                        <td className="py-3 text-right text-muted-foreground whitespace-nowrap">
+                          {new Date(user.created_at).toLocaleDateString("en-PH", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
