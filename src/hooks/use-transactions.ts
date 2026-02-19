@@ -13,7 +13,42 @@ export function useRecentTransactions() {
         .order("date", { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+}
+
+export function useTransactions(filters?: {
+  category?: string;
+  type?: "income" | "expense" | "all";
+  search?: string;
+}) {
+  return useQuery({
+    queryKey: ["transactions", "all", filters],
+    queryFn: async (): Promise<Transaction[]> => {
+      const supabase = createClient();
+      let query = supabase
+        .from("transactions")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (filters?.category && filters.category !== "all") {
+        query = query.eq("category", filters.category);
+      }
+
+      if (filters?.type === "income") {
+        query = query.gt("amount", 0);
+      } else if (filters?.type === "expense") {
+        query = query.lt("amount", 0);
+      }
+
+      if (filters?.search) {
+        query = query.ilike("description", `%${filters.search}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
       return data;
     },
   });
@@ -28,7 +63,7 @@ export function useTransactionsSummary() {
         .from("transactions")
         .select("amount");
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       const income = data
         .filter((t: { amount: number }) => t.amount > 0)
@@ -61,8 +96,52 @@ export function useAddTransaction() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+}
+
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...updates
+    }: Partial<TransactionInsert> & { id: string }) => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("transactions")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+}
+
+export function useDeleteTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });

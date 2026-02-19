@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,14 +19,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAddTransaction } from "@/hooks/use-transactions";
+import { useUpdateTransaction } from "@/hooks/use-transactions";
 import { CATEGORIES } from "@/lib/constants";
+import type { Transaction } from "@/lib/types/database";
 
-export function AddTransactionDialog() {
+export function EditTransactionDialog({
+  transaction,
+}: {
+  transaction: Transaction;
+}) {
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState("expense");
-  const [category, setCategory] = useState("");
-  const addTransaction = useAddTransaction();
+  const [type, setType] = useState(
+    transaction.amount > 0 ? "income" : "expense"
+  );
+  const [category, setCategory] = useState(transaction.category);
+  const updateTransaction = useUpdateTransaction();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,7 +43,8 @@ export function AddTransactionDialog() {
     const amount =
       type === "expense" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
 
-    await addTransaction.mutateAsync({
+    await updateTransaction.mutateAsync({
+      id: transaction.id,
       amount,
       category,
       description: formData.get("description") as string,
@@ -44,24 +52,20 @@ export function AddTransactionDialog() {
     });
 
     setOpen(false);
-    setType("expense");
-    setCategory("");
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Transaction
+        <Button variant="ghost" size="icon-xs">
+          <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Transaction</DialogTitle>
+          <DialogTitle>Edit Transaction</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Type */}
           <div className="space-y-2">
             <Label>Type</Label>
             <Select value={type} onValueChange={setType}>
@@ -75,21 +79,19 @@ export function AddTransactionDialog() {
             </Select>
           </div>
 
-          {/* Amount */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="edit-amount">Amount</Label>
             <Input
-              id="amount"
+              id="edit-amount"
               name="amount"
               type="number"
               step="0.01"
               min="0.01"
-              placeholder="0.00"
+              defaultValue={Math.abs(transaction.amount)}
               required
             />
           </div>
 
-          {/* Category */}
           <div className="space-y-2">
             <Label>Category</Label>
             <Select value={category} onValueChange={setCategory} required>
@@ -106,25 +108,23 @@ export function AddTransactionDialog() {
             </Select>
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="edit-description">Description</Label>
             <Input
-              id="description"
+              id="edit-description"
               name="description"
-              placeholder="Coffee, rent, paycheck..."
+              defaultValue={transaction.description}
               required
             />
           </div>
 
-          {/* Date */}
           <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="edit-date">Date</Label>
             <Input
-              id="date"
+              id="edit-date"
               name="date"
               type="date"
-              defaultValue={new Date().toISOString().split("T")[0]}
+              defaultValue={transaction.date}
               required
             />
           </div>
@@ -132,9 +132,9 @@ export function AddTransactionDialog() {
           <Button
             type="submit"
             className="w-full"
-            disabled={addTransaction.isPending}
+            disabled={updateTransaction.isPending}
           >
-            {addTransaction.isPending ? "Adding..." : "Add Transaction"}
+            {updateTransaction.isPending ? "Saving..." : "Save Changes"}
           </Button>
         </form>
       </DialogContent>

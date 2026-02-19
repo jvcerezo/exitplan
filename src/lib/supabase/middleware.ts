@@ -10,6 +10,24 @@ function isPublicRoute(pathname: string) {
 }
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Fast path: check if any Supabase auth cookies exist at all.
+  // If not and the route is protected, redirect immediately — no network call.
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith("sb-"));
+
+  if (!hasAuthCookie && !isPublicRoute(pathname)) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // For public routes with no auth cookie, skip Supabase entirely
+  if (!hasAuthCookie && isPublicRoute(pathname)) {
+    return NextResponse.next({ request });
+  }
+
+  // Auth cookie exists — create client to validate/refresh the session
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -37,16 +55,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
-  // Redirect unauthenticated users away from protected routes
+  // Session cookie exists but is invalid/expired — redirect to login
   if (!user && !isPublicRoute(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages to dashboard
+  // Authenticated user on auth page — redirect to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";

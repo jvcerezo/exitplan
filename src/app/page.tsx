@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 const features = [
   {
     icon: Wallet,
-    title: "Track Every Dollar",
+    title: "Track Every Peso",
     description:
       "Log income and expenses effortlessly. See exactly where your money goes with clean, intuitive categorization.",
   },
@@ -124,17 +124,17 @@ export default function LandingPage() {
             {[
               {
                 label: "Total Balance",
-                value: "$12,847.50",
+                value: "₱12,847.50",
                 color: "text-foreground",
               },
               {
                 label: "Income this month",
-                value: "$5,200.00",
+                value: "₱5,200.00",
                 color: "text-green-600",
               },
               {
                 label: "Expenses this month",
-                value: "$2,135.40",
+                value: "₱2,135.40",
                 color: "text-red-500",
               },
             ].map((card) => (

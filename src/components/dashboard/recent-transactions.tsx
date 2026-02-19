@@ -2,10 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRecentTransactions } from "@/hooks/use-transactions";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, AlertCircle } from "lucide-react";
+import { formatSignedCurrency } from "@/lib/utils";
 
 export function RecentTransactions() {
-  const { data: transactions, isLoading } = useRecentTransactions();
+  const { data: transactions, isLoading, error } = useRecentTransactions();
 
   return (
     <Card>
@@ -25,6 +26,16 @@ export function RecentTransactions() {
                 <div className="h-4 w-16 bg-muted rounded" />
               </div>
             ))}
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-3 py-6">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Could not load transactions</p>
+              <p className="text-xs text-muted-foreground">
+                {error instanceof Error ? error.message : "Check your Supabase connection and ensure the transactions table exists."}
+              </p>
+            </div>
           </div>
         ) : transactions?.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
@@ -60,10 +71,7 @@ export function RecentTransactions() {
                     tx.amount > 0 ? "text-green-600" : "text-foreground"
                   }`}
                 >
-                  {tx.amount > 0 ? "+" : "-"}$
-                  {Math.abs(tx.amount).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatSignedCurrency(tx.amount)}
                 </div>
               </div>
             ))}

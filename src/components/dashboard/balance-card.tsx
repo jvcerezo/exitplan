@@ -1,11 +1,12 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, AlertCircle } from "lucide-react";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
+import { formatCurrency } from "@/lib/utils";
 
 export function BalanceCard() {
-  const { data: summary, isLoading } = useTransactionsSummary();
+  const { data: summary, isLoading, error } = useTransactionsSummary();
 
   if (isLoading) {
     return (
@@ -21,6 +22,22 @@ export function BalanceCard() {
           </Card>
         ))}
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="flex items-center gap-3 py-6">
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+          <div>
+            <p className="text-sm font-medium">Could not load balance</p>
+            <p className="text-xs text-muted-foreground">
+              {error instanceof Error ? error.message : "Check your Supabase connection and ensure the transactions table exists."}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -57,10 +74,7 @@ export function BalanceCard() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${card.color}`}>
-              $
-              {Math.abs(card.value).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              {formatCurrency(card.value)}
             </div>
           </CardContent>
         </Card>
