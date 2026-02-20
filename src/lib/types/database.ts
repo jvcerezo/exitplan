@@ -84,3 +84,9 @@ export type AccountInsert = Omit<
   balance?: number;
   is_archived?: boolean;
 };
+
+export interface MarketRate {
+  currency: string;
+  rate_to_php: number;
+  updated_at: string;
+}

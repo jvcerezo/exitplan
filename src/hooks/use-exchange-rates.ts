@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { DEFAULT_RATES_TO_PHP } from "@/lib/constants";
+import { useMarketRates } from "@/hooks/use-market-rates";
 import type { ExchangeRate } from "@/lib/types/database";
 
 export function useExchangeRates() {
@@ -21,7 +22,9 @@ export function useExchangeRates() {
 }
 
 export function useConvertCurrency() {
-  const { data: rates } = useExchangeRates();
+  const { data: userRates } = useExchangeRates();
+  const { data: marketData } = useMarketRates();
+  const marketRates = marketData?.rates;
 
   return function convert(
     amount: number,
@@ -30,21 +33,30 @@ export function useConvertCurrency() {
   ): number {
     if (fromCurrency === toCurrency) return amount;
 
-    // Try user-defined rate first
-    const userRate = rates?.find(
+    // 1. User-defined rate (exact match)
+    const userRate = userRates?.find(
       (r) =>
         r.from_currency === fromCurrency && r.to_currency === toCurrency
     );
     if (userRate) return amount * userRate.rate;
 
-    // Try reverse
-    const reverseRate = rates?.find(
+    // 2. User-defined reverse rate
+    const reverseRate = userRates?.find(
       (r) =>
         r.from_currency === toCurrency && r.to_currency === fromCurrency
     );
     if (reverseRate && reverseRate.rate > 0) return amount / reverseRate.rate;
 
-    // Fall back to PHP-based conversion
+    // 3. Market rates (cross-rate via PHP)
+    if (marketRates) {
+      const fromToPhp = marketRates[fromCurrency];
+      const toToPhp = marketRates[toCurrency];
+      if (fromToPhp && toToPhp) {
+        return (amount * fromToPhp) / toToPhp;
+      }
+    }
+
+    // 4. Hardcoded fallback
     const fromToPhp = DEFAULT_RATES_TO_PHP[fromCurrency] ?? 1;
     const toToPhp = DEFAULT_RATES_TO_PHP[toCurrency] ?? 1;
     return (amount * fromToPhp) / toToPhp;

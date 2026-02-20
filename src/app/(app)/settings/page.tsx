@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, LogOut, Loader2 } from "lucide-react";
+import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw } from "lucide-react";
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
 import { useExchangeRates, useUpsertExchangeRate } from "@/hooks/use-exchange-rates";
+import { useMarketRates } from "@/hooks/use-market-rates";
 import { signOut } from "@/app/(auth)/actions";
 import {
   Card,
@@ -24,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQueryClient } from "@tanstack/react-query";
 import { CURRENCIES, DEFAULT_RATES_TO_PHP } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -33,10 +35,15 @@ export default function SettingsPage() {
   const updateProfile = useUpdateProfile();
   const { theme, setTheme } = useTheme();
   const { data: exchangeRates } = useExchangeRates();
+  const { data: marketData, isLoading: marketLoading } = useMarketRates();
   const upsertRate = useUpsertExchangeRate();
+  const queryClient = useQueryClient();
 
+  const [mounted, setMounted] = useState(false);
   const [fullName, setFullName] = useState("");
   const [primaryCurrency, setPrimaryCurrency] = useState("PHP");
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -198,15 +205,34 @@ export default function SettingsPage() {
           <Separator />
 
           <div className="space-y-3">
-            <Label>Exchange Rates (to {primaryCurrency})</Label>
+            <div className="flex items-center justify-between">
+              <Label>Exchange Rates (to {primaryCurrency})</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground"
+                onClick={() =>
+                  queryClient.invalidateQueries({ queryKey: ["market-rates"] })
+                }
+                disabled={marketLoading}
+              >
+                <RefreshCw
+                  className={`h-3 w-3 mr-1 ${marketLoading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Set custom rates or leave blank to use defaults
+              Set custom rates or leave blank to use live market rates
             </p>
             <div className="space-y-2">
               {CURRENCIES.filter((c) => c.code !== primaryCurrency).map((c) => {
-                const defaultRate =
-                  (DEFAULT_RATES_TO_PHP[c.code] ?? 1) /
-                  (DEFAULT_RATES_TO_PHP[primaryCurrency] ?? 1);
+                // Prefer live market rate, fall back to hardcoded
+                const marketRate = marketData?.rates
+                  ? (marketData.rates[c.code] ?? DEFAULT_RATES_TO_PHP[c.code] ?? 1) /
+                    (marketData.rates[primaryCurrency] ?? DEFAULT_RATES_TO_PHP[primaryCurrency] ?? 1)
+                  : (DEFAULT_RATES_TO_PHP[c.code] ?? 1) /
+                    (DEFAULT_RATES_TO_PHP[primaryCurrency] ?? 1);
                 const currentRate = userRates[c.code];
 
                 return (
@@ -220,7 +246,7 @@ export default function SettingsPage() {
                       type="number"
                       step="0.0001"
                       min="0.0001"
-                      placeholder={defaultRate.toFixed(4)}
+                      placeholder={marketRate.toFixed(4)}
                       defaultValue={currentRate ?? ""}
                       className="w-32 h-8 text-sm"
                       onBlur={(e) => {
@@ -241,6 +267,20 @@ export default function SettingsPage() {
                 );
               })}
             </div>
+            {marketData?.updated_at && (
+              <p className="text-[11px] text-muted-foreground/60">
+                Market rates updated{" "}
+                {(() => {
+                  const diff = Date.now() - new Date(marketData.updated_at).getTime();
+                  const mins = Math.floor(diff / 60000);
+                  if (mins < 1) return "just now";
+                  if (mins < 60) return `${mins}m ago`;
+                  const hours = Math.floor(mins / 60);
+                  if (hours < 24) return `${hours}h ago`;
+                  return `${Math.floor(hours / 24)}d ago`;
+                })()}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -258,7 +298,7 @@ export default function SettingsPage() {
             <Label>Theme</Label>
             <div className="flex flex-wrap gap-3">
               <Button
-                variant={theme === "light" ? "default" : "outline"}
+                variant={mounted && theme === "light" ? "default" : "outline"}
                 onClick={() => setTheme("light")}
                 className="flex-1 min-w-[100px]"
               >
@@ -266,7 +306,7 @@ export default function SettingsPage() {
                 Light
               </Button>
               <Button
-                variant={theme === "dark" ? "default" : "outline"}
+                variant={mounted && theme === "dark" ? "default" : "outline"}
                 onClick={() => setTheme("dark")}
                 className="flex-1 min-w-[100px]"
               >
@@ -274,7 +314,7 @@ export default function SettingsPage() {
                 Dark
               </Button>
               <Button
-                variant={theme === "system" ? "default" : "outline"}
+                variant={mounted && theme === "system" ? "default" : "outline"}
                 onClick={() => setTheme("system")}
                 className="flex-1 min-w-[100px]"
               >

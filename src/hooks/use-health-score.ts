@@ -29,7 +29,7 @@ export function useHealthScore() {
 
       const budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
-      const [txResult, budgetResult, goalResult] = await Promise.all([
+      const [txResult, budgetResult, goalResult, accountResult] = await Promise.all([
         supabase
           .from("transactions")
           .select("amount, date, category")
@@ -37,6 +37,10 @@ export function useHealthScore() {
           .lte("date", currentMonthEnd),
         supabase.from("budgets").select("*").eq("month", budgetMonth),
         supabase.from("goals").select("*"),
+        supabase
+          .from("accounts")
+          .select("balance")
+          .eq("is_archived", false),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
@@ -46,6 +50,11 @@ export function useHealthScore() {
       const transactions = txResult.data;
       const budgets = budgetResult.data;
       const goals = goalResult.data;
+      const accounts = accountResult.data ?? [];
+      const accountsTotal = accounts.reduce(
+        (sum, a) => sum + Number(a.balance),
+        0
+      );
 
       // ----- Savings Rate (30%) -----
       const income = transactions
@@ -89,6 +98,8 @@ export function useHealthScore() {
       }
 
       // ----- Emergency Fund (20%) -----
+      // Use emergency goal amount if one exists, otherwise fall back
+      // to total account balances as the financial cushion
       const emergencyGoal = goals.find(
         (g) =>
           g.name.toLowerCase().includes("emergency") ||
@@ -96,11 +107,14 @@ export function useHealthScore() {
       );
       const monthlyExpenses = expenses || 1;
       const targetEmergency = monthlyExpenses * 3;
+      const cushionAmount = emergencyGoal
+        ? emergencyGoal.current_amount
+        : accountsTotal;
       let emergencyScore = 0;
-      if (emergencyGoal) {
+      if (cushionAmount > 0) {
         emergencyScore = Math.min(
           100,
-          (emergencyGoal.current_amount / targetEmergency) * 100
+          (cushionAmount / targetEmergency) * 100
         );
       }
 
@@ -138,7 +152,9 @@ export function useHealthScore() {
           weight: 20,
           detail: emergencyGoal
             ? `₱${emergencyGoal.current_amount.toLocaleString()} saved`
-            : "No emergency fund goal",
+            : accountsTotal > 0
+              ? `₱${Math.round(accountsTotal).toLocaleString()} in accounts`
+              : "No emergency fund goal",
         },
       ];
 

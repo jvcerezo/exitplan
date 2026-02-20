@@ -76,24 +76,39 @@ export function useTransactionsSummary() {
     queryKey: ["transactions", "summary"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("amount");
 
-      if (error) throw new Error(error.message);
+      const [txResult, accountResult] = await Promise.all([
+        supabase.from("transactions").select("amount, account_id"),
+        supabase
+          .from("accounts")
+          .select("balance")
+          .eq("is_archived", false),
+      ]);
 
-      const income = data
-        .filter((t: { amount: number }) => t.amount > 0)
-        .reduce((sum: number, t: { amount: number }) => sum + t.amount, 0);
-      const expenses = data
-        .filter((t: { amount: number }) => t.amount < 0)
-        .reduce(
-          (sum: number, t: { amount: number }) => sum + Math.abs(t.amount),
-          0
-        );
+      if (txResult.error) throw new Error(txResult.error.message);
+
+      const transactions = txResult.data;
+      const accounts = accountResult.data ?? [];
+
+      const income = transactions
+        .filter((t) => t.amount > 0)
+        .reduce((sum, t) => sum + t.amount, 0);
+      const expenses = transactions
+        .filter((t) => t.amount < 0)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+      // Account balances already include their linked transactions,
+      // so only add unlinked transaction amounts to avoid double-counting
+      const accountsTotal = accounts.reduce(
+        (sum, a) => sum + Number(a.balance),
+        0
+      );
+      const unlinkedBalance = transactions
+        .filter((t) => !t.account_id)
+        .reduce((sum, t) => sum + t.amount, 0);
 
       return {
-        balance: Math.round((income - expenses) * 100) / 100,
+        balance: Math.round((accountsTotal + unlinkedBalance) * 100) / 100,
         income: Math.round(income * 100) / 100,
         expenses: Math.round(expenses * 100) / 100,
       };
