@@ -47,7 +47,7 @@ export function EditGoalDialog({ goal }: { goal: Goal }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon-xs">
+        <Button variant="ghost" size="icon-xs" aria-label="Edit goal">
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>

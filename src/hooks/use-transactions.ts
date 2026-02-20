@@ -47,7 +47,8 @@ export function useTransactions(filters?: {
       }
 
       if (filters?.search) {
-        query = query.ilike("description", `%${filters.search}%`);
+        const search = filters.search.slice(0, 200);
+        query = query.ilike("description", `%${search}%`);
       }
 
       if (filters?.dateFrom) {
@@ -86,7 +87,11 @@ export function useTransactionsSummary() {
           0
         );
 
-      return { balance: income - expenses, income, expenses };
+      return {
+        balance: Math.round((income - expenses) * 100) / 100,
+        income: Math.round(income * 100) / 100,
+        expenses: Math.round(expenses * 100) / 100,
+      };
     },
   });
 }
@@ -100,10 +105,11 @@ export function useAddTransaction() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("transactions")
-        .insert({ ...transaction, user_id: user!.id })
+        .insert({ ...transaction, user_id: user.id })
         .select()
         .single();
 
@@ -164,18 +170,28 @@ export function useDeleteTransaction() {
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["transactions"] });
-      const previous = queryClient.getQueriesData({ queryKey: ["transactions"] });
-      queryClient.setQueriesData(
-        { queryKey: ["transactions"] },
-        (old: Transaction[] | undefined) => old?.filter((t) => t.id !== id)
-      );
-      return { previous };
+      const previousRecent = queryClient.getQueryData<Transaction[]>(["transactions", "recent"]);
+      const previousAll = queryClient.getQueryData<Transaction[]>(["transactions", "all", undefined]);
+      if (previousRecent) {
+        queryClient.setQueryData<Transaction[]>(
+          ["transactions", "recent"],
+          previousRecent.filter((t) => t.id !== id)
+        );
+      }
+      if (previousAll) {
+        queryClient.setQueryData<Transaction[]>(
+          ["transactions", "all", undefined],
+          previousAll.filter((t) => t.id !== id)
+        );
+      }
+      return { previousRecent, previousAll };
     },
     onError: (error, _id, context) => {
-      if (context?.previous) {
-        context.previous.forEach(([key, data]) => {
-          queryClient.setQueryData(key, data);
-        });
+      if (context?.previousRecent) {
+        queryClient.setQueryData(["transactions", "recent"], context.previousRecent);
+      }
+      if (context?.previousAll) {
+        queryClient.setQueryData(["transactions", "all", undefined], context.previousAll);
       }
       toast.error("Failed to delete transaction", { description: error.message });
     },

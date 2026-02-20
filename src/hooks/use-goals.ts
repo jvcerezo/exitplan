@@ -40,7 +40,13 @@ export function useGoalsSummary() {
         0
       );
 
-      return { total, completed, active: total - completed, totalTarget, totalSaved };
+      return {
+        total,
+        completed,
+        active: total - completed,
+        totalTarget: Math.round(totalTarget * 100) / 100,
+        totalSaved: Math.round(totalSaved * 100) / 100,
+      };
     },
   });
 }
@@ -54,10 +60,11 @@ export function useAddGoal() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("goals")
-        .insert({ ...goal, user_id: user!.id })
+        .insert({ ...goal, user_id: user.id })
         .select()
         .single();
 
@@ -115,18 +122,18 @@ export function useDeleteGoal() {
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["goals"] });
-      const previous = queryClient.getQueriesData({ queryKey: ["goals"] });
-      queryClient.setQueriesData(
-        { queryKey: ["goals"] },
-        (old: Goal[] | undefined) => old?.filter((g) => g.id !== id)
-      );
-      return { previous };
+      const previousList = queryClient.getQueryData<Goal[]>(["goals"]);
+      if (previousList) {
+        queryClient.setQueryData<Goal[]>(
+          ["goals"],
+          previousList.filter((g) => g.id !== id)
+        );
+      }
+      return { previousList };
     },
     onError: (error, _id, context) => {
-      if (context?.previous) {
-        context.previous.forEach(([key, data]) => {
-          queryClient.setQueryData(key, data);
-        });
+      if (context?.previousList) {
+        queryClient.setQueryData(["goals"], context.previousList);
       }
       toast.error("Failed to delete goal", { description: error.message });
     },

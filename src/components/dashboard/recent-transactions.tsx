@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRecentTransactions } from "@/hooks/use-transactions";
-import { ArrowUpRight, ArrowDownRight, AlertCircle, Wallet } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ArrowRight, AlertCircle, Wallet } from "lucide-react";
 import { formatSignedCurrency } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -78,6 +79,13 @@ export function RecentTransactions() {
                 </div>
               </div>
             ))}
+            <Link
+              href="/transactions"
+              className="flex items-center justify-center gap-1 pt-2 text-sm text-primary hover:underline"
+            >
+              View all transactions
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
         )}
       </CardContent>

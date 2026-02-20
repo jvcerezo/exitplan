@@ -36,6 +36,7 @@ export function DeleteGoalDialog({
           variant="ghost"
           size="icon-xs"
           className="text-muted-foreground hover:text-destructive"
+          aria-label="Delete goal"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>

@@ -11,6 +11,16 @@ export const CATEGORIES = [
   "Other",
 ] as const;
 
+export const EXPENSE_CATEGORIES = [
+  "Food",
+  "Housing",
+  "Transportation",
+  "Entertainment",
+  "Healthcare",
+  "Education",
+  "Other",
+] as const;
+
 export type Category = (typeof CATEGORIES)[number];
 
 export const GOAL_CATEGORIES = [

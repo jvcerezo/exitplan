@@ -24,7 +24,10 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const addAmount = parseFloat(formData.get("amount") as string);
-    const newAmount = goal.current_amount + addAmount;
+
+    if (!addAmount || addAmount <= 0) return;
+
+    const newAmount = Math.round((goal.current_amount + addAmount) * 100) / 100;
     const isCompleted = newAmount >= goal.target_amount;
 
     await updateGoal.mutateAsync({
@@ -36,7 +39,7 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
     setOpen(false);
   }
 
-  const remaining = goal.target_amount - goal.current_amount;
+  const remaining = Math.round((goal.target_amount - goal.current_amount) * 100) / 100;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,6 +65,7 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
               type="number"
               step="0.01"
               min="0.01"
+              max="9999999999.99"
               placeholder="₱0.00"
               required
             />

@@ -6,20 +6,16 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { formatCurrency } from "@/lib/utils";
 import type { Transaction } from "@/lib/types/database";
 
-function computeInsights(transactions: Transaction[]) {
+function getCurrentMonthRange() {
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .split("T")[0];
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    .toISOString()
-    .split("T")[0];
+  return {
+    from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
+    to: new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0],
+  };
+}
 
-  const currentMonth = transactions.filter(
-    (tx) => tx.date >= startOfMonth && tx.date <= endOfMonth
-  );
-
-  const expenses = currentMonth.filter((tx) => tx.amount < 0);
+function computeInsights(transactions: Transaction[]) {
+  const expenses = transactions.filter((tx) => tx.amount < 0);
 
   // Top spending category
   const categoryTotals: Record<string, number> = {};
@@ -32,13 +28,13 @@ function computeInsights(transactions: Transaction[]) {
     "N/A";
 
   // Number of transactions this month
-  const transactionCount = currentMonth.length;
+  const transactionCount = transactions.length;
 
   // Average transaction amount
   const avgAmount =
-    currentMonth.length > 0
-      ? currentMonth.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) /
-        currentMonth.length
+    transactions.length > 0
+      ? transactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) /
+        transactions.length
       : 0;
 
   // Biggest single expense
@@ -56,7 +52,11 @@ function computeInsights(transactions: Transaction[]) {
 }
 
 export function SpendingInsights() {
-  const { data: transactions, isLoading, error } = useTransactions();
+  const monthRange = getCurrentMonthRange();
+  const { data: transactions, isLoading, error } = useTransactions({
+    dateFrom: monthRange.from,
+    dateTo: monthRange.to,
+  });
 
   const insights = transactions ? computeInsights(transactions) : null;
 

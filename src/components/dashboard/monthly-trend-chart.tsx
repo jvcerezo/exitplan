@@ -66,15 +66,15 @@ export function MonthlyTrendChart() {
       <CardContent>
         {isLoading ? (
           <div className="flex items-end gap-2 justify-center h-[250px] sm:h-[300px] px-4 pb-8">
-            {[...Array(6)].map((_, i) => (
+            {[40, 65, 55, 80, 45, 70].map((h, i) => (
               <div key={i} className="flex gap-1 items-end flex-1">
                 <div
                   className="flex-1 bg-muted rounded-t animate-pulse"
-                  style={{ height: `${40 + Math.random() * 60}%` }}
+                  style={{ height: `${h}%` }}
                 />
                 <div
                   className="flex-1 bg-muted rounded-t animate-pulse"
-                  style={{ height: `${30 + Math.random() * 50}%` }}
+                  style={{ height: `${h - 15}%` }}
                 />
               </div>
             ))}

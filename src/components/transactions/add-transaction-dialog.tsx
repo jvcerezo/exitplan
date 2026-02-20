@@ -84,6 +84,7 @@ export function AddTransactionDialog() {
               type="number"
               step="0.01"
               min="0.01"
+              max="9999999999.99"
               placeholder="0.00"
               required
             />

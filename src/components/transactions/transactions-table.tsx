@@ -46,10 +46,18 @@ function getDatePreset(preset: string): { from: string; to: string } | null {
   }
 }
 
+function sanitizeCSVField(value: string): string {
+  let sanitized = value.replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(sanitized)) {
+    sanitized = `'${sanitized}`;
+  }
+  return `"${sanitized}"`;
+}
+
 function exportCSV(transactions: { date: string; description: string; category: string; amount: number }[]) {
   const header = "Date,Description,Category,Amount\n";
   const rows = transactions
-    .map((tx) => `${tx.date},"${tx.description.replace(/"/g, '""')}",${tx.category},${tx.amount}`)
+    .map((tx) => `${tx.date},${sanitizeCSVField(tx.description)},${sanitizeCSVField(tx.category)},${tx.amount}`)
     .join("\n");
   const blob = new Blob([header + rows], { type: "text/csv" });
   const url = URL.createObjectURL(blob);

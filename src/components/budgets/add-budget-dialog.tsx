@@ -20,16 +20,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAddBudget } from "@/hooks/use-budgets";
-import { CATEGORIES } from "@/lib/constants";
+import { EXPENSE_CATEGORIES } from "@/lib/constants";
 
 interface AddBudgetDialogProps {
   month: string;
+  existingCategories: string[];
 }
 
-export function AddBudgetDialog({ month }: AddBudgetDialogProps) {
+export function AddBudgetDialog({ month, existingCategories }: AddBudgetDialogProps) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
   const addBudget = useAddBudget();
+
+  const availableCategories = EXPENSE_CATEGORIES.filter(
+    (cat) => !existingCategories.includes(cat.toLowerCase())
+  );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,6 +50,15 @@ export function AddBudgetDialog({ month }: AddBudgetDialogProps) {
     setCategory("");
   }
 
+  if (availableCategories.length === 0) {
+    return (
+      <Button disabled>
+        <Plus className="h-4 w-4 mr-2" />
+        All Categories Budgeted
+      </Button>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -57,6 +71,9 @@ export function AddBudgetDialog({ month }: AddBudgetDialogProps) {
         <DialogHeader>
           <DialogTitle>Add Budget</DialogTitle>
         </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Set a monthly spending limit. Your expenses in this category will be tracked against it.
+        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Category</Label>
@@ -65,7 +82,7 @@ export function AddBudgetDialog({ month }: AddBudgetDialogProps) {
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((cat) => (
+                {availableCategories.map((cat) => (
                   <SelectItem key={cat} value={cat.toLowerCase()}>
                     {cat}
                   </SelectItem>
@@ -75,13 +92,14 @@ export function AddBudgetDialog({ month }: AddBudgetDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="budget-amount">Amount</Label>
+            <Label htmlFor="budget-amount">Monthly Limit</Label>
             <Input
               id="budget-amount"
               name="amount"
               type="number"
               step="0.01"
               min="1"
+              max="9999999999.99"
               placeholder="₱0.00"
               required
             />

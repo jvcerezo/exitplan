@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AddBudgetDialog } from "@/components/budgets/add-budget-dialog";
 import { BudgetCard } from "@/components/budgets/budget-card";
-import { useBudgetSummary } from "@/hooks/use-budgets";
+import { useBudgetSummary, useCopyBudgetsFromMonth } from "@/hooks/use-budgets";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +32,10 @@ function shiftMonth(monthStr: string, delta: number): string {
 export default function BudgetsPage() {
   const [month, setMonth] = useState(() => getFirstOfMonth(new Date()));
   const { data, isLoading } = useBudgetSummary(month);
+  const copyBudgets = useCopyBudgetsFromMonth();
+
+  const existingCategories = data?.budgets.map((b) => b.category) || [];
+  const previousMonth = shiftMonth(month, -1);
 
   return (
     <div className="space-y-8">
@@ -40,10 +44,27 @@ export default function BudgetsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Budgets</h1>
           <p className="text-muted-foreground">
-            Set monthly spending limits per category
+            Set monthly spending limits and track your expenses against them
           </p>
         </div>
-        <AddBudgetDialog month={month} />
+        <div className="flex gap-2">
+          {data && data.budgets.length === 0 && (
+            <Button
+              variant="outline"
+              onClick={() =>
+                copyBudgets.mutate({
+                  sourceMonth: previousMonth,
+                  targetMonth: month,
+                })
+              }
+              disabled={copyBudgets.isPending}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              {copyBudgets.isPending ? "Copying..." : "Copy Last Month"}
+            </Button>
+          )}
+          <AddBudgetDialog month={month} existingCategories={existingCategories} />
+        </div>
       </div>
 
       {/* Month picker */}
@@ -51,6 +72,7 @@ export default function BudgetsPage() {
         <Button
           variant="outline"
           size="icon"
+          aria-label="Previous month"
           onClick={() => setMonth((m) => shiftMonth(m, -1))}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -61,6 +83,7 @@ export default function BudgetsPage() {
         <Button
           variant="outline"
           size="icon"
+          aria-label="Next month"
           onClick={() => setMonth((m) => shiftMonth(m, 1))}
         >
           <ChevronRight className="h-4 w-4" />
@@ -68,22 +91,22 @@ export default function BudgetsPage() {
       </div>
 
       {/* Summary bar */}
-      {data && (
-        <div className="flex items-center justify-center gap-6 text-sm">
+      {data && data.budgets.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
           <div>
             <span className="text-muted-foreground">Total Budget: </span>
             <span className="font-semibold">
               {formatCurrency(data.totalBudget)}
             </span>
           </div>
-          <Separator orientation="vertical" className="h-4" />
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <div>
             <span className="text-muted-foreground">Total Spent: </span>
             <span className="font-semibold">
               {formatCurrency(data.totalSpent)}
             </span>
           </div>
-          <Separator orientation="vertical" className="h-4" />
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <div>
             <span className="text-muted-foreground">Remaining: </span>
             <span className="font-semibold">
@@ -107,10 +130,15 @@ export default function BudgetsPage() {
           ))}
         </div>
       ) : (
-        <p className="text-center text-muted-foreground py-12">
-          No budgets set for {formatMonthLabel(month)}. Click &quot;Add
-          Budget&quot; to get started.
-        </p>
+        <div className="text-center py-12 space-y-3">
+          <p className="text-muted-foreground">
+            No budgets set for {formatMonthLabel(month)}.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Create budgets for your expense categories to track spending limits.
+            Your transactions will automatically count against the matching budget.
+          </p>
+        </div>
       )}
     </div>
   );

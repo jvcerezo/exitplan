@@ -11,11 +11,12 @@ export function useProfile() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user!.id)
+        .eq("id", user.id)
         .single();
 
       if (error) throw new Error(error.message);
@@ -33,11 +34,12 @@ export function useUpdateProfile() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("profiles")
         .update({ full_name })
-        .eq("id", user!.id)
+        .eq("id", user.id)
         .select()
         .single();
 

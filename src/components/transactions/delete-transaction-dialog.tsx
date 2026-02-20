@@ -32,7 +32,7 @@ export function DeleteTransactionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon-xs" className="text-muted-foreground hover:text-destructive">
+        <Button variant="ghost" size="icon-xs" className="text-muted-foreground hover:text-destructive" aria-label="Delete transaction">
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>

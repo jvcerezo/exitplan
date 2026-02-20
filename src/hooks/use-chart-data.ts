@@ -42,7 +42,7 @@ export function useSpendingByCategory() {
       }
 
       return Object.entries(categoryMap)
-        .map(([category, amount]) => ({ category, amount }))
+        .map(([category, amount]) => ({ category, amount: Math.round(amount * 100) / 100 }))
         .sort((a, b) => b.amount - a.amount);
     },
   });
@@ -108,11 +108,17 @@ export function useMonthlyTrend() {
       return Object.entries(monthMap)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([key, values]) => {
-          const monthIndex = parseInt(key.split("-")[1], 10) - 1;
+          const [yearStr, monthStr] = key.split("-");
+          const monthIndex = parseInt(monthStr, 10) - 1;
+          const year = parseInt(yearStr, 10);
+          const currentYear = now.getFullYear();
+          const label = year !== currentYear
+            ? `${MONTH_NAMES[monthIndex]} '${String(year).slice(2)}`
+            : MONTH_NAMES[monthIndex];
           return {
-            month: MONTH_NAMES[monthIndex],
-            income: values.income,
-            expenses: values.expenses,
+            month: label,
+            income: Math.round(values.income * 100) / 100,
+            expenses: Math.round(values.expenses * 100) / 100,
           };
         });
     },
