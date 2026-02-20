@@ -1,22 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ArrowUpRight, ArrowDownRight, SlidersHorizontal, AlertCircle, Download, Wallet } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Search,
+  ArrowUpRight,
+  ArrowDownRight,
+  Download,
+  Wallet,
+  AlertCircle,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useTransactions } from "@/hooks/use-transactions";
 import { CATEGORIES } from "@/lib/constants";
-import { formatSignedCurrency } from "@/lib/utils";
+import { formatSignedCurrency, cn } from "@/lib/utils";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
+import { AttachmentUpload } from "./attachment-upload";
+import { AttachmentViewer } from "./attachment-viewer";
 import { EmptyState } from "@/components/ui/empty-state";
 
 function getDatePreset(preset: string): { from: string; to: string } | null {
@@ -35,12 +38,11 @@ function getDatePreset(preset: string): { from: string; to: string } | null {
         from: new Date(y, m - 1, 1).toISOString().split("T")[0],
         to: new Date(y, m, 0).toISOString().split("T")[0],
       };
-    case "last-3-months": {
+    case "last-3-months":
       return {
         from: new Date(y, m - 2, 1).toISOString().split("T")[0],
         to: new Date(y, m + 1, 0).toISOString().split("T")[0],
       };
-    }
     default:
       return null;
   }
@@ -54,10 +56,15 @@ function sanitizeCSVField(value: string): string {
   return `"${sanitized}"`;
 }
 
-function exportCSV(transactions: { date: string; description: string; category: string; amount: number }[]) {
+function exportCSV(
+  transactions: { date: string; description: string; category: string; amount: number }[]
+) {
   const header = "Date,Description,Category,Amount\n";
   const rows = transactions
-    .map((tx) => `${tx.date},${sanitizeCSVField(tx.description)},${sanitizeCSVField(tx.category)},${tx.amount}`)
+    .map(
+      (tx) =>
+        `${tx.date},${sanitizeCSVField(tx.description)},${sanitizeCSVField(tx.category)},${tx.amount}`
+    )
     .join("\n");
   const blob = new Blob([header + rows], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -68,11 +75,18 @@ function exportCSV(transactions: { date: string; description: string; category: 
   URL.revokeObjectURL(url);
 }
 
+const DATE_LABELS: Record<string, string> = {
+  "this-month": "This Month",
+  "last-month": "Last Month",
+  "last-3-months": "Last 3 Months",
+};
+
 export function TransactionsTable() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [type, setType] = useState<"all" | "income" | "expense">("all");
   const [dateRange, setDateRange] = useState("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const datePreset = getDatePreset(dateRange);
 
@@ -84,195 +98,313 @@ export function TransactionsTable() {
     dateTo: datePreset?.to,
   });
 
+  const hasFilters = category !== "all" || dateRange !== "all";
+  const activeFilterCount = (category !== "all" ? 1 : 0) + (dateRange !== "all" ? 1 : 0);
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>All Transactions</CardTitle>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <SlidersHorizontal className="h-4 w-4" />
-              <span>
-                {transactions?.length ?? 0}{" "}
-                {transactions?.length === 1 ? "transaction" : "transactions"}
-              </span>
-            </div>
+    <div className="space-y-4">
+      {/* Segmented type control */}
+      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-0.5">
+        {(["all", "income", "expense"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setType(t)}
+            className={cn(
+              "rounded-md px-4 py-1.5 text-sm font-medium transition-all",
+              type === t
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t === "all" ? "All" : t === "income" ? "Income" : "Expenses"}
+          </button>
+        ))}
+      </div>
+
+      <Card>
+        {/* Search + filter bar */}
+        <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          <input
+            placeholder="Search transactions..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
+          />
+          <div className="flex items-center gap-2 shrink-0">
             {transactions && transactions.length > 0 && (
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground"
                 onClick={() => exportCSV(transactions)}
               >
-                <Download className="h-3.5 w-3.5 mr-1.5" />
+                <Download className="h-3.5 w-3.5 mr-1" />
                 CSV
               </Button>
             )}
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className={cn(
+                "relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                filtersOpen || hasFilters
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="grid gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search descriptions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat.toLowerCase()}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={type}
-            onValueChange={(v) => setType(v as "all" | "income" | "expense")}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="income">Income</SelectItem>
-              <SelectItem value="expense">Expense</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Date Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="this-month">This Month</SelectItem>
-              <SelectItem value="last-month">Last Month</SelectItem>
-              <SelectItem value="last-3-months">Last 3 Months</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 rounded-lg border border-border/40 p-4 animate-pulse"
+        {/* Active filter chips */}
+        {hasFilters && !filtersOpen && (
+          <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2">
+            {dateRange !== "all" && (
+              <button
+                type="button"
+                onClick={() => setDateRange("all")}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
               >
-                <div className="h-10 w-10 rounded-full bg-muted" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-40 bg-muted rounded" />
-                  <div className="h-3 w-24 bg-muted rounded" />
-                </div>
-                <div className="h-4 w-20 bg-muted rounded" />
-              </div>
-            ))}
+                {DATE_LABELS[dateRange]}
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {category !== "all" && (
+              <button
+                type="button"
+                onClick={() => setCategory("all")}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize transition-colors hover:bg-primary/15"
+              >
+                {category}
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setDateRange("all");
+                setCategory("all");
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear all
+            </button>
           </div>
-        ) : error ? (
-          <div className="flex items-center gap-3 py-10">
-            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Could not load transactions</p>
-              <p className="text-xs text-muted-foreground">
-                {error instanceof Error ? error.message : "Check your Supabase connection and ensure the transactions table exists."}
+        )}
+
+        {/* Filter panel (collapsible) */}
+        {filtersOpen && (
+          <div className="border-b border-border/50 px-4 py-3 space-y-3 bg-muted/20">
+            {/* Date range */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Date Range
               </p>
-            </div>
-          </div>
-        ) : transactions?.length === 0 ? (
-          <EmptyState
-            icon={search || category !== "all" || type !== "all" || dateRange !== "all" ? Search : Wallet}
-            title={search || category !== "all" || type !== "all" || dateRange !== "all" ? "No transactions found" : "No transactions yet"}
-            description={
-              search || category !== "all" || type !== "all" || dateRange !== "all"
-                ? "Try adjusting your filters to find what you're looking for."
-                : "Add your first transaction and start tracking your finances."
-            }
-          />
-        ) : (
-          <>
-            {/* Desktop table header */}
-            <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 px-4 pb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <span>Description</span>
-              <span>Category</span>
-              <span>Date</span>
-              <span className="text-right">Amount</span>
-              <span className="w-16" />
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { value: "all", label: "All Time" },
+                  { value: "this-month", label: "This Month" },
+                  { value: "last-month", label: "Last Month" },
+                  { value: "last-3-months", label: "Last 3 Months" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setDateRange(opt.value)}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      dateRange === opt.value
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background text-muted-foreground border border-border/60 hover:text-foreground hover:border-border"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            {/* Category */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Category
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCategory("all")}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    category === "all"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background text-muted-foreground border border-border/60 hover:text-foreground hover:border-border"
+                  )}
+                >
+                  All
+                </button>
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat.toLowerCase())}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      category === cat.toLowerCase()
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background text-muted-foreground border border-border/60 hover:text-foreground hover:border-border"
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear + done */}
+            <div className="flex items-center justify-between pt-1">
+              {hasFilters ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateRange("all");
+                    setCategory("all");
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Clear all
+                </button>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Results count */}
+        <div className="px-4 pt-3 pb-1">
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {transactions?.length ?? 0}{" "}
+            {(transactions?.length ?? 0) === 1 ? "transaction" : "transactions"}
+          </p>
+        </div>
+
+        <CardContent className="pt-2">
+          {isLoading ? (
             <div className="space-y-2">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-lg p-3 animate-pulse"
+                >
+                  <div className="h-9 w-9 rounded-full bg-muted" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3.5 w-36 bg-muted rounded" />
+                    <div className="h-3 w-20 bg-muted rounded" />
+                  </div>
+                  <div className="h-3.5 w-16 bg-muted rounded" />
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="flex items-center gap-3 py-10">
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Could not load transactions</p>
+                <p className="text-xs text-muted-foreground">
+                  {error instanceof Error
+                    ? error.message
+                    : "Check your Supabase connection and ensure the transactions table exists."}
+                </p>
+              </div>
+            </div>
+          ) : transactions?.length === 0 ? (
+            <EmptyState
+              icon={search || hasFilters ? Search : Wallet}
+              title={
+                search || hasFilters
+                  ? "No transactions found"
+                  : "No transactions yet"
+              }
+              description={
+                search || hasFilters
+                  ? "Try adjusting your filters to find what you're looking for."
+                  : "Add your first transaction and start tracking your finances."
+              }
+            />
+          ) : (
+            <div className="space-y-0.5">
               {transactions?.map((tx) => (
                 <div
                   key={tx.id}
-                  className="group flex items-center gap-4 rounded-lg border border-border/40 p-4 transition-colors hover:bg-muted/30"
+                  className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/40"
                 >
                   {/* Icon */}
                   <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
                       tx.amount > 0
-                        ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-500"
-                    }`}
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : "bg-muted text-muted-foreground"
+                    )}
                   >
                     {tx.amount > 0 ? (
-                      <ArrowUpRight className="h-5 w-5" />
+                      <ArrowUpRight className="h-4 w-4" />
                     ) : (
-                      <ArrowDownRight className="h-5 w-5" />
+                      <ArrowDownRight className="h-4 w-4" />
                     )}
                   </div>
 
-                  {/* Description + category (mobile combines, desktop splits) */}
-                  <div className="flex-1 min-w-0 sm:grid sm:grid-cols-[1fr_1fr_1fr] sm:gap-4 sm:items-center">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {tx.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground capitalize sm:hidden">
-                        {tx.category} &middot;{" "}
-                        {new Date(tx.date + "T00:00:00").toLocaleDateString(
-                          "en-PH",
-                          {
-                            month: "short",
-                            day: "numeric",
-                          }
-                        )}
-                      </p>
-                    </div>
-                    <p className="hidden sm:block text-sm text-muted-foreground capitalize">
-                      {tx.category}
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {tx.description}
                     </p>
-                    <p className="hidden sm:block text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {tx.category}
+                      <span className="mx-1.5 text-border">&middot;</span>
                       {new Date(tx.date + "T00:00:00").toLocaleDateString(
                         "en-PH",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }
+                        { month: "short", day: "numeric" }
                       )}
                     </p>
                   </div>
 
                   {/* Amount */}
-                  <div
-                    className={`shrink-0 text-sm font-semibold ${
-                      tx.amount > 0 ? "text-green-600" : "text-foreground"
-                    }`}
+                  <p
+                    className={cn(
+                      "text-sm font-semibold tabular-nums shrink-0",
+                      tx.amount > 0 ? "text-emerald-600" : "text-foreground"
+                    )}
                   >
-                    {formatSignedCurrency(tx.amount)}
-                  </div>
+                    {formatSignedCurrency(tx.amount, tx.currency)}
+                  </p>
 
                   {/* Actions */}
-                  <div className="flex shrink-0 items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {tx.attachment_path ? (
+                      <AttachmentViewer
+                        transactionId={tx.id}
+                        path={tx.attachment_path}
+                      />
+                    ) : (
+                      <AttachmentUpload transactionId={tx.id} />
+                    )}
                     <EditTransactionDialog transaction={tx} />
                     <DeleteTransactionDialog
                       id={tx.id}
@@ -282,9 +414,9 @@ export function TransactionsTable() {
                 </div>
               ))}
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

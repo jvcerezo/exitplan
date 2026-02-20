@@ -141,7 +141,7 @@ export default async function AdminUsersPage() {
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Expenses</p>
-                        <p className="font-medium tabular-nums text-red-500">
+                        <p className="font-medium tabular-nums text-foreground">
                           {formatCurrency(user.totalExpenses)}
                         </p>
                       </div>
@@ -218,7 +218,7 @@ export default async function AdminUsersPage() {
                         <td className="py-3 pr-4 text-right tabular-nums text-emerald-600">
                           {formatCurrency(user.totalIncome)}
                         </td>
-                        <td className="py-3 pr-4 text-right tabular-nums text-red-500">
+                        <td className="py-3 pr-4 text-right tabular-nums text-foreground">
                           {formatCurrency(user.totalExpenses)}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">

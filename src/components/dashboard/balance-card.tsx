@@ -58,7 +58,7 @@ export function BalanceCard() {
       title: "Expenses",
       value: summary?.expenses ?? 0,
       icon: TrendingDown,
-      color: "text-red-500",
+      color: "text-foreground",
     },
   ];
 

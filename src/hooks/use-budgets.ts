@@ -208,6 +208,53 @@ export function useCopyBudgetsFromMonth() {
   });
 }
 
+export function useBudgetRecommendations() {
+  return useQuery({
+    queryKey: ["budgets", "recommendations"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const now = new Date();
+
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+        .toISOString().split("T")[0];
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+        .toISOString().split("T")[0];
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("category, amount, date")
+        .lt("amount", 0)
+        .gte("date", threeMonthsAgo)
+        .lte("date", lastMonthEnd);
+
+      if (error) throw new Error(error.message);
+
+      const categoryByMonth: Record<string, Record<string, number>> = {};
+      for (const tx of data) {
+        const [year, month] = tx.date.split("-");
+        const monthKey = `${year}-${month}`;
+        if (!categoryByMonth[tx.category]) categoryByMonth[tx.category] = {};
+        categoryByMonth[tx.category][monthKey] =
+          (categoryByMonth[tx.category][monthKey] || 0) + Math.abs(tx.amount);
+      }
+
+      const recommendations: { category: string; average: number; suggested: number }[] = [];
+      for (const [category, months] of Object.entries(categoryByMonth)) {
+        const values = Object.values(months);
+        const avg = values.reduce((a, b) => a + b, 0) / Math.max(values.length, 1);
+        const suggested = Math.ceil(avg * 1.1);
+        recommendations.push({
+          category,
+          average: Math.round(avg * 100) / 100,
+          suggested: Math.round(suggested * 100) / 100,
+        });
+      }
+
+      return recommendations.sort((a, b) => b.suggested - a.suggested);
+    },
+  });
+}
+
 export function useDeleteBudget() {
   const queryClient = useQueryClient();
 

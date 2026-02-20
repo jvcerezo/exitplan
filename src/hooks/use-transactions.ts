@@ -26,6 +26,7 @@ export function useTransactions(filters?: {
   search?: string;
   dateFrom?: string;
   dateTo?: string;
+  accountId?: string;
 }) {
   return useQuery({
     queryKey: ["transactions", "all", filters],
@@ -57,6 +58,10 @@ export function useTransactions(filters?: {
 
       if (filters?.dateTo) {
         query = query.lte("date", filters.dateTo);
+      }
+
+      if (filters?.accountId) {
+        query = query.eq("account_id", filters.accountId);
       }
 
       const { data, error } = await query;
@@ -114,10 +119,28 @@ export function useAddTransaction() {
         .single();
 
       if (error) throw new Error(error.message);
+
+      // Sync account balance
+      if (transaction.account_id) {
+        const { data: account } = await supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", transaction.account_id)
+          .single();
+
+        if (account) {
+          await supabase
+            .from("accounts")
+            .update({ balance: account.balance + transaction.amount })
+            .eq("id", transaction.account_id);
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
       toast.success("Transaction added");
     },
     onError: (error) => {

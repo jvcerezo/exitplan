@@ -125,7 +125,7 @@ export function MonthlyTrendChart() {
                 <Bar
                   dataKey="expenses"
                   name="Expenses"
-                  fill="#ef4444"
+                  fill="#94a3b8"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

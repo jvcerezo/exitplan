@@ -63,6 +63,145 @@ const MONTH_NAMES = [
   "Dec",
 ];
 
+interface NetWorthPoint {
+  month: string;
+  balance: number;
+}
+
+export function useNetWorthOverTime() {
+  return useQuery({
+    queryKey: ["transactions", "net-worth"],
+    queryFn: async (): Promise<NetWorthPoint[]> => {
+      const supabase = createClient();
+      const now = new Date();
+      const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+      const startDate = twelveMonthsAgo.toISOString().split("T")[0];
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("amount, date")
+        .order("date", { ascending: true });
+
+      if (error) throw new Error(error.message);
+
+      // Compute balance before the 12-month window
+      let runningTotal = 0;
+      for (const tx of data) {
+        if (tx.date < startDate) {
+          runningTotal += tx.amount;
+        }
+      }
+
+      // Initialize 12 months
+      const monthKeys: string[] = [];
+      const monthContributions: Record<string, number> = {};
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthKeys.push(key);
+        monthContributions[key] = 0;
+      }
+
+      // Sum contributions within window
+      for (const tx of data) {
+        if (tx.date >= startDate) {
+          const [year, month] = tx.date.split("-");
+          const key = `${year}-${month}`;
+          if (monthContributions[key] !== undefined) {
+            monthContributions[key] += tx.amount;
+          }
+        }
+      }
+
+      // Build cumulative points
+      const points: NetWorthPoint[] = [];
+      for (const key of monthKeys) {
+        runningTotal += monthContributions[key] || 0;
+        const [yearStr, monthStr] = key.split("-");
+        const monthIndex = parseInt(monthStr, 10) - 1;
+        const year = parseInt(yearStr, 10);
+        const label =
+          year !== now.getFullYear()
+            ? `${MONTH_NAMES[monthIndex]} '${String(year).slice(2)}`
+            : MONTH_NAMES[monthIndex];
+        points.push({
+          month: label,
+          balance: Math.round(runningTotal * 100) / 100,
+        });
+      }
+
+      return points;
+    },
+  });
+}
+
+interface SpendingComparison {
+  category: string;
+  currentMonth: number;
+  previousMonth: number;
+  changePercent: number;
+}
+
+export function useSpendingComparison() {
+  return useQuery({
+    queryKey: ["transactions", "spending-comparison"],
+    queryFn: async (): Promise<SpendingComparison[]> => {
+      const supabase = createClient();
+      const now = new Date();
+
+      const currentStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString().split("T")[0];
+      const currentEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        .toISOString().split("T")[0];
+      const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        .toISOString().split("T")[0];
+      const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+        .toISOString().split("T")[0];
+
+      const [currentResult, prevResult] = await Promise.all([
+        supabase
+          .from("transactions")
+          .select("category, amount")
+          .lt("amount", 0)
+          .gte("date", currentStart)
+          .lte("date", currentEnd),
+        supabase
+          .from("transactions")
+          .select("category, amount")
+          .lt("amount", 0)
+          .gte("date", prevStart)
+          .lte("date", prevEnd),
+      ]);
+
+      if (currentResult.error) throw new Error(currentResult.error.message);
+      if (prevResult.error) throw new Error(prevResult.error.message);
+
+      const currentMap: Record<string, number> = {};
+      const prevMap: Record<string, number> = {};
+
+      for (const tx of currentResult.data) {
+        currentMap[tx.category] = (currentMap[tx.category] || 0) + Math.abs(tx.amount);
+      }
+      for (const tx of prevResult.data) {
+        prevMap[tx.category] = (prevMap[tx.category] || 0) + Math.abs(tx.amount);
+      }
+
+      const allCategories = new Set([...Object.keys(currentMap), ...Object.keys(prevMap)]);
+
+      return Array.from(allCategories)
+        .map((category) => {
+          const current = Math.round((currentMap[category] || 0) * 100) / 100;
+          const previous = Math.round((prevMap[category] || 0) * 100) / 100;
+          const changePercent = previous > 0
+            ? Math.round(((current - previous) / previous) * 100)
+            : current > 0 ? 100 : 0;
+          return { category, currentMonth: current, previousMonth: previous, changePercent };
+        })
+        .sort((a, b) => (b.currentMonth + b.previousMonth) - (a.currentMonth + a.previousMonth));
+    },
+  });
+}
+
 export function useMonthlyTrend() {
   return useQuery({
     queryKey: ["transactions", "monthly-trend"],

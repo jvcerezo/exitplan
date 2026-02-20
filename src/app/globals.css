@@ -161,4 +161,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  input[type="password"] {
+    font-family: Verdana, sans-serif;
+    letter-spacing: 0.125em;
+    font-size: 0.75rem;
+  }
 }

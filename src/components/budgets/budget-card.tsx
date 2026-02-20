@@ -5,10 +5,13 @@ import { Pencil, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useDeleteBudget, useUpdateBudget } from "@/hooks/use-budgets";
+import { useUpdateBudget } from "@/hooks/use-budgets";
+import { useUndoDelete } from "@/hooks/use-undo-delete";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { Budget } from "@/lib/types/database";
+
+const BUDGET_QUERY_KEYS = [["budgets"]];
 
 interface BudgetCardProps {
   budget: Budget;
@@ -16,7 +19,7 @@ interface BudgetCardProps {
 }
 
 export function BudgetCard({ budget, spent }: BudgetCardProps) {
-  const deleteBudget = useDeleteBudget();
+  const undoDelete = useUndoDelete("budgets", BUDGET_QUERY_KEYS);
   const updateBudget = useUpdateBudget();
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(budget.amount));
@@ -75,8 +78,7 @@ export function BudgetCard({ budget, spent }: BudgetCardProps) {
               size="icon-xs"
               className="text-muted-foreground hover:text-destructive"
               aria-label={`Delete ${budget.category} budget`}
-              onClick={() => deleteBudget.mutate(budget.id)}
-              disabled={deleteBudget.isPending}
+              onClick={() => undoDelete(budget.id, budget.category)}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>

@@ -53,7 +53,7 @@ export function RecentTransactions() {
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
                     tx.amount > 0
                       ? "bg-green-100 text-green-600"
-                      : "bg-red-100 text-red-500"
+                      : "bg-muted text-foreground"
                   }`}
                 >
                   {tx.amount > 0 ? (

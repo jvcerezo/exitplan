@@ -6,9 +6,20 @@ export interface Transaction {
   category: string;
   description: string;
   date: string;
+  currency: string;
+  attachment_path: string | null;
+  account_id: string | null;
+  transfer_id: string | null;
 }
 
-export type TransactionInsert = Omit<Transaction, "id" | "created_at" | "user_id">;
+export type TransactionInsert = Omit<
+  Transaction,
+  "id" | "created_at" | "user_id" | "attachment_path" | "account_id" | "transfer_id"
+> & {
+  attachment_path?: string | null;
+  account_id?: string | null;
+  transfer_id?: string | null;
+};
 
 export interface Goal {
   id: string;
@@ -30,6 +41,7 @@ export interface Profile {
   full_name: string | null;
   role: "user" | "admin";
   created_at: string;
+  primary_currency: string;
 }
 
 export interface Budget {
@@ -42,3 +54,33 @@ export interface Budget {
 }
 
 export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id">;
+
+export interface ExchangeRate {
+  id: string;
+  created_at: string;
+  user_id: string;
+  from_currency: string;
+  to_currency: string;
+  rate: number;
+}
+
+export type ExchangeRateInsert = Omit<ExchangeRate, "id" | "created_at" | "user_id">;
+
+export interface Account {
+  id: string;
+  created_at: string;
+  user_id: string;
+  name: string;
+  type: "cash" | "bank" | "e-wallet" | "credit-card";
+  currency: string;
+  balance: number;
+  is_archived: boolean;
+}
+
+export type AccountInsert = Omit<
+  Account,
+  "id" | "created_at" | "user_id" | "balance" | "is_archived"
+> & {
+  balance?: number;
+  is_archived?: boolean;
+};

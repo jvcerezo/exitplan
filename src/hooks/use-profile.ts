@@ -29,7 +29,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ full_name }: { full_name: string }) => {
+    mutationFn: async (updates: { full_name?: string; primary_currency?: string }) => {
       const supabase = createClient();
       const {
         data: { user },
@@ -38,7 +38,7 @@ export function useUpdateProfile() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .update({ full_name })
+        .update(updates)
         .eq("id", user.id)
         .select()
         .single();

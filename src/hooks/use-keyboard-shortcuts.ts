@@ -48,15 +48,6 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Focus search with /
-      if (e.key === "/") {
-        e.preventDefault();
-        const searchInput = document.querySelector<HTMLInputElement>(
-          'input[placeholder*="Search"]'
-        );
-        searchInput?.focus();
-      }
-
       // Escape to blur focused element
       if (e.key === "Escape") {
         (document.activeElement as HTMLElement)?.blur();

@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import {
+  Pencil,
+  Shield,
+  CreditCard,
+  PiggyBank,
+  TrendingUp,
+  Clock,
+  Plane,
+  GraduationCap,
+  Home,
+  Car,
+  Ellipsis,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,42 +22,74 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useUpdateGoal } from "@/hooks/use-goals";
 import { GOAL_CATEGORIES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { Goal } from "@/lib/types/database";
 
+const GOAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "emergency fund": Shield,
+  "debt payoff": CreditCard,
+  savings: PiggyBank,
+  investment: TrendingUp,
+  retirement: Clock,
+  travel: Plane,
+  education: GraduationCap,
+  home: Home,
+  vehicle: Car,
+  other: Ellipsis,
+};
+
+const ALL_KNOWN_GOAL_CATEGORIES = GOAL_CATEGORIES.map((c) => c.toLowerCase());
+
 export function EditGoalDialog({ goal }: { goal: Goal }) {
+  const isCustom = !ALL_KNOWN_GOAL_CATEGORIES.includes(goal.category);
   const [open, setOpen] = useState(false);
-  const [category, setCategory] = useState(goal.category);
+  const [category, setCategory] = useState(isCustom ? "other" : goal.category);
+  const [customCategory, setCustomCategory] = useState(isCustom ? goal.category : "");
+  const [name, setName] = useState(goal.name);
+  const [targetAmount, setTargetAmount] = useState(String(goal.target_amount));
+  const [currentAmount, setCurrentAmount] = useState(String(goal.current_amount));
+  const [deadline, setDeadline] = useState(goal.deadline ?? "");
   const updateGoal = useUpdateGoal();
+
+  function resetForm() {
+    setCategory(isCustom ? "other" : goal.category);
+    setCustomCategory(isCustom ? goal.category : "");
+    setName(goal.name);
+    setTargetAmount(String(goal.target_amount));
+    setCurrentAmount(String(goal.current_amount));
+    setDeadline(goal.deadline ?? "");
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+
+    const finalCategory =
+      category === "other" && customCategory.trim()
+        ? customCategory.trim().toLowerCase()
+        : category;
 
     await updateGoal.mutateAsync({
       id: goal.id,
-      name: formData.get("name") as string,
-      target_amount: parseFloat(formData.get("target_amount") as string),
-      current_amount: parseFloat(formData.get("current_amount") as string),
-      deadline: (formData.get("deadline") as string) || null,
-      category,
+      name,
+      target_amount: parseFloat(targetAmount),
+      current_amount: parseFloat(currentAmount),
+      deadline: deadline || null,
+      category: finalCategory,
     });
 
     setOpen(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) resetForm();
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon-xs" aria-label="Edit goal">
           <Pencil className="h-3.5 w-3.5" />
@@ -55,73 +99,124 @@ export function EditGoalDialog({ goal }: { goal: Goal }) {
         <DialogHeader>
           <DialogTitle>Edit Goal</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="edit-goal-name">Goal Name</Label>
-            <Input
-              id="edit-goal-name"
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Category pills */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              Category
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {GOAL_CATEGORIES.map((cat) => {
+                const Icon = GOAL_ICONS[cat.toLowerCase()] ?? Ellipsis;
+                const isSelected = category === cat.toLowerCase();
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat.toLowerCase())}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+            {category === "other" && (
+              <input
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                placeholder="Type your category..."
+                autoFocus
+                className="w-full bg-transparent text-sm font-medium outline-none border-b border-border pb-2 placeholder:text-muted-foreground/40 focus:border-primary transition-colors mt-1"
+              />
+            )}
+          </div>
+
+          {/* Goal name */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              Goal Name
+            </p>
+            <input
               name="name"
-              defaultValue={goal.name}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Emergency Fund"
               required
+              className="w-full bg-transparent text-sm font-medium outline-none border-b border-border pb-2 placeholder:text-muted-foreground/40 focus:border-primary transition-colors"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {GOAL_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat.toLowerCase()}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-target">Target Amount</Label>
-              <Input
-                id="edit-target"
+          {/* Target amount */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              Target Amount
+            </p>
+            <div className="flex items-baseline gap-2 py-2">
+              <span className="text-3xl font-bold text-muted-foreground/50">
+                ₱
+              </span>
+              <input
                 name="target_amount"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="1"
-                defaultValue={goal.target_amount}
+                max="9999999999.99"
+                placeholder="0.00"
+                value={targetAmount}
+                onChange={(e) => setTargetAmount(e.target.value)}
                 required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-current">Saved So Far</Label>
-              <Input
-                id="edit-current"
-                name="current_amount"
-                type="number"
-                step="0.01"
-                min="0"
-                defaultValue={goal.current_amount}
+                className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit-deadline">Deadline (optional)</Label>
-            <Input
-              id="edit-deadline"
-              name="deadline"
-              type="date"
-              defaultValue={goal.deadline ?? ""}
-            />
+          {/* Saved so far + Deadline row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">
+                Saved So Far
+              </p>
+              <div className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2">
+                <span className="text-sm text-muted-foreground/50">₱</span>
+                <input
+                  name="current_amount"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={currentAmount}
+                  onChange={(e) => setCurrentAmount(e.target.value)}
+                  className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">
+                Deadline
+              </p>
+              <input
+                name="deadline"
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium bg-transparent outline-none focus:border-primary transition-colors"
+              />
+            </div>
           </div>
 
           <Button
             type="submit"
             className="w-full"
-            disabled={updateGoal.isPending}
+            disabled={updateGoal.isPending || !category || !name || !targetAmount || (category === "other" && !customCategory.trim())}
           >
             {updateGoal.isPending ? "Saving..." : "Save Changes"}
           </Button>

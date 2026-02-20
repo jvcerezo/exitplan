@@ -156,7 +156,7 @@ export default function LandingPage() {
               {[
                 { label: "Total Balance", value: "₱42,267.50", color: "text-foreground" },
                 { label: "Income", value: "₱33,500.00", color: "text-green-600" },
-                { label: "Expenses", value: "₱7,232.50", color: "text-red-500" },
+                { label: "Expenses", value: "₱7,232.50", color: "text-foreground" },
               ].map((card) => (
                 <div
                   key={card.label}
@@ -254,7 +254,7 @@ export default function LandingPage() {
                       className={`flex h-8 w-8 items-center justify-center rounded-full ${
                         tx.amount > 0
                           ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-500"
+                          : "bg-muted text-foreground"
                       }`}
                     >
                       {tx.amount > 0 ? (

@@ -44,6 +44,20 @@ export function useRealtimeSync() {
           queryClient.invalidateQueries({ queryKey: ["budgets"] });
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "exchange_rates", filter },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["exchange-rates"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "accounts", filter },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        }
+      )
       .subscribe();
 
     return () => {
