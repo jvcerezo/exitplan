@@ -1,4 +1,7 @@
 import { BalanceCard } from "@/components/dashboard/balance-card";
+import { SpendingChart } from "@/components/dashboard/spending-chart";
+import { MonthlyTrendChart } from "@/components/dashboard/monthly-trend-chart";
+import { SpendingInsights } from "@/components/dashboard/spending-insights";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 
@@ -20,6 +23,15 @@ export default function DashboardPage() {
 
       {/* Balance Overview */}
       <BalanceCard />
+
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SpendingChart />
+        <MonthlyTrendChart />
+      </div>
+
+      {/* Spending Insights */}
+      <SpendingInsights />
 
       {/* Recent Transactions */}
       <RecentTransactions />

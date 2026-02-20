@@ -6,15 +6,20 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Target,
+  Calculator,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/(auth)/actions";
+import { ThemeToggle } from "./theme-toggle";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/goals", label: "Goals", icon: Target },
+  { href: "/budgets", label: "Budgets", icon: Calculator },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -52,7 +57,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-sidebar-border">
+      <div className="px-3 py-4 border-t border-sidebar-border space-y-1">
+        <div className="flex items-center justify-between px-3 py-1">
+          <span className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider">Theme</span>
+          <ThemeToggle />
+        </div>
         <form action={signOut}>
           <button
             type="submit"

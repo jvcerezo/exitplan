@@ -31,3 +31,14 @@ export interface Profile {
   role: "user" | "admin";
   created_at: string;
 }
+
+export interface Budget {
+  id: string;
+  created_at: string;
+  user_id: string;
+  category: string;
+  amount: number;
+  month: string;
+}
+
+export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id">;

@@ -9,6 +9,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const features = [
   {
@@ -59,6 +60,7 @@ export default function LandingPage() {
             Exit<span className="text-primary">Plan</span>
           </Link>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Button variant="ghost" size="sm" asChild>
               <Link href="/login">Sign In</Link>
             </Button>

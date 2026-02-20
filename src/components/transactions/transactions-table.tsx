@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ArrowUpRight, ArrowDownRight, SlidersHorizontal, AlertCircle } from "lucide-react";
+import { Search, ArrowUpRight, ArrowDownRight, SlidersHorizontal, AlertCircle, Download, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -16,16 +17,63 @@ import { CATEGORIES } from "@/lib/constants";
 import { formatSignedCurrency } from "@/lib/utils";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+
+function getDatePreset(preset: string): { from: string; to: string } | null {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+
+  switch (preset) {
+    case "this-month":
+      return {
+        from: new Date(y, m, 1).toISOString().split("T")[0],
+        to: new Date(y, m + 1, 0).toISOString().split("T")[0],
+      };
+    case "last-month":
+      return {
+        from: new Date(y, m - 1, 1).toISOString().split("T")[0],
+        to: new Date(y, m, 0).toISOString().split("T")[0],
+      };
+    case "last-3-months": {
+      return {
+        from: new Date(y, m - 2, 1).toISOString().split("T")[0],
+        to: new Date(y, m + 1, 0).toISOString().split("T")[0],
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+function exportCSV(transactions: { date: string; description: string; category: string; amount: number }[]) {
+  const header = "Date,Description,Category,Amount\n";
+  const rows = transactions
+    .map((tx) => `${tx.date},"${tx.description.replace(/"/g, '""')}",${tx.category},${tx.amount}`)
+    .join("\n");
+  const blob = new Blob([header + rows], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `exitplan-transactions-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function TransactionsTable() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [type, setType] = useState<"all" | "income" | "expense">("all");
+  const [dateRange, setDateRange] = useState("all");
+
+  const datePreset = getDatePreset(dateRange);
 
   const { data: transactions, isLoading, error } = useTransactions({
     search: search || undefined,
     category: category !== "all" ? category : undefined,
     type,
+    dateFrom: datePreset?.from,
+    dateTo: datePreset?.to,
   });
 
   return (
@@ -33,17 +81,29 @@ export function TransactionsTable() {
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>All Transactions</CardTitle>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <SlidersHorizontal className="h-4 w-4" />
-            <span>
-              {transactions?.length ?? 0}{" "}
-              {transactions?.length === 1 ? "transaction" : "transactions"}
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <SlidersHorizontal className="h-4 w-4" />
+              <span>
+                {transactions?.length ?? 0}{" "}
+                {transactions?.length === 1 ? "transaction" : "transactions"}
+              </span>
+            </div>
+            {transactions && transactions.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportCSV(transactions)}
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                CSV
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Filters */}
-        <div className="grid gap-3 pt-2 sm:grid-cols-3">
+        <div className="grid gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -79,6 +139,17 @@ export function TransactionsTable() {
               <SelectItem value="expense">Expense</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Date Range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="last-month">Last Month</SelectItem>
+              <SelectItem value="last-3-months">Last 3 Months</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
 
@@ -110,17 +181,15 @@ export function TransactionsTable() {
             </div>
           </div>
         ) : transactions?.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <Search className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="font-medium">No transactions found</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {search || category !== "all" || type !== "all"
-                ? "Try adjusting your filters."
-                : "Add your first transaction to get started."}
-            </p>
-          </div>
+          <EmptyState
+            icon={search || category !== "all" || type !== "all" || dateRange !== "all" ? Search : Wallet}
+            title={search || category !== "all" || type !== "all" || dateRange !== "all" ? "No transactions found" : "No transactions yet"}
+            description={
+              search || category !== "all" || type !== "all" || dateRange !== "all"
+                ? "Try adjusting your filters to find what you're looking for."
+                : "Add your first transaction and start tracking your finances."
+            }
+          />
         ) : (
           <>
             {/* Desktop table header */}

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import type { Transaction, TransactionInsert } from "@/lib/types/database";
 
 export function useRecentTransactions() {
@@ -23,6 +24,8 @@ export function useTransactions(filters?: {
   category?: string;
   type?: "income" | "expense" | "all";
   search?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }) {
   return useQuery({
     queryKey: ["transactions", "all", filters],
@@ -45,6 +48,14 @@ export function useTransactions(filters?: {
 
       if (filters?.search) {
         query = query.ilike("description", `%${filters.search}%`);
+      }
+
+      if (filters?.dateFrom) {
+        query = query.gte("date", filters.dateFrom);
+      }
+
+      if (filters?.dateTo) {
+        query = query.lte("date", filters.dateTo);
       }
 
       const { data, error } = await query;
@@ -101,6 +112,10 @@ export function useAddTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transaction added");
+    },
+    onError: (error) => {
+      toast.error("Failed to add transaction", { description: error.message });
     },
   });
 }
@@ -126,6 +141,10 @@ export function useUpdateTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transaction updated");
+    },
+    onError: (error) => {
+      toast.error("Failed to update transaction", { description: error.message });
     },
   });
 }
@@ -143,7 +162,27 @@ export function useDeleteTransaction() {
 
       if (error) throw new Error(error.message);
     },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+      const previous = queryClient.getQueriesData({ queryKey: ["transactions"] });
+      queryClient.setQueriesData(
+        { queryKey: ["transactions"] },
+        (old: Transaction[] | undefined) => old?.filter((t) => t.id !== id)
+      );
+      return { previous };
+    },
+    onError: (error, _id, context) => {
+      if (context?.previous) {
+        context.previous.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
+      toast.error("Failed to delete transaction", { description: error.message });
+    },
     onSuccess: () => {
+      toast.success("Transaction deleted");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
   });

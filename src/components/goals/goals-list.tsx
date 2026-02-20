@@ -4,6 +4,7 @@ import { useGoals } from "@/hooks/use-goals";
 import { GoalCard } from "./goal-card";
 import { AlertCircle, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export function GoalsList() {
   const { data: goals, isLoading, error } = useGoals();
@@ -52,15 +53,11 @@ export function GoalsList() {
 
   if (!goals || goals.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-          <Target className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <p className="text-lg font-medium">No goals yet</p>
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          Set your first financial goal and start building towards freedom.
-        </p>
-      </div>
+      <EmptyState
+        icon={Target}
+        title="No goals yet"
+        description="Set your first financial goal and start building towards freedom."
+      />
     );
   }
 

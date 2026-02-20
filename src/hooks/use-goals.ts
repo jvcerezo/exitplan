@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import type { Goal, GoalInsert } from "@/lib/types/database";
 
 export function useGoals() {
@@ -65,6 +66,10 @@ export function useAddGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      toast.success("Goal created");
+    },
+    onError: (error) => {
+      toast.error("Failed to create goal", { description: error.message });
     },
   });
 }
@@ -90,6 +95,10 @@ export function useUpdateGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      toast.success("Goal updated");
+    },
+    onError: (error) => {
+      toast.error("Failed to update goal", { description: error.message });
     },
   });
 }
@@ -104,7 +113,27 @@ export function useDeleteGoal() {
 
       if (error) throw new Error(error.message);
     },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["goals"] });
+      const previous = queryClient.getQueriesData({ queryKey: ["goals"] });
+      queryClient.setQueriesData(
+        { queryKey: ["goals"] },
+        (old: Goal[] | undefined) => old?.filter((g) => g.id !== id)
+      );
+      return { previous };
+    },
+    onError: (error, _id, context) => {
+      if (context?.previous) {
+        context.previous.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
+      toast.error("Failed to delete goal", { description: error.message });
+    },
     onSuccess: () => {
+      toast.success("Goal deleted");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
     },
   });

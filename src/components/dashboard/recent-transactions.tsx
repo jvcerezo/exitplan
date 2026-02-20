@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRecentTransactions } from "@/hooks/use-transactions";
-import { ArrowUpRight, ArrowDownRight, AlertCircle } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, AlertCircle, Wallet } from "lucide-react";
 import { formatSignedCurrency } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export function RecentTransactions() {
   const { data: transactions, isLoading, error } = useRecentTransactions();
@@ -38,9 +39,11 @@ export function RecentTransactions() {
             </div>
           </div>
         ) : transactions?.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            No transactions yet. Start tracking your finances!
-          </p>
+          <EmptyState
+            icon={Wallet}
+            title="No transactions yet"
+            description="Add your first transaction and start tracking your path to financial freedom."
+          />
         ) : (
           <div className="space-y-4">
             {transactions?.map((tx) => (

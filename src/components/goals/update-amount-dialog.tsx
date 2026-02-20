@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PiggyBank } from "lucide-react";
+import { Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,7 +42,7 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PiggyBank className="h-4 w-4 mr-1.5" />
+          <Coins className="h-4 w-4 mr-1.5" />
           Add Funds
         </Button>
       </DialogTrigger>

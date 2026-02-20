@@ -127,3 +127,39 @@ $$;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- ============================================
+-- Budgets table
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.budgets (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  category    text NOT NULL,
+  amount      numeric(12, 2) NOT NULL,
+  month       date NOT NULL -- first day of the month (e.g. 2026-02-01)
+);
+
+CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON public.budgets USING btree (user_id);
+CREATE INDEX IF NOT EXISTS idx_budgets_month ON public.budgets USING btree (month);
+
+ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own budgets"
+  ON public.budgets FOR SELECT TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own budgets"
+  ON public.budgets FOR INSERT TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can update own budgets"
+  ON public.budgets FOR UPDATE TO authenticated
+  USING ((SELECT auth.uid()) = user_id)
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can delete own budgets"
+  ON public.budgets FOR DELETE TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
