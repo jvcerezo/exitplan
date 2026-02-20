@@ -6,6 +6,12 @@ import {
   Wallet,
   BarChart3,
   Target,
+  Calculator,
+  AlertTriangle,
+  CheckCircle2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,38 +22,58 @@ const features = [
     icon: Wallet,
     title: "Track Every Peso",
     description:
-      "Log income and expenses effortlessly. See exactly where your money goes with clean, intuitive categorization.",
+      "Log income and expenses with categories, descriptions, and dates. Filter, search, and export to CSV anytime.",
+  },
+  {
+    icon: Calculator,
+    title: "Smart Budgets",
+    description:
+      "Set monthly spending limits per category. Get alerts when you're near or over budget — right on your dashboard.",
+  },
+  {
+    icon: Target,
+    title: "Savings Goals",
+    description:
+      "Set targets with deadlines — emergency fund, debt payoff, travel. Add funds and watch your progress grow.",
   },
   {
     icon: BarChart3,
     title: "Visual Insights",
     description:
-      "Beautiful charts and summaries that turn raw numbers into actionable financial clarity at a glance.",
-  },
-  {
-    icon: Target,
-    title: "Set Freedom Goals",
-    description:
-      "Define your financial milestones. Whether it's an emergency fund or early retirement — track your progress.",
+      "Spending breakdowns by category, monthly income vs expense trends, and smart insights — all in one view.",
   },
   {
     icon: Shield,
-    title: "Bank-Level Security",
+    title: "Private & Secure",
     description:
-      "Your data is encrypted and protected with row-level security. Only you can see your finances.",
+      "Row-level security ensures only you can see your data. No ads, no tracking, no selling your information.",
   },
   {
     icon: TrendingUp,
-    title: "Watch Your Growth",
+    title: "All-in-One Dashboard",
     description:
-      "See your net worth trend upward over time. Every tracked transaction brings you closer to freedom.",
+      "Balance, budget alerts, goal progress, charts, and recent transactions — everything at a glance.",
   },
-  {
-    icon: Zap,
-    title: "Lightning Fast",
-    description:
-      "No bloat, no clutter. A minimalist interface that loads instantly and stays out of your way.",
-  },
+];
+
+const mockTransactions = [
+  { desc: "Freelance Payment", cat: "freelance", amount: 8500, date: "Today" },
+  { desc: "Grocery Run", cat: "food", amount: -1247.5, date: "Today" },
+  { desc: "Electric Bill", cat: "housing", amount: -2850, date: "Yesterday" },
+  { desc: "Monthly Salary", cat: "salary", amount: 25000, date: "Feb 15" },
+  { desc: "Grab Ride", cat: "transportation", amount: -185, date: "Feb 14" },
+];
+
+const mockBudgets = [
+  { category: "Food", spent: 4200, limit: 5000 },
+  { category: "Transport", spent: 2800, limit: 3000 },
+  { category: "Entertainment", spent: 950, limit: 2000 },
+];
+
+const mockGoals = [
+  { name: "Emergency Fund", current: 45000, target: 100000, days: 142 },
+  { name: "Japan Trip", current: 28000, target: 50000, days: 87 },
+  { name: "New Laptop", current: 12500, target: 35000, days: null },
 ];
 
 export default function LandingPage() {
@@ -87,9 +113,9 @@ export default function LandingPage() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            ExitPlan is the minimalist financial tracker built for people who
-            want clarity, not complexity. Track spending, grow savings, and build
-            your path to financial independence.
+            Track spending, set budgets, grow savings, and see it all on one
+            smart dashboard. ExitPlan is the minimalist financial tracker
+            built for clarity, not complexity.
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -114,6 +140,7 @@ export default function LandingPage() {
       {/* Dashboard Preview */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-24">
         <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-xl">
+          {/* Browser chrome */}
           <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
             <div className="h-3 w-3 rounded-full bg-red-400/70" />
             <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
@@ -122,34 +149,140 @@ export default function LandingPage() {
               exitplan.app/dashboard
             </span>
           </div>
-          <div className="grid gap-4 p-4 sm:p-6 sm:grid-cols-2 md:grid-cols-3">
-            {[
-              {
-                label: "Total Balance",
-                value: "₱12,847.50",
-                color: "text-foreground",
-              },
-              {
-                label: "Income this month",
-                value: "₱5,200.00",
-                color: "text-green-600",
-              },
-              {
-                label: "Expenses this month",
-                value: "₱2,135.40",
-                color: "text-red-500",
-              },
-            ].map((card) => (
-              <div
-                key={card.label}
-                className="rounded-lg border border-border/40 bg-background p-5"
-              >
-                <p className="text-sm text-muted-foreground">{card.label}</p>
-                <p className={`mt-1 text-2xl font-bold ${card.color}`}>
-                  {card.value}
-                </p>
+
+          <div className="p-4 sm:p-6 space-y-4">
+            {/* Balance cards row */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { label: "Total Balance", value: "₱42,267.50", color: "text-foreground" },
+                { label: "Income", value: "₱33,500.00", color: "text-green-600" },
+                { label: "Expenses", value: "₱7,232.50", color: "text-red-500" },
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  className="rounded-lg border border-border/40 bg-background p-4"
+                >
+                  <p className="text-xs text-muted-foreground">{card.label}</p>
+                  <p className={`mt-1 text-xl font-bold ${card.color}`}>
+                    {card.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Budget Alerts + Goals row */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Budget Alerts */}
+              <div className="rounded-lg border border-border/40 bg-background p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold">Budget Status</p>
+                  <span className="text-xs font-medium text-yellow-600">1 alert</span>
+                </div>
+                {mockBudgets.map((b) => {
+                  const pct = (b.spent / b.limit) * 100;
+                  const isWarning = pct >= 75;
+                  const isOver = pct > 100;
+                  return (
+                    <div key={b.category} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1">
+                          {isWarning ? (
+                            <AlertTriangle className={`h-3 w-3 ${isOver ? "text-red-500" : "text-yellow-500"}`} />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3 text-green-500" />
+                          )}
+                          <span className="font-medium">{b.category}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          ₱{b.spent.toLocaleString()} / ₱{b.limit.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            isOver ? "bg-red-500" : isWarning ? "bg-yellow-500" : "bg-primary"
+                          }`}
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+
+              {/* Goals */}
+              <div className="rounded-lg border border-border/40 bg-background p-4 space-y-3">
+                <p className="text-sm font-semibold">Goals</p>
+                {mockGoals.map((g) => {
+                  const pct = (g.current / g.target) * 100;
+                  return (
+                    <div key={g.name} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1">
+                          <Target className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-medium">{g.name}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          {pct.toFixed(0)}%
+                          {g.days && (
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="h-3 w-3" />
+                              {g.days}d
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary/60"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Recent Transactions */}
+            <div className="rounded-lg border border-border/40 bg-background p-4">
+              <p className="text-sm font-semibold mb-3">Recent Transactions</p>
+              <div className="space-y-2.5">
+                {mockTransactions.map((tx) => (
+                  <div key={tx.desc} className="flex items-center gap-3">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                        tx.amount > 0
+                          ? "bg-green-100 text-green-600"
+                          : "bg-red-100 text-red-500"
+                      }`}
+                    >
+                      {tx.amount > 0 ? (
+                        <ArrowUpRight className="h-4 w-4" />
+                      ) : (
+                        <ArrowDownRight className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{tx.desc}</p>
+                      <p className="text-[10px] text-muted-foreground capitalize">
+                        {tx.cat} &middot; {tx.date}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs font-semibold shrink-0 ${
+                        tx.amount > 0 ? "text-green-600" : "text-foreground"
+                      }`}
+                    >
+                      {tx.amount > 0 ? "+" : ""}₱
+                      {Math.abs(tx.amount).toLocaleString("en-PH", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -163,8 +296,8 @@ export default function LandingPage() {
               <span className="text-primary">Nothing you don&apos;t.</span>
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              Built for clarity and speed. No ads, no premium upsells, no data
-              selling. Just a clean tool that helps you take control.
+              No ads, no premium upsells, no data selling. Just a clean tool
+              that helps you take control of your finances.
             </p>
           </div>
 
@@ -184,8 +317,56 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* How it works */}
       <section className="border-t border-border/50">
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Simple by design
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+              No setup wizards. No onboarding flows. Sign up and start tracking
+              in under a minute.
+            </p>
+          </div>
+
+          <div className="mt-16 grid gap-8 sm:grid-cols-3">
+            {[
+              {
+                step: "1",
+                title: "Add transactions",
+                description:
+                  "Log your income and expenses as they happen. Categorize them with one tap.",
+              },
+              {
+                step: "2",
+                title: "Set budgets & goals",
+                description:
+                  "Create monthly spending limits and savings targets. Copy budgets between months with one click.",
+              },
+              {
+                step: "3",
+                title: "See everything",
+                description:
+                  "Your dashboard shows balance, budget alerts, goal progress, charts, and recent activity — all in one place.",
+              },
+            ].map((item) => (
+              <div key={item.step} className="text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
+                  {item.step}
+                </div>
+                <h3 className="text-lg font-semibold">{item.title}</h3>
+                <p className="mt-2 text-muted-foreground leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-border/50 bg-muted/30">
         <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
