@@ -43,13 +43,14 @@ export function AccountCard({ account }: { account: Account }) {
           <div className="flex gap-0.5">
             {!account.is_archived && (
               <AddTransactionDialog
+                type="expense"
                 defaultAccountId={account.id}
                 trigger={
                   <Button
                     variant="ghost"
                     size="icon-xs"
                     className="text-muted-foreground hover:text-primary"
-                    aria-label="Quick add transaction"
+                    aria-label="Quick add expense"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Button>

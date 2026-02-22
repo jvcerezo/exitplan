@@ -21,8 +21,21 @@ import { useAddAccount } from "@/hooks/use-accounts";
 import { ACCOUNT_TYPES, CURRENCIES, COMMON_ACCOUNTS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-export function AddAccountDialog() {
-  const [open, setOpen] = useState(false);
+interface AddAccountDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+}
+
+export function AddAccountDialog({
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  trigger,
+}: AddAccountDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [currency, setCurrency] = useState("PHP");
@@ -50,20 +63,13 @@ export function AddAccountDialog() {
     setType(preset.type);
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Account
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Account</DialogTitle>
-        </DialogHeader>
+  const dialogContent = (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Add Account</DialogTitle>
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
           {/* Quick presets */}
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">
@@ -168,6 +174,27 @@ export function AddAccountDialog() {
           </Button>
         </form>
       </DialogContent>
+  );
+
+  if (isControlled) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        {dialogContent}
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Account
+          </Button>
+        )}
+      </DialogTrigger>
+      {dialogContent}
     </Dialog>
   );
 }

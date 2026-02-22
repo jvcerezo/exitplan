@@ -110,7 +110,10 @@ export default function AccountDetailPage({
             )}
           </div>
         </div>
-        <AddTransactionDialog defaultAccountId={account.id} />
+        <div className="flex gap-2">
+          <AddTransactionDialog type="expense" defaultAccountId={account.id} />
+          <AddTransactionDialog type="income" defaultAccountId={account.id} />
+        </div>
       </div>
 
       {/* Stats row */}
@@ -153,6 +156,7 @@ export default function AccountDetailPage({
                 No transactions for this account yet.
               </p>
               <AddTransactionDialog
+                type="expense"
                 defaultAccountId={account.id}
                 trigger={
                   <Button variant="outline" size="sm">

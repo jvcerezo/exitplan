@@ -77,7 +77,7 @@ export function useNetWorthOverTime() {
       const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
       const startDate = twelveMonthsAgo.toISOString().split("T")[0];
 
-      const [txResult, accountResult] = await Promise.all([
+      const [txResult, accountResult, goalsResult] = await Promise.all([
         supabase
           .from("transactions")
           .select("amount, date, account_id")
@@ -86,24 +86,29 @@ export function useNetWorthOverTime() {
           .from("accounts")
           .select("balance")
           .eq("is_archived", false),
+        supabase.from("goals").select("current_amount"),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
 
       const data = txResult.data;
       const accounts = accountResult.data ?? [];
+      const goals = goalsResult.data ?? [];
 
       // Account balances already include their linked transactions.
-      // For the chart baseline, use account totals + all-time unlinked transactions
-      // as the "current" net worth, then work backwards with transaction deltas.
+      // Goal savings are included so moving money to goals doesn't reduce net worth.
       const accountsTotal = accounts.reduce(
         (sum, a) => sum + Number(a.balance),
+        0
+      );
+      const goalsTotalSaved = goals.reduce(
+        (sum, g) => sum + Number(g.current_amount),
         0
       );
       const allTimeUnlinkedBalance = data
         .filter((t) => !t.account_id)
         .reduce((sum, t) => sum + t.amount, 0);
-      const currentNetWorth = accountsTotal + allTimeUnlinkedBalance;
+      const currentNetWorth = accountsTotal + goalsTotalSaved + allTimeUnlinkedBalance;
 
       // Compute total of all transactions (linked + unlinked) to find starting point
       const allTimeTxTotal = data.reduce((sum, t) => sum + t.amount, 0);

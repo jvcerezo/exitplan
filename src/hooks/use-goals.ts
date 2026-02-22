@@ -110,6 +110,69 @@ export function useUpdateGoal() {
   });
 }
 
+export function useAddFundsToGoal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      goalId,
+      accountId,
+      amount,
+    }: {
+      goalId: string;
+      accountId: string;
+      amount: number;
+    }) => {
+      const supabase = createClient();
+
+      const [goalResult, accountResult] = await Promise.all([
+        supabase
+          .from("goals")
+          .select("current_amount, target_amount")
+          .eq("id", goalId)
+          .single(),
+        supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", accountId)
+          .single(),
+      ]);
+
+      if (goalResult.error) throw new Error(goalResult.error.message);
+      if (accountResult.error) throw new Error(accountResult.error.message);
+
+      const newGoalAmount =
+        Math.round((goalResult.data.current_amount + amount) * 100) / 100;
+      const newAccountBalance =
+        Math.round((accountResult.data.balance - amount) * 100) / 100;
+      const isCompleted = newGoalAmount >= goalResult.data.target_amount;
+
+      const [goalUpdate, accountUpdate] = await Promise.all([
+        supabase
+          .from("goals")
+          .update({ current_amount: newGoalAmount, is_completed: isCompleted })
+          .eq("id", goalId),
+        supabase
+          .from("accounts")
+          .update({ balance: newAccountBalance })
+          .eq("id", accountId),
+      ]);
+
+      if (goalUpdate.error) throw new Error(goalUpdate.error.message);
+      if (accountUpdate.error) throw new Error(accountUpdate.error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Funds added to goal");
+    },
+    onError: (error) => {
+      toast.error("Failed to add funds", { description: error.message });
+    },
+  });
+}
+
 export function useDeleteGoal() {
   const queryClient = useQueryClient();
 

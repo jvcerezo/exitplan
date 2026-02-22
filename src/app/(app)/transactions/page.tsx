@@ -14,7 +14,10 @@ export default function TransactionsPage() {
             Manage and review all your financial activity
           </p>
         </div>
-        <AddTransactionDialog />
+        <div className="flex gap-2">
+          <AddTransactionDialog type="expense" />
+          <AddTransactionDialog type="income" />
+        </div>
       </div>
 
       {/* Table */}

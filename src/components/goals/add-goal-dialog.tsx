@@ -39,8 +39,21 @@ const GOAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   other: Ellipsis,
 };
 
-export function AddGoalDialog() {
-  const [open, setOpen] = useState(false);
+interface AddGoalDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+}
+
+export function AddGoalDialog({
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  trigger,
+}: AddGoalDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [name, setName] = useState("");
@@ -78,25 +91,12 @@ export function AddGoalDialog() {
     resetForm();
   }
 
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) resetForm();
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          New Goal
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create a New Goal</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-5">
+  const dialogContent = (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Create a New Goal</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-5">
           {/* Category pills */}
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">
@@ -219,6 +219,32 @@ export function AddGoalDialog() {
           </Button>
         </form>
       </DialogContent>
+  );
+
+  const onOpenChangeHandler = (v: boolean) => {
+    setOpen(v);
+    if (!v) resetForm();
+  };
+
+  if (isControlled) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChangeHandler}>
+        {dialogContent}
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChangeHandler}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            New Goal
+          </Button>
+        )}
+      </DialogTrigger>
+      {dialogContent}
     </Dialog>
   );
 }

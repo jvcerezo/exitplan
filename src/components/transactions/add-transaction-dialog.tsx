@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   Plus,
+  Minus,
   Utensils,
   Home,
   Car,
@@ -41,16 +42,25 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
 };
 
 interface AddTransactionDialogProps {
+  type: "expense" | "income";
   defaultAccountId?: string;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function AddTransactionDialog({
+  type,
   defaultAccountId,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: AddTransactionDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [type, setType] = useState<"expense" | "income">("expense");
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
+
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [accountId, setAccountId] = useState(defaultAccountId ?? "");
@@ -71,7 +81,6 @@ export function AddTransactionDialog({
   // Reset & auto-focus amount on open
   useEffect(() => {
     if (open) {
-      setType("expense");
       setCategory("");
       setCustomCategory("");
       setAccountId(defaultAccountId || activeAccounts[0]?.id || "");
@@ -106,172 +115,154 @@ export function AddTransactionDialog({
     setOpen(false);
   }
 
+  const label = type === "expense" ? "Expense" : "Income";
+
+  const dialogContent = (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Add {label}</DialogTitle>
+      </DialogHeader>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Account selector pills */}
+        {activeAccounts.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              Account
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {activeAccounts.map((account) => (
+                <button
+                  key={account.id}
+                  type="button"
+                  onClick={() => setAccountId(account.id)}
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
+                    accountId === account.id
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                  )}
+                >
+                  {account.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Amount */}
+        <div className="flex items-baseline gap-2 py-2">
+          <span className="text-3xl font-bold text-muted-foreground/50">
+            {currencySymbol}
+          </span>
+          <input
+            ref={amountRef}
+            name="amount"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0.01"
+            max="9999999999.99"
+            placeholder="0.00"
+            required
+            className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+
+        {/* Category pills */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            Category
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => {
+              const Icon = CATEGORY_ICONS[cat.toLowerCase()] ?? Ellipsis;
+              const isSelected = category === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setCategory(cat);
+                    if (cat !== "Other") setCustomCategory("");
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+          {category === "Other" && (
+            <input
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder="What category?"
+              autoFocus
+              className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
+            />
+          )}
+        </div>
+
+        {/* Note + Date */}
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <input
+            name="description"
+            placeholder="Add a note..."
+            className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
+          />
+          <input
+            name="date"
+            type="date"
+            defaultValue={new Date().toISOString().split("T")[0]}
+            required
+            className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+
+        {/* Submit */}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={addTransaction.isPending || !category}
+        >
+          {addTransaction.isPending ? "Adding..." : `Add ${label}`}
+        </Button>
+      </form>
+    </DialogContent>
+  );
+
+  // Controlled mode: no trigger, dialog is opened externally
+  if (isControlled) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        {dialogContent}
+      </Dialog>
+    );
+  }
+
+  // Uncontrolled mode: render trigger
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Transaction
+          <Button variant={type === "income" ? "outline" : "default"}>
+            {type === "expense" ? (
+              <Minus className="h-4 w-4 mr-2" />
+            ) : (
+              <Plus className="h-4 w-4 mr-2" />
+            )}
+            Add {label}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Transaction</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Account selector pills */}
-          {activeAccounts.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Account
-              </p>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {activeAccounts.map((account) => (
-                  <button
-                    key={account.id}
-                    type="button"
-                    onClick={() => setAccountId(account.id)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                      accountId === account.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
-                  >
-                    {account.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Type toggle */}
-          <div className="flex rounded-lg border p-0.5">
-            <button
-              type="button"
-              onClick={() => {
-                setType("expense");
-                setCategory("");
-                setCustomCategory("");
-              }}
-              className={cn(
-                "flex-1 rounded-md py-2 text-sm font-medium transition-colors",
-                type === "expense"
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Expense
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setType("income");
-                setCategory("");
-                setCustomCategory("");
-              }}
-              className={cn(
-                "flex-1 rounded-md py-2 text-sm font-medium transition-colors",
-                type === "income"
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Income
-            </button>
-          </div>
-
-          {/* Amount */}
-          <div className="flex items-baseline gap-2 py-2">
-            <span className="text-3xl font-bold text-muted-foreground/50">
-              {currencySymbol}
-            </span>
-            <input
-              ref={amountRef}
-              name="amount"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0.01"
-              max="9999999999.99"
-              placeholder="0.00"
-              required
-              className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-
-          {/* Category pills */}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">
-              Category
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => {
-                const Icon = CATEGORY_ICONS[cat.toLowerCase()] ?? Ellipsis;
-                const isSelected = category === cat;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => {
-                      setCategory(cat);
-                      if (cat !== "Other") setCustomCategory("");
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                      isSelected
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
-            {category === "Other" && (
-              <input
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                placeholder="What category?"
-                autoFocus
-                className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
-              />
-            )}
-          </div>
-
-          {/* Note + Date */}
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <input
-              name="description"
-              placeholder="Add a note..."
-              className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
-            />
-            <input
-              name="date"
-              type="date"
-              defaultValue={new Date().toISOString().split("T")[0]}
-              required
-              className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-
-          {/* Submit */}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={addTransaction.isPending || !category}
-          >
-            {addTransaction.isPending
-              ? "Adding..."
-              : `Add ${type === "expense" ? "Expense" : "Income"}`}
-          </Button>
-        </form>
-      </DialogContent>
+      {dialogContent}
     </Dialog>
   );
 }
