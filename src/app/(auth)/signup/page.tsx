@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,17 +15,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { signUp } from "../actions";
+import { signUp, verifySignupOtp } from "../actions";
 
 export default function SignupPage() {
+  const [step, setStep] = useState<"form" | "otp">("form");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -45,20 +45,39 @@ export default function SignupPage() {
       return;
     }
 
+    setEmail(formData.get("email") as string);
+
     const result = await signUp(formData);
 
     if (result?.error) {
       setError(result.error);
     } else if (result?.success) {
-      setSuccess(result.success);
+      setStep("otp");
     }
 
     setLoading(false);
   }
 
+  async function handleVerifyOtp(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.set("email", email);
+    formData.set("token", (e.currentTarget.elements.namedItem("token") as HTMLInputElement).value);
+
+    const result = await verifySignupOtp(formData);
+
+    if (result?.error) {
+      setError(result.error);
+      setLoading(false);
+    }
+    // On success, the server action redirects
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      {/* Back to home */}
       <div className="mb-8 w-full max-w-sm">
         <Link
           href="/"
@@ -76,29 +95,18 @@ export default function SignupPage() {
               Exit<span className="text-primary">Plan</span>
             </span>
           </Link>
-          <CardTitle className="text-xl">Create your account</CardTitle>
+          <CardTitle className="text-xl">
+            {step === "form" ? "Create your account" : "Verify your email"}
+          </CardTitle>
           <CardDescription>
-            Start your path to financial freedom
+            {step === "form"
+              ? "Start your path to financial freedom"
+              : `We sent a 6-digit code to ${email}`}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {success ? (
-            <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Check your email</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {success}
-                </p>
-              </div>
-              <Button variant="outline" className="mt-2" asChild>
-                <Link href="/login">Go to Sign In</Link>
-              </Button>
-            </div>
-          ) : (
+          {step === "form" ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -165,10 +173,57 @@ export default function SignupPage() {
                 )}
               </Button>
             </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              {error && (
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="token">Verification Code</Label>
+                <Input
+                  id="token"
+                  name="token"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  placeholder="000000"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  required
+                  className="text-center text-2xl tracking-[0.5em] font-mono"
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  "Verify"
+                )}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("form");
+                  setError(null);
+                }}
+                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Go back
+              </button>
+            </form>
           )}
         </CardContent>
 
-        {!success && (
+        {step === "form" && (
           <CardFooter className="flex-col gap-4">
             <Separator />
             <p className="text-center text-sm text-muted-foreground">

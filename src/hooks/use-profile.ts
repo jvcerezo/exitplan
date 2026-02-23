@@ -29,7 +29,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (updates: { full_name?: string; primary_currency?: string }) => {
+    mutationFn: async (updates: { full_name?: string; primary_currency?: string; has_completed_onboarding?: boolean }) => {
       const supabase = createClient();
       const {
         data: { user },

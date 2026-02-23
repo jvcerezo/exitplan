@@ -66,22 +66,58 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user on auth page — redirect to dashboard
+  // Authenticated user on auth page (not onboarding) — redirect to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Admin route protection — check profile role
+  // Admin route protection (also checks onboarding)
   if (user && isAdminRoute(pathname)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, has_completed_onboarding")
       .eq("id", user.id)
       .single();
 
+    if (profile && !profile.has_completed_onboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
+
     if (!profile || profile.role !== "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Onboarding enforcement for non-onboarding protected routes
+  if (user && !isAdminRoute(pathname) && pathname !== "/onboarding") {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("has_completed_onboarding")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && !profile.has_completed_onboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Already-onboarded user visiting /onboarding — redirect to dashboard
+  if (user && pathname === "/onboarding") {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("has_completed_onboarding")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.has_completed_onboarding) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

@@ -42,6 +42,7 @@ export interface Profile {
   role: "user" | "admin";
   created_at: string;
   primary_currency: string;
+  has_completed_onboarding: boolean;
 }
 
 export interface Budget {
