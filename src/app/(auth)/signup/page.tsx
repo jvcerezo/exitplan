@@ -195,6 +195,10 @@ export default function SignupPage() {
                   autoFocus
                   required
                   className="text-center text-2xl tracking-[0.5em] font-mono"
+                  onInput={(e) => {
+                    const input = e.currentTarget;
+                    input.value = input.value.replace(/[^0-9]/g, '');
+                  }}
                 />
               </div>
 

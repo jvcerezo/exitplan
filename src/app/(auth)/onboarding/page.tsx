@@ -20,9 +20,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
+import { useProfile } from "@/hooks/use-profile";
 import { useAddAccount } from "@/hooks/use-accounts";
 import { useAddGoal } from "@/hooks/use-goals";
+import { completeOnboarding } from "@/app/(auth)/actions";
 import { COMMON_ACCOUNTS, GOAL_CATEGORIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +55,6 @@ interface AddedAccount {
 export default function OnboardingPage() {
   const router = useRouter();
   const { data: profile } = useProfile();
-  const updateProfile = useUpdateProfile();
   const addAccount = useAddAccount();
   const addGoal = useAddGoal();
 
@@ -93,36 +93,65 @@ export default function OnboardingPage() {
   async function handleAccountsContinue() {
     if (addedAccounts.length === 0) return;
     setSaving(true);
-    await updateProfile.mutateAsync({ primary_currency: "PHP" });
-    for (const acc of addedAccounts) {
-      await addAccount.mutateAsync({
-        name: acc.name,
-        type: acc.type as "cash" | "bank" | "e-wallet" | "credit-card",
-        currency: "PHP",
-        balance: parseFloat(acc.balance) || 0,
-      });
+    try {
+      for (const acc of addedAccounts) {
+        await addAccount.mutateAsync({
+          name: acc.name,
+          type: acc.type as "cash" | "bank" | "e-wallet" | "credit-card",
+          currency: "PHP",
+          balance: parseFloat(acc.balance) || 0,
+        });
+      }
+      setSaving(false);
+      setStep(3);
+    } catch (error) {
+      console.error("Failed to add accounts:", error);
+      setSaving(false);
     }
-    setSaving(false);
-    setStep(3);
   }
 
   async function handleGoalCreate() {
     if (!goalCategory || !goalName || !goalTarget) return;
     setSaving(true);
-    await addGoal.mutateAsync({
-      name: goalName,
-      target_amount: parseFloat(goalTarget),
-      current_amount: 0,
-      deadline: null,
-      category: goalCategory,
-    });
-    await handleFinish();
+    try {
+      await addGoal.mutateAsync({
+        name: goalName,
+        target_amount: parseFloat(goalTarget),
+        current_amount: 0,
+        deadline: null,
+        category: goalCategory,
+      });
+      console.log("Goal created successfully");
+      const result = await completeOnboarding();
+      console.log("Onboarding completed:", result);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      // Small delay to ensure DB sync
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Failed to create goal or finish onboarding:", error);
+      setSaving(false);
+    }
   }
 
   async function handleFinish() {
     setSaving(true);
-    await updateProfile.mutateAsync({ has_completed_onboarding: true });
-    router.push("/dashboard");
+    try {
+      console.log("Starting onboarding completion...");
+      const result = await completeOnboarding();
+      console.log("Onboarding completed:", result);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      // Small delay to ensure DB sync
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Failed to finish onboarding:", error);
+      setSaving(false);
+    }
   }
 
   return (

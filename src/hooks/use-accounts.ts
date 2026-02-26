@@ -31,9 +31,34 @@ export function useAddAccount() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const normalizedName = account.name.trim();
+      const incomingBalance = Number(account.balance ?? 0);
+
+      const { data: existing, error: existingError } = await supabase
+        .from("accounts")
+        .select("id, balance, is_archived")
+        .eq("user_id", user.id)
+        .eq("name", normalizedName)
+        .eq("type", account.type)
+        .eq("currency", account.currency)
+        .maybeSingle();
+
+      if (existingError) throw new Error(existingError.message);
+
+      if (existing) {
+        const updatedBalance = Number(existing.balance ?? 0) + incomingBalance;
+        const { error: updateError } = await supabase
+          .from("accounts")
+          .update({ balance: updatedBalance, is_archived: false })
+          .eq("id", existing.id);
+
+        if (updateError) throw new Error(updateError.message);
+        return { ...existing, balance: updatedBalance, is_archived: false } as Account;
+      }
+
       const { data, error } = await supabase
         .from("accounts")
-        .insert({ ...account, user_id: user.id })
+        .insert({ ...account, name: normalizedName, user_id: user.id })
         .select()
         .single();
 

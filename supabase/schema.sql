@@ -5,13 +5,17 @@
 
 -- 1. Create the transactions table
 CREATE TABLE IF NOT EXISTS public.transactions (
-  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  created_at  timestamptz DEFAULT now() NOT NULL,
-  user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  amount      numeric(12, 2) NOT NULL,
-  category    text NOT NULL,
-  description text NOT NULL,
-  date        date NOT NULL
+  id              uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at      timestamptz DEFAULT now() NOT NULL,
+  user_id         uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  amount          numeric(12, 2) NOT NULL,
+  category        text NOT NULL,
+  description     text NOT NULL,
+  date            date NOT NULL,
+  currency        text DEFAULT 'PHP' NOT NULL,
+  attachment_path text,
+  account_id      uuid REFERENCES public.accounts(id) ON DELETE SET NULL,
+  transfer_id     uuid
 );
 
 -- 2. Indexes for performance
@@ -92,11 +96,13 @@ CREATE POLICY "Users can delete own goals"
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id          uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  email       text,
-  full_name   text,
-  role        text DEFAULT 'user' NOT NULL CHECK (role IN ('user', 'admin')),
-  created_at  timestamptz DEFAULT now() NOT NULL
+  id                          uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email                       text,
+  full_name                   text,
+  primary_currency            text DEFAULT 'PHP' NOT NULL,
+  has_completed_onboarding    boolean DEFAULT false NOT NULL,
+  role                        text DEFAULT 'user' NOT NULL CHECK (role IN ('user', 'admin')),
+  created_at                  timestamptz DEFAULT now() NOT NULL
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -106,6 +112,13 @@ CREATE POLICY "Users can view own profile"
   ON public.profiles FOR SELECT
   TO authenticated
   USING ((SELECT auth.uid()) = id);
+
+-- Users can update their own profile
+CREATE POLICY "Users can update own profile"
+  ON public.profiles FOR UPDATE
+  TO authenticated
+  USING ((SELECT auth.uid()) = id)
+  WITH CHECK ((SELECT auth.uid()) = id);
 
 -- Auto-create a profile row when a new user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -163,3 +176,97 @@ CREATE POLICY "Users can update own budgets"
 CREATE POLICY "Users can delete own budgets"
   ON public.budgets FOR DELETE TO authenticated
   USING ((SELECT auth.uid()) = user_id);
+
+
+-- ============================================
+-- Accounts table
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.accounts (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name        text NOT NULL,
+  type        text NOT NULL CHECK (type IN ('cash', 'bank', 'e-wallet', 'credit-card')),
+  currency    text DEFAULT 'PHP' NOT NULL,
+  balance     numeric(12, 2) DEFAULT 0 NOT NULL,
+  is_archived boolean DEFAULT false NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts USING btree (user_id);
+
+ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own accounts"
+  ON public.accounts FOR SELECT TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own accounts"
+  ON public.accounts FOR INSERT TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can update own accounts"
+  ON public.accounts FOR UPDATE TO authenticated
+  USING ((SELECT auth.uid()) = user_id)
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can delete own accounts"
+  ON public.accounts FOR DELETE TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+
+-- ============================================
+-- Exchange Rates table (user-defined rates)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.exchange_rates (
+  id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at    timestamptz DEFAULT now() NOT NULL,
+  user_id       uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  from_currency text NOT NULL,
+  to_currency   text NOT NULL,
+  rate          numeric(12, 6) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_exchange_rates_user_id ON public.exchange_rates USING btree (user_id);
+
+ALTER TABLE public.exchange_rates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own exchange rates"
+  ON public.exchange_rates FOR SELECT TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own exchange rates"
+  ON public.exchange_rates FOR INSERT TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can update own exchange rates"
+  ON public.exchange_rates FOR UPDATE TO authenticated
+  USING ((SELECT auth.uid()) = user_id)
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can delete own exchange rates"
+  ON public.exchange_rates FOR DELETE TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+
+-- ============================================
+-- Market Rates table (global reference rates)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.market_rates (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  updated_at  timestamptz DEFAULT now() NOT NULL,
+  currency    text NOT NULL UNIQUE,
+  rate_to_php numeric(12, 6) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_rates_currency ON public.market_rates USING btree (currency);
+
+ALTER TABLE public.market_rates ENABLE ROW LEVEL SECURITY;
+
+-- Anyone authenticated can view market rates (no user_id column)
+CREATE POLICY "Authenticated users can view market rates"
+  ON public.market_rates FOR SELECT TO authenticated
+  USING (true);

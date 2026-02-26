@@ -88,3 +88,28 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+export async function completeOnboarding() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  // Use admin client to bypass RLS
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update({ has_completed_onboarding: true })
+    .eq("id", user.id);
+
+  if (error) {
+    console.error("Error completing onboarding:", error);
+    return { error: error.message };
+  }
+
+  return { success: true };
+}

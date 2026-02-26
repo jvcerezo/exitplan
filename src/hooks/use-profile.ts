@@ -36,21 +36,26 @@ export function useUpdateProfile() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
+      console.log("Updating profile with:", updates);
+      const { error } = await supabase
         .from("profiles")
         .update(updates)
-        .eq("id", user.id)
-        .select()
-        .single();
+        .eq("id", user.id);
 
+      console.log("Update response - error:", error);
       if (error) throw new Error(error.message);
-      return data;
+      return updates;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Update mutation success, invalidating profile query");
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Profile updated");
+      // Don't show toast if only updating onboarding flag
+      if (!data.has_completed_onboarding) {
+        toast.success("Profile updated");
+      }
     },
     onError: (error) => {
+      console.error("Update mutation error:", error);
       toast.error("Failed to update profile", { description: error.message });
     },
   });

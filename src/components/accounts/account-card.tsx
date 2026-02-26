@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Plus, Trash2 } from "lucide-react";
+import { Archive, Plus, Minus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,22 +41,6 @@ export function AccountCard({ account }: { account: Account }) {
             </Badge>
           </Link>
           <div className="flex gap-0.5">
-            {!account.is_archived && (
-              <AddTransactionDialog
-                type="expense"
-                defaultAccountId={account.id}
-                trigger={
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-muted-foreground hover:text-primary"
-                    aria-label="Quick add expense"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                }
-              />
-            )}
             <Button
               variant="ghost"
               size="icon-xs"
@@ -86,7 +70,7 @@ export function AccountCard({ account }: { account: Account }) {
       <CardContent>
         <Link
           href={`/accounts/${account.id}`}
-          className="block hover:opacity-70 transition-opacity"
+          className="block hover:opacity-70 transition-opacity mb-4"
         >
           <div className="text-2xl font-bold">
             {formatCurrency(account.balance, account.currency)}
@@ -97,6 +81,40 @@ export function AccountCard({ account }: { account: Account }) {
             </p>
           )}
         </Link>
+
+        {/* Quick action buttons */}
+        {!account.is_archived && (
+          <div className="flex gap-2">
+            <AddTransactionDialog
+              type="income"
+              defaultAccountId={account.id}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 h-8 text-xs"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Add Income
+                </Button>
+              }
+            />
+            <AddTransactionDialog
+              type="expense"
+              defaultAccountId={account.id}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 h-8 text-xs"
+                >
+                  <Minus className="h-3.5 w-3.5 mr-1" />
+                  Add Expense
+                </Button>
+              }
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

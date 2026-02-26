@@ -77,13 +77,14 @@ export function useTransactionsSummary() {
     queryFn: async () => {
       const supabase = createClient();
 
-      const [txResult, accountResult, goalsResult] = await Promise.all([
+      const [txResult, accountResult, goalsResult, budgetsResult] = await Promise.all([
         supabase.from("transactions").select("amount, account_id"),
         supabase
           .from("accounts")
           .select("balance")
           .eq("is_archived", false),
         supabase.from("goals").select("current_amount"),
+        supabase.from("budgets").select("amount"),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
@@ -91,6 +92,7 @@ export function useTransactionsSummary() {
       const transactions = txResult.data;
       const accounts = accountResult.data ?? [];
       const goals = goalsResult.data ?? [];
+      const budgets = budgetsResult.data ?? [];
 
       const income = transactions
         .filter((t) => t.amount > 0)
@@ -113,11 +115,20 @@ export function useTransactionsSummary() {
         (sum, g) => sum + Number(g.current_amount),
         0
       );
+      const budgetsTotal = budgets.reduce(
+        (sum, b) => sum + Number(b.amount),
+        0
+      );
 
       return {
         balance: Math.round((accountsTotal + goalsTotalSaved + unlinkedBalance) * 100) / 100,
         income: Math.round(income * 100) / 100,
         expenses: Math.round(expenses * 100) / 100,
+        breakdown: {
+          inAccounts: Math.round(accountsTotal * 100) / 100,
+          inGoals: Math.round(goalsTotalSaved * 100) / 100,
+          budgetAllocated: Math.round(budgetsTotal * 100) / 100,
+        },
       };
     },
   });

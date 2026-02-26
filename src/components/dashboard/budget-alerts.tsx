@@ -59,16 +59,16 @@ export function BudgetAlerts() {
     );
   }
 
-  // Compute alerts
-  const alerts = data.budgets
+  // Compute all budgets with their status
+  const budgetItems = data.budgets
     .map((budget) => {
       const spent = data.spentByCategory[budget.category] || 0;
       const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
       return { budget, spent, percentage };
     })
-    .filter((a) => a.percentage >= 75)
     .sort((a, b) => b.percentage - a.percentage);
 
+  const alerts = budgetItems.filter((a) => a.percentage >= 75);
   const totalPct =
     data.totalBudget > 0 ? (data.totalSpent / data.totalBudget) * 100 : 0;
 
@@ -83,58 +83,56 @@ export function BudgetAlerts() {
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {alerts.length === 0 ? (
-          /* All healthy */
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-              <span className="font-medium text-green-600 dark:text-green-400">
-                All budgets on track
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(data.totalSpent)} of{" "}
-              {formatCurrency(data.totalBudget)} spent ({totalPct.toFixed(0)}%)
-            </p>
+        {/* Budget summary */}
+        <div className="space-y-2 pb-3 border-b">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Total Spent</span>
+            <span className="font-semibold">
+              {formatCurrency(data.totalSpent)} / {formatCurrency(data.totalBudget)}
+            </span>
           </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min(totalPct, 100)}%`,
+                backgroundColor: totalPct > 100 ? "#ef4444" : totalPct > 75 ? "#eab308" : "#22c55e",
+              }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground text-right">
+            {totalPct.toFixed(0)}% used
+          </p>
+        </div>
+
+        {/* All budgets */}
+        {budgetItems.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No budgets set this month.
+          </p>
         ) : (
-          /* Show alerts */
-          <div className="space-y-3">
-            {alerts.map(({ budget, spent, percentage }) => {
+          <div className="space-y-2.5 max-h-64 overflow-y-auto">
+            {budgetItems.map(({ budget, spent, percentage }) => {
               const isOver = percentage > 100;
               const remaining = Math.round((budget.amount - spent) * 100) / 100;
+              const statusColor =
+                percentage >= 75 ? (isOver ? "text-red-500" : "text-yellow-500") : "text-green-600";
+              const barColor =
+                percentage >= 75 ? (isOver ? "bg-red-500" : "bg-yellow-500") : "bg-green-600";
 
               return (
-                <div key={budget.id} className="space-y-1.5">
+                <div key={budget.id} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <AlertTriangle
-                        className={cn(
-                          "h-3.5 w-3.5 shrink-0",
-                          isOver ? "text-red-500" : "text-yellow-500"
-                        )}
-                      />
-                      <span className="font-medium capitalize truncate">
-                        {budget.category}
-                      </span>
-                    </div>
-                    <span
-                      className={cn(
-                        "text-xs font-medium shrink-0 ml-2",
-                        isOver ? "text-red-500" : "text-yellow-500"
-                      )}
-                    >
-                      {isOver
-                        ? `${formatCurrency(Math.abs(remaining))} over`
-                        : `${formatCurrency(remaining)} left`}
+                    <span className="font-medium capitalize truncate flex-1">
+                      {budget.category}
+                    </span>
+                    <span className={cn("text-xs font-medium shrink-0 ml-2", statusColor)}>
+                      {formatCurrency(spent)} / {formatCurrency(budget.amount)}
                     </span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className={cn(
-                        "h-full rounded-full transition-all",
-                        isOver ? "bg-red-500" : "bg-yellow-500"
-                      )}
+                      className={cn("h-full rounded-full transition-all", barColor)}
                       style={{ width: `${Math.min(percentage, 100)}%` }}
                     />
                   </div>

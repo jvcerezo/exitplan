@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Wallet, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, AlertCircle, PiggyBank, Target, DollarSign } from "lucide-react";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
 import { formatCurrency } from "@/lib/utils";
 
@@ -63,22 +63,70 @@ export function BalanceCard() {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-      {cards.map((card) => (
-        <Card key={card.title}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {card.title}
-            </CardTitle>
-            <card.icon className={`h-5 w-5 ${card.color}`} />
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+        {cards.map((card) => (
+          <Card key={card.title}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {card.title}
+              </CardTitle>
+              <card.icon className={`h-5 w-5 ${card.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${card.color}`}>
+                {formatCurrency(card.value)}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Balance Breakdown */}
+      {summary?.breakdown && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Balance Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${card.color}`}>
-              {formatCurrency(card.value)}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="flex items-start justify-between rounded-lg border border-border p-3">
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">In Accounts</p>
+                    <p className="text-sm font-semibold">
+                      {formatCurrency(summary.breakdown.inAccounts)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-start justify-between rounded-lg border border-border p-3">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">In Goals</p>
+                    <p className="text-sm font-semibold">
+                      {formatCurrency(summary.breakdown.inGoals)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-start justify-between rounded-lg border border-border p-3">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Budget Allocated</p>
+                    <p className="text-sm font-semibold">
+                      {formatCurrency(summary.breakdown.budgetAllocated)}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
-      ))}
+      )}
     </div>
   );
 }
