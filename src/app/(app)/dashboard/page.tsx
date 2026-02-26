@@ -8,6 +8,8 @@ import { NetWorthChart } from "@/components/dashboard/net-worth-chart";
 import { SpendingComparison } from "@/components/dashboard/spending-comparison";
 import { SpendingInsights } from "@/components/dashboard/spending-insights";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+import { SavingsRateIndicator } from "@/components/dashboard/savings-rate-indicator";
+import { EmergencyFundStatus } from "@/components/dashboard/emergency-fund-status";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 
 export const dynamic = "force-dynamic";
@@ -29,34 +31,35 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Balance Overview */}
+      {/* Tier 1: Essential Overview */}
       <BalanceCard />
-
-      {/* Financial Health Score */}
       <HealthScoreCard />
 
-      {/* Budget Alerts + Goals Snapshot */}
+      {/* Tier 2: Core Status + Key Goals */}
       <div className="grid gap-6 lg:grid-cols-2">
         <BudgetAlerts />
         <GoalsSnapshot />
       </div>
 
-      {/* Charts */}
+      {/* Tier 2: Savings & Emergency Fund */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SavingsRateIndicator />
+        <EmergencyFundStatus targetMonths={3} />
+      </div>
+
+      {/* Tier 3: Analytics & Trends */}
       <div className="grid gap-6 lg:grid-cols-2">
         <SpendingChart />
         <MonthlyTrendChart />
       </div>
 
-      {/* Net Worth + Spending Comparison */}
+      {/* Tier 3: Additional Context */}
       <div className="grid gap-6 lg:grid-cols-2">
         <NetWorthChart />
-        <SpendingComparison />
+        <SpendingInsights />
       </div>
 
-      {/* Spending Insights */}
-      <SpendingInsights />
-
-      {/* Recent Transactions */}
+      {/* Tier 3: Recent Activity */}
       <RecentTransactions />
     </div>
   );

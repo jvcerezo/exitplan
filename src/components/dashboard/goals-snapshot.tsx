@@ -43,13 +43,13 @@ export function GoalsSnapshot() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <div className="h-5 w-16 bg-muted rounded animate-pulse" />
+          <div className="h-5 w-24 bg-muted rounded animate-pulse" />
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="space-y-1.5 animate-pulse">
+            <div key={i} className="space-y-2 animate-pulse">
               <div className="h-4 w-32 bg-muted rounded" />
-              <div className="h-1.5 w-full bg-muted rounded-full" />
+              <div className="h-2 w-full bg-muted rounded-full" />
               <div className="h-3 w-24 bg-muted rounded" />
             </div>
           ))}
@@ -64,23 +64,28 @@ export function GoalsSnapshot() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base">Goals</CardTitle>
-        {activeGoals.length > 3 && (
-          <span className="text-xs text-muted-foreground">
-            +{activeGoals.length - 3} more
-          </span>
-        )}
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Active Goals</CardTitle>
+          {activeGoals.length > 3 && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {activeGoals.length - 3} more
+            </span>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {sorted.length === 0 ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">No active goals yet.</p>
+          <div className="space-y-3 py-4">
+            <div className="text-center space-y-2">
+              <Target className="h-8 w-8 text-muted-foreground mx-auto" />
+              <p className="text-sm text-muted-foreground">No active goals yet</p>
+            </div>
             <AddGoalDialog />
           </div>
         ) : (
           <>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {sorted.map((goal) => {
                 const pct = Math.min(
                   100,
@@ -101,18 +106,34 @@ export function GoalsSnapshot() {
                   : null;
 
                 return (
-                  <div key={goal.id} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Target className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-sm font-medium truncate">
-                          {goal.name}
-                        </span>
+                  <div key={goal.id} className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-semibold truncate">
+                            {goal.name}
+                          </span>
+                          {daysLeft !== null && daysLeft <= 30 && (
+                            <span
+                              className={cn(
+                                "flex items-center gap-0.5 text-xs font-medium",
+                                daysLeft <= 7 ? "text-red-500" : "text-amber-500"
+                              )}
+                            >
+                              <Clock className="h-3 w-3" />
+                              {daysLeft === 0 ? "Due today!" : `${daysLeft}d left`}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {formatCurrency(goal.current_amount)} of{" "}
+                          {formatCurrency(goal.target_amount)} • {pct.toFixed(0)}%
+                        </p>
                       </div>
                       <UpdateAmountDialog goal={goal} />
                     </div>
 
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                       <div
                         className={cn(
                           "h-full rounded-full transition-all",
@@ -121,42 +142,19 @@ export function GoalsSnapshot() {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        {formatCurrency(goal.current_amount)} of{" "}
-                        {formatCurrency(goal.target_amount)}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span>{pct.toFixed(0)}%</span>
-                        {daysLeft !== null && daysLeft <= 30 && (
-                          <span
-                            className={cn(
-                              "flex items-center gap-0.5",
-                              daysLeft <= 7 ? "text-red-500" : ""
-                            )}
-                          >
-                            <Clock className="h-3 w-3" />
-                            {daysLeft === 0
-                              ? "Today"
-                              : `${daysLeft}d`}
-                          </span>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center justify-between pt-2 border-t">
               <AddGoalDialog />
               {totalGoals > 0 && (
                 <Link
                   href="/goals"
-                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
-                  View all {totalGoals} goal{totalGoals > 1 ? "s" : ""}
+                  View all ({totalGoals})
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               )}

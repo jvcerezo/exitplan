@@ -62,16 +62,16 @@ export function SpendingInsights() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Spending Insights</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">This Month's Activity</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-1 animate-pulse">
+              <div key={i} className="space-y-1.5 animate-pulse">
                 <div className="h-3 w-20 bg-muted rounded" />
-                <div className="h-5 w-24 bg-muted rounded" />
+                <div className="h-6 w-24 bg-muted rounded" />
               </div>
             ))}
           </div>
@@ -88,26 +88,26 @@ export function SpendingInsights() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Top Category</p>
-              <p className="text-sm font-medium">{insights?.topCategory}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">Top Spending</p>
+              <p className="text-lg font-bold capitalize">{insights?.topCategory}</p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Transactions</p>
-              <p className="text-sm font-medium">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">Total Transactions</p>
+              <p className="text-lg font-bold">
                 {insights?.transactionCount}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Avg. Amount</p>
-              <p className="text-sm font-medium">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">Average Amount</p>
+              <p className="text-lg font-bold">
                 {formatCurrency(insights?.avgAmount ?? 0)}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Biggest Expense</p>
-              <p className="text-sm font-medium">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">Largest Expense</p>
+              <p className="text-lg font-bold">
                 {formatCurrency(insights?.biggestExpense ?? 0)}
               </p>
             </div>
