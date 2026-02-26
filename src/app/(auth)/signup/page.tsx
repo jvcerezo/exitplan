@@ -121,7 +121,7 @@ export default function SignupPage() {
                   name="fullName"
                   type="text"
                   placeholder="Jane Doe"
-                  autoComplete="name"
+                  autoComplete="off"
                   required
                 />
               </div>
@@ -191,7 +191,7 @@ export default function SignupPage() {
                   pattern="[0-9]*"
                   maxLength={6}
                   placeholder="000000"
-                  autoComplete="one-time-code"
+                  autoComplete="off"
                   autoFocus
                   required
                   className="text-center text-2xl tracking-[0.5em] font-mono"

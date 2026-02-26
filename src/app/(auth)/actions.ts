@@ -31,38 +31,16 @@ export async function verifySignupOtp(formData: FormData) {
   const email = formData.get("email") as string;
   const token = formData.get("token") as string;
 
-  if (token === "000000") {
-    // Dev bypass: confirm email + create session via admin client
-    const admin = createAdminClient();
+  // Verify the signup confirmation code
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "signup",
+  });
 
-    const { data: linkData, error: linkError } =
-      await admin.auth.admin.generateLink({ type: "magiclink", email });
-
-    if (linkError || !linkData) {
-      return { error: linkError?.message ?? "Failed to generate link" };
-    }
-
-    const supabase = await createClient();
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash: linkData.properties.hashed_token,
-      type: "magiclink",
-    });
-
-    if (verifyError) {
-      return { error: verifyError.message };
-    }
-  } else {
-    // Real OTP: verify the signup confirmation code
-    const supabase = await createClient();
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: "signup",
-    });
-
-    if (error) {
-      return { error: error.message };
-    }
+  if (error) {
+    return { error: error.message };
   }
 
   redirect("/onboarding");
