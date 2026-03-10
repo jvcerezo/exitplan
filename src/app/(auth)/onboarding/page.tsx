@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  ArrowLeft,
   X,
   Shield,
   CreditCard,
@@ -17,14 +16,17 @@ import {
   Car,
   Ellipsis,
   Wallet,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useProfile } from "@/hooks/use-profile";
 import { useAddAccount } from "@/hooks/use-accounts";
 import { useAddGoal } from "@/hooks/use-goals";
 import { completeOnboarding } from "@/app/(auth)/actions";
-import { COMMON_ACCOUNTS, GOAL_CATEGORIES } from "@/lib/constants";
+import { COMMON_ACCOUNTS, GOAL_CATEGORIES, ACCOUNT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const GOAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -62,6 +64,9 @@ export default function OnboardingPage() {
 
   // Accounts step
   const [addedAccounts, setAddedAccounts] = useState<AddedAccount[]>([]);
+  const [showCustomAccountForm, setShowCustomAccountForm] = useState(false);
+  const [customAccountName, setCustomAccountName] = useState("");
+  const [customAccountType, setCustomAccountType] = useState("bank");
 
   // Goal step
   const [goalCategory, setGoalCategory] = useState("");
@@ -78,6 +83,17 @@ export default function OnboardingPage() {
       }
       return [...prev, { name: preset.name, type: preset.type, balance: "" }];
     });
+  }
+
+  function addCustomAccount() {
+    if (!customAccountName.trim()) return;
+    setAddedAccounts((prev) => [
+      ...prev,
+      { name: customAccountName, type: customAccountType, balance: "" },
+    ]);
+    setCustomAccountName("");
+    setCustomAccountType("bank");
+    setShowCustomAccountForm(false);
   }
 
   function removeAccount(index: number) {
@@ -103,7 +119,7 @@ export default function OnboardingPage() {
         });
       }
       setSaving(false);
-      setStep(3);
+      setStep(2);
     } catch (error) {
       console.error("Failed to add accounts:", error);
       setSaving(false);
@@ -156,10 +172,10 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      {/* Step indicator — only shown on steps 1-3 */}
+      {/* Step indicator — only shown on steps 1-2 */}
       {step >= 1 && (
         <p className="mb-6 text-sm text-muted-foreground">
-          Step {step} of 3
+          Step {step} of 2
         </p>
       )}
 
@@ -187,13 +203,13 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 1: Add Accounts */}
+          {/* Step 1: Add Accounts with Balances */}
           {step === 1 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-xl font-bold">Add your accounts</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Tap to select your wallets and bank accounts.
+                  Select accounts and add their current balance
                 </p>
               </div>
 
@@ -219,21 +235,102 @@ export default function OnboardingPage() {
                     </button>
                   );
                 })}
+                
+                {/* Add Custom Account Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomAccountForm(true)}
+                  className="rounded-full px-4 py-2 text-sm font-medium transition-colors border bg-muted/50 text-muted-foreground border-transparent hover:bg-muted flex items-center gap-1"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Custom
+                </button>
               </div>
 
-              {/* Selected accounts list */}
+              {/* Custom Account Form */}
+              {showCustomAccountForm && (
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold">Add Custom Account</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomAccountForm(false);
+                        setCustomAccountName("");
+                        setCustomAccountType("bank");
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customName">Account Name</Label>
+                    <Input
+                      id="customName"
+                      value={customAccountName}
+                      onChange={(e) => setCustomAccountName(e.target.value)}
+                      placeholder="e.g., BDO, BPI"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customType">Account Type</Label>
+                    <select
+                      id="customType"
+                      value={customAccountType}
+                      onChange={(e) => setCustomAccountType(e.target.value)}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      {ACCOUNT_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button
+                    onClick={addCustomAccount}
+                    disabled={!customAccountName.trim()}
+                    className="w-full"
+                    size="sm"
+                  >
+                    Add Account
+                  </Button>
+                </div>
+              )}
+
+              {/* Selected accounts with balance input */}
               {addedAccounts.length > 0 && (
                 <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Your Accounts</p>
                   {addedAccounts.map((acc, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between rounded-lg border px-3 py-2.5"
+                      className="flex items-center gap-3 rounded-lg border px-3 py-3"
                     >
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{acc.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type}
                         </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm text-muted-foreground">
+                          ₱
+                        </span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          placeholder="0"
+                          value={acc.balance}
+                          onChange={(e) =>
+                            updateAccountBalance(i, e.target.value)
+                          }
+                          className="w-24 bg-transparent text-sm font-medium text-right outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
                       </div>
                       <button
                         type="button"
@@ -251,77 +348,14 @@ export default function OnboardingPage() {
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setStep(3)}
+                  onClick={() => setStep(2)}
                 >
                   Skip
                 </Button>
                 <Button
                   className="flex-1"
-                  onClick={() => setStep(2)}
-                  disabled={addedAccounts.length === 0}
-                >
-                  Continue
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Add Balance */}
-          {step === 2 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-xl font-bold">Add your balances</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Enter the current balance for each account.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                {addedAccounts.map((acc, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 rounded-lg border px-3 py-2.5"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{acc.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm text-muted-foreground">
-                        ₱
-                      </span>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0"
-                        placeholder="0"
-                        value={acc.balance}
-                        onChange={(e) =>
-                          updateAccountBalance(i, e.target.value)
-                        }
-                        className="w-24 bg-transparent text-sm font-medium text-right outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setStep(1)}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Back
-                </Button>
-                <Button
-                  className="flex-1"
                   onClick={handleAccountsContinue}
-                  disabled={saving}
+                  disabled={addedAccounts.length === 0 || saving}
                 >
                   {saving ? "Saving..." : "Continue"}
                 </Button>
@@ -329,8 +363,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3: Add Goals (optional) */}
-          {step === 3 && (
+          {/* Step 2: Add Goals (optional) */}
+          {step === 2 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-xl font-bold">Set your first goal</h2>

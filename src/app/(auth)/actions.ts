@@ -5,17 +5,19 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function signUp(formData: FormData) {
-  const supabase = await createClient();
-
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("fullName") as string;
 
-  const { error } = await supabase.auth.signUp({
+  // Use admin client to create user without email verification
+  const admin = createAdminClient();
+  
+  const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: { full_name: fullName },
+    email_confirm: true, // Auto-confirm email
+    user_metadata: {
+      full_name: fullName,
     },
   });
 
@@ -23,26 +25,18 @@ export async function signUp(formData: FormData) {
     return { error: error.message };
   }
 
-  // Instead of "check your email", the UI will show an OTP input
-  return { success: true };
-}
-
-export async function verifySignupOtp(formData: FormData) {
-  const email = formData.get("email") as string;
-  const token = formData.get("token") as string;
-
-  // Verify the signup confirmation code
+  // Sign in the user immediately
   const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({
+  const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
-    token,
-    type: "signup",
+    password,
   });
 
-  if (error) {
-    return { error: error.message };
+  if (signInError) {
+    return { error: signInError.message };
   }
 
+  // Redirect to onboarding immediately
   redirect("/onboarding");
 }
 

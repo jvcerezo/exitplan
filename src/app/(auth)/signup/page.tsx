@@ -15,11 +15,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { signUp, verifySignupOtp } from "../actions";
+import { signUp } from "../actions";
 
 export default function SignupPage() {
-  const [step, setStep] = useState<"form" | "otp">("form");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -45,35 +43,13 @@ export default function SignupPage() {
       return;
     }
 
-    setEmail(formData.get("email") as string);
-
     const result = await signUp(formData);
-
-    if (result?.error) {
-      setError(result.error);
-    } else if (result?.success) {
-      setStep("otp");
-    }
-
-    setLoading(false);
-  }
-
-  async function handleVerifyOtp(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.set("email", email);
-    formData.set("token", (e.currentTarget.elements.namedItem("token") as HTMLInputElement).value);
-
-    const result = await verifySignupOtp(formData);
 
     if (result?.error) {
       setError(result.error);
       setLoading(false);
     }
-    // On success, the server action redirects
+    // On success, the server action redirects to onboarding
   }
 
   return (
@@ -95,152 +71,93 @@ export default function SignupPage() {
               Exit<span className="text-primary">Plan</span>
             </span>
           </Link>
-          <CardTitle className="text-xl">
-            {step === "form" ? "Create your account" : "Verify your email"}
-          </CardTitle>
+          <CardTitle className="text-xl">Create your account</CardTitle>
           <CardDescription>
-            {step === "form"
-              ? "Start your path to financial freedom"
-              : `We sent a 6-digit code to ${email}`}
+            Start your path to financial freedom
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {step === "form" ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                  {error}
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                name="fullName"
+                type="text"
+                placeholder="Jane Doe"
+                autoComplete="off"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Min. 6 characters"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                placeholder="Repeat your password"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
               )}
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  placeholder="Jane Doe"
-                  autoComplete="off"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Min. 6 characters"
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Repeat your password"
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              {error && (
-                <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="token">Verification Code</Label>
-                <Input
-                  id="token"
-                  name="token"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={6}
-                  placeholder="000000"
-                  autoComplete="off"
-                  autoFocus
-                  required
-                  className="text-center text-2xl tracking-[0.5em] font-mono"
-                  onInput={(e) => {
-                    const input = e.currentTarget;
-                    input.value = input.value.replace(/[^0-9]/g, '');
-                  }}
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  "Verify"
-                )}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("form");
-                  setError(null);
-                }}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Go back
-              </button>
-            </form>
-          )}
+            </Button>
+          </form>
         </CardContent>
 
-        {step === "form" && (
-          <CardFooter className="flex-col gap-4">
-            <Separator />
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="font-medium text-primary hover:text-primary/80 transition-colors"
-              >
-                Sign in
-              </Link>
-            </p>
-          </CardFooter>
-        )}
+        <CardFooter className="flex-col gap-4">
+          <Separator />
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
 
       <p className="mt-8 text-center text-xs text-muted-foreground">
@@ -249,3 +166,4 @@ export default function SignupPage() {
     </div>
   );
 }
+

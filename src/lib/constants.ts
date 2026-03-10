@@ -72,8 +72,6 @@ export const ACCOUNT_TYPES = [
 
 export const COMMON_ACCOUNTS = [
   { name: "Cash", type: "cash" as const },
-  { name: "BDO", type: "bank" as const },
-  { name: "BPI", type: "bank" as const },
   { name: "GCash", type: "e-wallet" as const },
   { name: "Maya", type: "e-wallet" as const },
 ] as const;
