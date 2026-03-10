@@ -27,6 +27,7 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CURRENCIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Transaction } from "@/lib/types/database";
+import { TagInput } from "@/components/ui/tag-input";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   food: Utensils,
@@ -67,6 +68,7 @@ export function EditTransactionDialog({
     isCustomStored ? transaction.category : ""
   );
   const [accountId, setAccountId] = useState(transaction.account_id ?? "");
+  const [tags, setTags] = useState<string[]>(transaction.tags ?? []);
   const updateTransaction = useUpdateTransaction();
   const { data: accounts } = useAccounts();
 
@@ -103,6 +105,7 @@ export function EditTransactionDialog({
       description: (formData.get("description") as string) || category,
       date: formData.get("date") as string,
       account_id: accountId || null,
+      tags: tags.length > 0 ? tags : null,
     });
 
     setOpen(false);
@@ -271,6 +274,9 @@ export function EditTransactionDialog({
               className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
+
+          {/* Tags */}
+          <TagInput tags={tags} onChange={setTags} placeholder="Add tags..." />
 
           {/* Submit */}
           <Button

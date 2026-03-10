@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { TagInput } from "@/components/ui/tag-input";
 import { useAddTransaction } from "@/hooks/use-transactions";
 import { useAccounts } from "@/hooks/use-accounts";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CURRENCIES } from "@/lib/constants";
@@ -64,6 +65,7 @@ export function AddTransactionDialog({
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [accountId, setAccountId] = useState(defaultAccountId ?? "");
+  const [tags, setTags] = useState<string[]>([]);
   const amountRef = useRef<HTMLInputElement>(null);
 
   const { data: accounts } = useAccounts();
@@ -83,6 +85,7 @@ export function AddTransactionDialog({
     if (open) {
       setCategory("");
       setCustomCategory("");
+      setTags([]);
       setAccountId(defaultAccountId || activeAccounts[0]?.id || "");
       setTimeout(() => amountRef.current?.focus(), 100);
     }
@@ -110,6 +113,7 @@ export function AddTransactionDialog({
         (formData.get("date") as string) ||
         new Date().toISOString().split("T")[0],
       account_id: accountId || null,
+      tags: tags.length > 0 ? tags : null,
     });
 
     setOpen(false);
@@ -225,6 +229,9 @@ export function AddTransactionDialog({
             className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
+
+        {/* Tags */}
+        <TagInput tags={tags} onChange={setTags} placeholder="Add tags..." />
 
         {/* Submit */}
         <Button

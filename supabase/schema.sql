@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   currency        text DEFAULT 'PHP' NOT NULL,
   attachment_path text,
   account_id      uuid REFERENCES public.accounts(id) ON DELETE SET NULL,
-  transfer_id     uuid
+  transfer_id     uuid,
+  tags            text[] DEFAULT '{}'
 );
 
 -- 2. Indexes for performance

@@ -86,6 +86,7 @@ export function TransactionsTable() {
   const [category, setCategory] = useState("all");
   const [type, setType] = useState<"all" | "income" | "expense">("all");
   const [dateRange, setDateRange] = useState("all");
+  const [tagFilter, setTagFilter] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const datePreset = getDatePreset(dateRange);
@@ -98,8 +99,16 @@ export function TransactionsTable() {
     dateTo: datePreset?.to,
   });
 
-  const hasFilters = category !== "all" || dateRange !== "all";
-  const activeFilterCount = (category !== "all" ? 1 : 0) + (dateRange !== "all" ? 1 : 0);
+  // Client-side tag filter applied on top of server-side results
+  const filteredTransactions = tagFilter
+    ? transactions?.filter((tx) => tx.tags?.includes(tagFilter))
+    : transactions;
+
+  const hasFilters = category !== "all" || dateRange !== "all" || tagFilter !== "";
+  const activeFilterCount =
+    (category !== "all" ? 1 : 0) +
+    (dateRange !== "all" ? 1 : 0) +
+    (tagFilter !== "" ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -188,11 +197,22 @@ export function TransactionsTable() {
                 <X className="h-3 w-3" />
               </button>
             )}
+            {tagFilter && (
+              <button
+                type="button"
+                onClick={() => setTagFilter("")}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+              >
+                #{tagFilter}
+                <X className="h-3 w-3" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
                 setDateRange("all");
                 setCategory("all");
+                setTagFilter("");
               }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -269,6 +289,19 @@ export function TransactionsTable() {
               </div>
             </div>
 
+            {/* Tag filter */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Tag
+              </p>
+              <input
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                placeholder="Filter by tag..."
+                className="w-full rounded-md border bg-transparent px-3 py-1.5 text-xs outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
+              />
+            </div>
+
             {/* Clear + done */}
             <div className="flex items-center justify-between pt-1">
               {hasFilters ? (
@@ -277,6 +310,7 @@ export function TransactionsTable() {
                   onClick={() => {
                     setDateRange("all");
                     setCategory("all");
+                    setTagFilter("");
                   }}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
@@ -299,8 +333,8 @@ export function TransactionsTable() {
         {/* Results count */}
         <div className="px-4 pt-3 pb-1">
           <p className="text-xs text-muted-foreground tabular-nums">
-            {transactions?.length ?? 0}{" "}
-            {(transactions?.length ?? 0) === 1 ? "transaction" : "transactions"}
+            {filteredTransactions?.length ?? 0}{" "}
+            {(filteredTransactions?.length ?? 0) === 1 ? "transaction" : "transactions"}
           </p>
         </div>
 
@@ -333,7 +367,7 @@ export function TransactionsTable() {
                 </p>
               </div>
             </div>
-          ) : transactions?.length === 0 ? (
+          ) : filteredTransactions?.length === 0 ? (
             <EmptyState
               icon={search || hasFilters ? Search : Wallet}
               title={
@@ -349,7 +383,7 @@ export function TransactionsTable() {
             />
           ) : (
             <div className="space-y-0.5">
-              {transactions?.map((tx) => (
+              {filteredTransactions?.map((tx) => (
                 <div
                   key={tx.id}
                   className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/40"
@@ -375,14 +409,26 @@ export function TransactionsTable() {
                     <p className="text-sm font-medium truncate">
                       {tx.description}
                     </p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {tx.category}
-                      <span className="mx-1.5 text-border">&middot;</span>
-                      {new Date(tx.date + "T00:00:00").toLocaleDateString(
-                        "en-PH",
-                        { month: "short", day: "numeric" }
-                      )}
-                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {tx.category}
+                        <span className="mx-1.5 text-border">&middot;</span>
+                        {new Date(tx.date + "T00:00:00").toLocaleDateString(
+                          "en-PH",
+                          { month: "short", day: "numeric" }
+                        )}
+                      </p>
+                      {tx.tags?.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => setTagFilter(tag)}
+                          className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Amount */}
