@@ -211,6 +211,62 @@ export function useUpdateTransaction() {
   });
 }
 
+export function useImportTransactions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (transactions: TransactionInsert[]) => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const rows = transactions.map((t) => ({ ...t, user_id: user.id }));
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert(rows)
+        .select();
+
+      if (error) throw new Error(error.message);
+
+      // Accumulate deltas per account and update balances
+      const deltas: Record<string, number> = {};
+      for (const t of transactions) {
+        if (t.account_id) {
+          deltas[t.account_id] = (deltas[t.account_id] ?? 0) + t.amount;
+        }
+      }
+
+      for (const [accountId, delta] of Object.entries(deltas)) {
+        const { data: account } = await supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", accountId)
+          .single();
+
+        if (account) {
+          await supabase
+            .from("accounts")
+            .update({ balance: account.balance + delta })
+            .eq("id", accountId);
+        }
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      toast.success(`Imported ${data?.length ?? 0} transactions`);
+    },
+    onError: (error) => {
+      toast.error("Import failed", { description: error.message });
+    },
+  });
+}
+
 export function useDeleteTransaction() {
   const queryClient = useQueryClient();
 
