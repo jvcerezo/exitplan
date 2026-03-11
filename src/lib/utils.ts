@@ -34,3 +34,22 @@ export function formatSignedCurrency(amount: number, currencyCode = "PHP"): stri
     maximumFractionDigits: noDecimal ? 0 : 2,
   })}`;
 }
+
+export function getTransactionLabel(tx: { category: string; description: string; amount: number }): string {
+  if (tx.category === "transfer") {
+    // If description already has transfer info, use it
+    if (tx.description.toLowerCase().includes("transfer")) {
+      return tx.description;
+    }
+    // Otherwise show as Outgoing/Incoming transfer
+    return tx.amount < 0 ? "Outgoing transfer" : "Incoming transfer";
+  }
+  return tx.description;
+}
+
+export function getTransactionCategory(tx: { category: string; amount: number }): string {
+  if (tx.category === "transfer") {
+    return tx.amount < 0 ? "Outgoing transfer" : "Incoming transfer";
+  }
+  return tx.category;
+}

@@ -15,7 +15,7 @@ function getCurrentMonthRange() {
 }
 
 function computeInsights(transactions: Transaction[]) {
-  const expenses = transactions.filter((tx) => tx.amount < 0);
+  const expenses = transactions.filter((tx) => tx.amount < 0 && tx.category !== "transfer");
 
   // Top spending category
   const categoryTotals: Record<string, number> = {};
@@ -27,14 +27,14 @@ function computeInsights(transactions: Transaction[]) {
     Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]?.[0] ??
     "N/A";
 
-  // Number of transactions this month
-  const transactionCount = transactions.length;
+  // Number of transactions this month (excluding transfers)
+  const transactionCount = transactions.filter((tx) => tx.category !== "transfer").length;
 
-  // Average transaction amount
+  // Average expense amount
   const avgAmount =
-    transactions.length > 0
-      ? transactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) /
-        transactions.length
+    expenses.length > 0
+      ? expenses.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) /
+        expenses.length
       : 0;
 
   // Biggest single expense
@@ -88,28 +88,26 @@ export function SpendingInsights() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Top Spending</p>
-              <p className="text-lg font-bold capitalize">{insights?.topCategory}</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between py-2 border-b border-border">
+              <div>
+                <p className="text-xs text-muted-foreground">Top Spending</p>
+                <p className="font-bold capitalize">{insights?.topCategory}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Total Transactions</p>
+                <p className="font-bold text-right">{insights?.transactionCount}</p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Total Transactions</p>
-              <p className="text-lg font-bold">
-                {insights?.transactionCount}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Average Amount</p>
-              <p className="text-lg font-bold">
-                {formatCurrency(insights?.avgAmount ?? 0)}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Largest Expense</p>
-              <p className="text-lg font-bold">
-                {formatCurrency(insights?.biggestExpense ?? 0)}
-              </p>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Average Amount</p>
+                <p className="font-bold">{formatCurrency(insights?.avgAmount ?? 0)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Largest Expense</p>
+                <p className="font-bold text-right">{formatCurrency(insights?.biggestExpense ?? 0)}</p>
+              </div>
             </div>
           </div>
         )}

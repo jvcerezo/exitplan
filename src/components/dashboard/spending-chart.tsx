@@ -13,16 +13,16 @@ import { useSpendingByCategory } from "@/hooks/use-chart-data";
 import { formatCurrency } from "@/lib/utils";
 
 const COLORS = [
-  "#16a34a",
-  "#15803d",
-  "#0d9488",
-  "#0891b2",
-  "#2563eb",
-  "#4f46e5",
-  "#059669",
-  "#0e7490",
-  "#1d4ed8",
-  "#047857",
+  "#ef4444", // red
+  "#f97316", // orange
+  "#eab308", // yellow
+  "#22c55e", // green
+  "#06b6d4", // cyan
+  "#3b82f6", // blue
+  "#8b5cf6", // violet
+  "#ec4899", // pink
+  "#14b8a6", // teal
+  "#f59e0b", // amber
 ];
 
 interface TooltipPayloadEntry {
@@ -82,29 +82,44 @@ export function SpendingChart() {
             </p>
           </div>
         ) : (
-          <div className="h-[250px] sm:h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={2}
-                  dataKey="amount"
-                  nameKey="category"
-                >
-                  {data.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="space-y-4">
+            <div className="h-[250px] sm:h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="amount"
+                    nameKey="category"
+                  >
+                    {data.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
+              {data.map((item, index) => (
+                <div key={item.category} className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  />
+                  <span className="text-xs text-muted-foreground capitalize truncate">
+                    {item.category}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

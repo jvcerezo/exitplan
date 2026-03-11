@@ -31,6 +31,7 @@ export function useSpendingByCategory() {
         .from("transactions")
         .select("category, amount")
         .lt("amount", 0)
+        .neq("category", "transfer")
         .gte("date", startOfMonth)
         .lte("date", endOfMonth);
 

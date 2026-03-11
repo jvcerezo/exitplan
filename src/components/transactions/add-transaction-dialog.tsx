@@ -171,6 +171,26 @@ export function AddTransactionDialog({
         ? customCategory.trim().toLowerCase()
         : category.toLowerCase();
 
+    // Validate account balances for expenses
+    if (type === "expense") {
+      if (splitMode) {
+        for (const part of splitParts) {
+          const partAcc = activeAccounts.find((a) => a.id === part.accountId);
+          const partAmount = parseFloat(part.amount) || 0;
+          if (partAcc && partAcc.balance - partAmount < 0) {
+            toast.error(`Insufficient balance in ${partAcc.name}`);
+            return;
+          }
+        }
+      } else {
+        const rawAmount = parseFloat(formData.get("amount") as string);
+        if (selectedAccount && selectedAccount.balance - rawAmount < 0) {
+          toast.error(`Insufficient balance in ${selectedAccount.name}`);
+          return;
+        }
+      }
+    }
+
     if (splitMode) {
       if (!allSplitAccountsSelected || hasDuplicateSplitAccounts) {
         toast.error("Select different accounts for each split part");

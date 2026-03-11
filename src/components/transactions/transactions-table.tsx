@@ -10,12 +10,13 @@ import {
   AlertCircle,
   SlidersHorizontal,
   X,
+  ArrowLeftRight,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTransactions } from "@/hooks/use-transactions";
 import { CATEGORIES } from "@/lib/constants";
-import { formatSignedCurrency, cn } from "@/lib/utils";
+import { formatSignedCurrency, cn, getTransactionLabel, getTransactionCategory } from "@/lib/utils";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
 import { SplitTransactionDialog } from "./split-transaction-dialog";
@@ -412,12 +413,16 @@ export function TransactionsTable() {
                   <div
                     className={cn(
                       "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                      tx.amount > 0
+                      tx.category === "transfer"
+                        ? "bg-blue-500/10 text-blue-600"
+                        : tx.amount > 0
                         ? "bg-emerald-500/10 text-emerald-600"
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {tx.amount > 0 ? (
+                    {tx.category === "transfer" ? (
+                      <ArrowLeftRight className="h-4 w-4" />
+                    ) : tx.amount > 0 ? (
                       <ArrowUpRight className="h-4 w-4" />
                     ) : (
                       <ArrowDownRight className="h-4 w-4" />
@@ -427,11 +432,11 @@ export function TransactionsTable() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {tx.description}
+                      {getTransactionLabel(tx)}
                     </p>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-xs text-muted-foreground capitalize">
-                        {tx.category}
+                        {getTransactionCategory(tx)}
                         <span className="mx-1.5 text-border">&middot;</span>
                         {new Date(tx.date + "T00:00:00").toLocaleDateString(
                           "en-PH",
@@ -455,7 +460,11 @@ export function TransactionsTable() {
                   <p
                     className={cn(
                       "text-sm font-semibold tabular-nums shrink-0",
-                      tx.amount > 0 ? "text-emerald-600" : "text-foreground"
+                      tx.category === "transfer"
+                        ? "text-blue-600"
+                        : tx.amount > 0
+                        ? "text-emerald-600"
+                        : "text-foreground"
                     )}
                   >
                     {formatSignedCurrency(tx.amount, tx.currency)}

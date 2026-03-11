@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRecentTransactions } from "@/hooks/use-transactions";
-import { ArrowUpRight, ArrowDownRight, ArrowRight, AlertCircle, Wallet } from "lucide-react";
-import { formatSignedCurrency } from "@/lib/utils";
+import { ArrowUpRight, ArrowDownRight, ArrowRight, AlertCircle, Wallet, ArrowLeftRight } from "lucide-react";
+import { formatSignedCurrency, getTransactionLabel, getTransactionCategory } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export function RecentTransactions() {
@@ -51,12 +51,16 @@ export function RecentTransactions() {
               <div key={tx.id} className="flex items-center gap-4">
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                    tx.amount > 0
+                    tx.category === "transfer"
+                      ? "bg-blue-100 text-blue-600"
+                      : tx.amount > 0
                       ? "bg-green-100 text-green-600"
                       : "bg-muted text-foreground"
                   }`}
                 >
-                  {tx.amount > 0 ? (
+                  {tx.category === "transfer" ? (
+                    <ArrowLeftRight className="h-5 w-5" />
+                  ) : tx.amount > 0 ? (
                     <ArrowUpRight className="h-5 w-5" />
                   ) : (
                     <ArrowDownRight className="h-5 w-5" />
@@ -64,15 +68,19 @@ export function RecentTransactions() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {tx.description}
+                    {getTransactionLabel(tx)}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {tx.category}
+                    {getTransactionCategory(tx)}
                   </p>
                 </div>
                 <div
                   className={`shrink-0 text-sm font-semibold ${
-                    tx.amount > 0 ? "text-green-600" : "text-foreground"
+                    tx.category === "transfer"
+                      ? "text-blue-600"
+                      : tx.amount > 0
+                      ? "text-green-600"
+                      : "text-foreground"
                   }`}
                 >
                   {formatSignedCurrency(tx.amount)}
