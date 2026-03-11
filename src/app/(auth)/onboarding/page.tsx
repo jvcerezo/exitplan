@@ -69,10 +69,20 @@ function formatAmount(raw: string): string {
 function parseAmountInput(value: string): string {
   // Remove all commas, then strip any char that isn't a digit or decimal
   const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
-  // Prevent multiple decimal points
-  const parts = stripped.split(".");
-  if (parts.length > 2) return parts[0] + "." + parts.slice(1).join("");
-  return stripped;
+  if (!stripped) return "";
+
+  // Keep only a single decimal point while preserving decimal digits
+  const [intPartRaw, ...rest] = stripped.split(".");
+  const decimalPart = rest.join("");
+
+  // Normalize leading zeros: 05000 -> 5000, 000 -> 0
+  const normalizedInt = intPartRaw.replace(/^0+(?=\d)/, "");
+
+  if (rest.length > 0) {
+    return `${normalizedInt || "0"}.${decimalPart}`;
+  }
+
+  return normalizedInt;
 }
 
 interface AddedAccount {

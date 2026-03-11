@@ -27,6 +27,28 @@ interface AddAccountDialogProps {
   trigger?: React.ReactNode;
 }
 
+function formatAmount(raw: string): string {
+  if (!raw) return "";
+  const [intPart, decPart] = raw.split(".");
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
+}
+
+function parseAmountInput(value: string): string {
+  const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!stripped) return "";
+
+  const [intPartRaw, ...rest] = stripped.split(".");
+  const decimalPart = rest.join("");
+  const normalizedInt = intPartRaw.replace(/^0+(?=\d)/, "");
+
+  if (rest.length > 0) {
+    return `${normalizedInt || "0"}.${decimalPart}`;
+  }
+
+  return normalizedInt;
+}
+
 export function AddAccountDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
@@ -39,23 +61,24 @@ export function AddAccountDialog({
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [currency, setCurrency] = useState("PHP");
+  const [balance, setBalance] = useState("");
   const addAccount = useAddAccount();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
 
     await addAccount.mutateAsync({
       name,
       type: type as "cash" | "bank" | "e-wallet" | "credit-card",
       currency,
-      balance: parseFloat((formData.get("balance") as string) || "0"),
+      balance: parseFloat(balance) || 0,
     });
 
     setOpen(false);
     setName("");
     setType("");
     setCurrency("PHP");
+    setBalance("");
   }
 
   function handlePreset(preset: (typeof COMMON_ACCOUNTS)[number]) {
@@ -152,14 +175,11 @@ export function AddAccountDialog({
                 Starting Balance
               </p>
               <input
-                name="balance"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.01"
-                min="0"
-                max="9999999999.99"
                 placeholder="0.00"
-                defaultValue="0"
+                value={formatAmount(balance)}
+                onChange={(e) => setBalance(parseAmountInput(e.target.value))}
                 className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
               />
             </div>
