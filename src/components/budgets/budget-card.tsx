@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useUpdateBudget } from "@/hooks/use-budgets";
+import { useUpdateBudget, useToggleBudgetRollover } from "@/hooks/use-budgets";
 import { useUndoDelete } from "@/hooks/use-undo-delete";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -16,17 +16,21 @@ const BUDGET_QUERY_KEYS = [["budgets"]];
 interface BudgetCardProps {
   budget: Budget;
   spent: number;
+  rollover?: number;
 }
 
-export function BudgetCard({ budget, spent }: BudgetCardProps) {
+export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
   const undoDelete = useUndoDelete("budgets", BUDGET_QUERY_KEYS);
   const updateBudget = useUpdateBudget();
+  const toggleRollover = useToggleBudgetRollover();
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(budget.amount));
 
-  const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+  // Effective budget = base amount + carried-over unspent from last month
+  const effectiveBudget = budget.amount + rollover;
+  const percentage = effectiveBudget > 0 ? (spent / effectiveBudget) * 100 : 0;
   const clampedPercentage = Math.min(percentage, 100);
-  const remaining = Math.round((budget.amount - spent) * 100) / 100;
+  const remaining = Math.round((effectiveBudget - spent) * 100) / 100;
 
   function getProgressColor(pct: number) {
     if (pct > 100) return "bg-red-500";
@@ -57,10 +61,35 @@ export function BudgetCard({ budget, spent }: BudgetCardProps) {
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-sm font-medium capitalize">
-            {budget.category}
-          </CardTitle>
+          <div className="space-y-0.5">
+            <CardTitle className="text-sm font-medium capitalize">
+              {budget.category}
+            </CardTitle>
+            {rollover > 0 && (
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                +{formatCurrency(rollover)} rolled over
+              </p>
+            )}
+          </div>
           <div className="flex gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className={cn(
+                "transition-colors",
+                budget.rollover
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              aria-label={budget.rollover ? "Disable rollover" : "Enable rollover"}
+              title={budget.rollover ? "Rollover on — unspent carries to next month" : "Enable rollover"}
+              onClick={() =>
+                toggleRollover.mutate({ id: budget.id, rollover: !budget.rollover })
+              }
+              disabled={toggleRollover.isPending}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon-xs"
@@ -134,7 +163,12 @@ export function BudgetCard({ budget, spent }: BudgetCardProps) {
               {formatCurrency(spent)} spent
             </span>
             <span className="font-medium">
-              of {formatCurrency(budget.amount)}
+              of {formatCurrency(effectiveBudget)}
+              {rollover > 0 && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  ({formatCurrency(budget.amount)} base)
+                </span>
+              )}
             </span>
           </div>
         )}

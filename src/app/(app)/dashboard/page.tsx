@@ -10,6 +10,7 @@ import { SpendingInsights } from "@/components/dashboard/spending-insights";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { SavingsRateIndicator } from "@/components/dashboard/savings-rate-indicator";
 import { EmergencyFundStatus } from "@/components/dashboard/emergency-fund-status";
+import { SafeToSpendCard } from "@/components/dashboard/safe-to-spend-card";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 
 export default function DashboardPage() {
@@ -40,6 +41,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Tier 2: Savings & Emergency Fund */}
+      <SafeToSpendCard />
       <div className="grid gap-6 lg:grid-cols-2">
         <SavingsRateIndicator />
         <EmergencyFundStatus targetMonths={3} />

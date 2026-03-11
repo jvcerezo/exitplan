@@ -10,24 +10,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useUpdateGoal, useAddFundsToGoal } from "@/hooks/use-goals";
+import { useAddFundsToGoal } from "@/hooks/use-goals";
 import { useAccounts } from "@/hooks/use-accounts";
 import type { Goal } from "@/lib/types/database";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function UpdateAmountDialog({ goal }: { goal: Goal }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [accountId, setAccountId] = useState("");
-  const updateGoal = useUpdateGoal();
   const addFundsToGoal = useAddFundsToGoal();
   const { data: accounts } = useAccounts();
 
   const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
   const selectedAccount = activeAccounts.find((a) => a.id === accountId);
   const remaining = Math.round((goal.target_amount - goal.current_amount) * 100) / 100;
-  const isPending = updateGoal.isPending || addFundsToGoal.isPending;
+  const isPending = addFundsToGoal.isPending;
 
   // Default to first account on open
   useEffect(() => {
@@ -43,23 +43,21 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
 
     if (!addAmount || addAmount <= 0) return;
 
-    if (accountId && selectedAccount) {
-      // Deduct from account
-      await addFundsToGoal.mutateAsync({
-        goalId: goal.id,
-        accountId,
-        amount: addAmount,
-      });
-    } else {
-      // No accounts — just update the goal directly
-      const newAmount = Math.round((goal.current_amount + addAmount) * 100) / 100;
-      const isCompleted = newAmount >= goal.target_amount;
-      await updateGoal.mutateAsync({
-        id: goal.id,
-        current_amount: newAmount,
-        is_completed: isCompleted,
-      });
+    if (!accountId || !selectedAccount) {
+      toast.error("Select an account first");
+      return;
     }
+
+    if (selectedAccount.balance < addAmount) {
+      toast.error("Insufficient account balance");
+      return;
+    }
+
+    await addFundsToGoal.mutateAsync({
+      goalId: goal.id,
+      accountId,
+      amount: addAmount,
+    });
 
     setOpen(false);
     setAmount("");
@@ -146,10 +144,16 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
           <Button
             type="submit"
             className="w-full"
-            disabled={isPending || !amount}
+            disabled={isPending || !amount || !accountId || activeAccounts.length === 0}
           >
             {isPending ? "Adding..." : "Add Funds"}
           </Button>
+
+          {activeAccounts.length === 0 && (
+            <p className="text-xs text-destructive text-center">
+              Add an account first before funding goals.
+            </p>
+          )}
         </form>
       </DialogContent>
     </Dialog>

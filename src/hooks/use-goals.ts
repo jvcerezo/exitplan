@@ -143,6 +143,12 @@ export function useAddFundsToGoal() {
       if (goalResult.error) throw new Error(goalResult.error.message);
       if (accountResult.error) throw new Error(accountResult.error.message);
 
+      if (!accountId) throw new Error("Account is required");
+      if (!amount || amount <= 0) throw new Error("Amount must be greater than zero");
+      if (accountResult.data.balance < amount) {
+        throw new Error("Insufficient account balance");
+      }
+
       const newGoalAmount =
         Math.round((goalResult.data.current_amount + amount) * 100) / 100;
       const newAccountBalance =

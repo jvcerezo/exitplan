@@ -18,6 +18,7 @@ import { CATEGORIES } from "@/lib/constants";
 import { formatSignedCurrency, cn } from "@/lib/utils";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
+import { SplitTransactionDialog } from "./split-transaction-dialog";
 import { AttachmentUpload } from "./attachment-upload";
 import { AttachmentViewer } from "./attachment-viewer";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -451,6 +452,7 @@ export function TransactionsTable() {
                     ) : (
                       <AttachmentUpload transactionId={tx.id} />
                     )}
+                    <SplitTransactionDialog transaction={tx} />
                     <EditTransactionDialog transaction={tx} />
                     <DeleteTransactionDialog
                       id={tx.id}

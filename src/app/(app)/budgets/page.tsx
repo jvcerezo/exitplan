@@ -9,7 +9,7 @@ import { BudgetCard } from "@/components/budgets/budget-card";
 import { useBudgetSummary, useCopyBudgetsFromMonth } from "@/hooks/use-budgets";
 import { formatCurrency } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+
 
 function getFirstOfMonth(date: Date): string {
   const year = date.getFullYear();
@@ -126,6 +126,7 @@ export default function BudgetsPage() {
               key={budget.id}
               budget={budget}
               spent={data.spentByCategory[budget.category] || 0}
+              rollover={data.rolloverByCategory?.[budget.category] ?? 0}
             />
           ))}
         </div>

@@ -54,9 +54,12 @@ export interface Budget {
   category: string;
   amount: number;
   month: string;
+  rollover: boolean;
 }
 
-export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id">;
+export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id"> & {
+  rollover?: boolean;
+};
 
 export interface ExchangeRate {
   id: string;

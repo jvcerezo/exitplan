@@ -26,43 +26,76 @@ export function useBudgetSummary(month: string) {
     queryFn: async () => {
       const supabase = createClient();
 
-      // Fetch budgets for the month
-      const { data: budgets, error: budgetsError } = await supabase
-        .from("budgets")
-        .select("*")
-        .eq("month", month);
-
-      if (budgetsError) throw new Error(budgetsError.message);
-
-      // Fetch expense transactions for the month
-      // month is "YYYY-MM-01", we need transactions where date is within that month
       const startDate = month;
       const [year, monthNum] = month.split("-").map(Number);
-      const endDate = new Date(year, monthNum, 0).toISOString().split("T")[0]; // last day of month
+      const endDate = new Date(year, monthNum, 0).toISOString().split("T")[0];
 
-      const { data: transactions, error: txError } = await supabase
-        .from("transactions")
-        .select("amount, category")
-        .gte("date", startDate)
-        .lte("date", endDate)
-        .lt("amount", 0); // only expenses (negative amounts)
+      // Previous month range for rollover computation
+      const prevDate = new Date(year, monthNum - 2, 1);
+      const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}-01`;
+      const prevMonthEnd = new Date(year, monthNum - 1, 0).toISOString().split("T")[0];
 
-      if (txError) throw new Error(txError.message);
+      const [budgetsResult, txResult, prevBudgetsResult, prevTxResult] = await Promise.all([
+        supabase.from("budgets").select("*").eq("month", month),
+        supabase
+          .from("transactions")
+          .select("amount, category")
+          .gte("date", startDate)
+          .lte("date", endDate)
+          .lt("amount", 0),
+        supabase.from("budgets").select("*").eq("month", prevMonth),
+        supabase
+          .from("transactions")
+          .select("amount, category")
+          .gte("date", prevMonth)
+          .lte("date", prevMonthEnd)
+          .lt("amount", 0),
+      ]);
 
-      // Compute spent per category (amounts are negative, so we use Math.abs)
+      if (budgetsResult.error) throw new Error(budgetsResult.error.message);
+      if (txResult.error) throw new Error(txResult.error.message);
+
+      const budgets: Budget[] = budgetsResult.data ?? [];
+      const transactions = txResult.data ?? [];
+      const prevBudgets: Budget[] = prevBudgetsResult.data ?? [];
+      const prevTransactions = prevTxResult.data ?? [];
+
+      // Compute spent per category this month
       const spentByCategory: Record<string, number> = {};
       for (const tx of transactions) {
-        const cat = tx.category;
-        spentByCategory[cat] = (spentByCategory[cat] || 0) + Math.abs(tx.amount);
+        spentByCategory[tx.category] =
+          (spentByCategory[tx.category] || 0) + Math.abs(tx.amount);
       }
-
-      // Round all currency values to avoid floating-point drift
       for (const cat of Object.keys(spentByCategory)) {
         spentByCategory[cat] = Math.round(spentByCategory[cat] * 100) / 100;
       }
 
+      // Compute previous month spent per category (for rollover)
+      const prevSpentByCategory: Record<string, number> = {};
+      for (const tx of prevTransactions) {
+        prevSpentByCategory[tx.category] =
+          (prevSpentByCategory[tx.category] || 0) + Math.abs(tx.amount);
+      }
+
+      // Compute rollover amounts: for each current budget with rollover=true,
+      // find the matching previous month budget and calculate unspent carry-forward
+      const rolloverByCategory: Record<string, number> = {};
+      for (const budget of budgets) {
+        if (!budget.rollover) continue;
+        const prevBudget = prevBudgets.find((b) => b.category === budget.category);
+        if (!prevBudget) continue;
+        const prevSpent = prevSpentByCategory[budget.category] ?? 0;
+        const prevUnspent = prevBudget.amount - prevSpent;
+        if (prevUnspent > 0) {
+          rolloverByCategory[budget.category] = Math.round(prevUnspent * 100) / 100;
+        }
+      }
+
       const totalBudget = Math.round(
         budgets.reduce((sum: number, b: Budget) => sum + b.amount, 0) * 100
+      ) / 100;
+      const totalRollover = Math.round(
+        Object.values(rolloverByCategory).reduce((s, v) => s + v, 0) * 100
       ) / 100;
       const totalSpent = Math.round(
         Object.values(spentByCategory).reduce((sum, v) => sum + v, 0) * 100
@@ -71,7 +104,9 @@ export function useBudgetSummary(month: string) {
       return {
         budgets,
         spentByCategory,
+        rolloverByCategory,
         totalBudget,
+        totalRollover,
         totalSpent,
       };
     },
@@ -133,6 +168,32 @@ export function useUpdateBudget() {
     },
     onError: (error) => {
       toast.error("Failed to update budget", { description: error.message });
+    },
+  });
+}
+
+export function useToggleBudgetRollover() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, rollover }: { id: string; rollover: boolean }) => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("budgets")
+        .update({ rollover })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: (_, { rollover }) => {
+      queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      toast.success(rollover ? "Rollover enabled" : "Rollover disabled");
+    },
+    onError: (error) => {
+      toast.error("Failed to update rollover", { description: error.message });
     },
   });
 }
