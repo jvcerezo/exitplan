@@ -121,6 +121,37 @@ CREATE POLICY "Users can update own profile"
   USING ((SELECT auth.uid()) = id)
   WITH CHECK ((SELECT auth.uid()) = id);
 
+-- Prevent authenticated users from self-escalating protected fields.
+-- Service-role operations (for trusted server actions) are still allowed.
+CREATE OR REPLACE FUNCTION public.prevent_protected_profile_updates()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  jwt_role text := current_setting('request.jwt.claim.role', true);
+BEGIN
+  IF jwt_role IS DISTINCT FROM 'service_role' THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION 'Updating role is not allowed';
+    END IF;
+
+    IF NEW.has_completed_onboarding IS DISTINCT FROM OLD.has_completed_onboarding THEN
+      RAISE EXCEPTION 'Updating onboarding state is not allowed';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS protect_profile_fields_before_update ON public.profiles;
+
+CREATE TRIGGER protect_profile_fields_before_update
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_protected_profile_updates();
+
 -- Auto-create a profile row when a new user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
