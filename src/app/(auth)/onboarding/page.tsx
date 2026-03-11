@@ -25,7 +25,6 @@ import { Label } from "@/components/ui/label";
 import { useProfile } from "@/hooks/use-profile";
 import { useAddAccount } from "@/hooks/use-accounts";
 import { useAddGoal } from "@/hooks/use-goals";
-import { completeOnboarding } from "@/app/(auth)/actions";
 import { COMMON_ACCOUNTS, GOAL_CATEGORIES, ACCOUNT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -137,15 +136,12 @@ export default function OnboardingPage() {
         deadline: null,
         category: goalCategory,
       });
-      console.log("Goal created successfully");
-      const result = await completeOnboarding();
-      console.log("Onboarding completed:", result);
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      // Small delay to ensure DB sync
+      // Require completing the tour before onboarding is marked as complete
+      localStorage.setItem("exitplan_tour_required", "1");
+      localStorage.setItem("exitplan_tour_pending", "1");
+      // Small delay before redirect
       await new Promise(resolve => setTimeout(resolve, 100));
-      router.push("/dashboard");
+      router.push("/dashboard?tour=1");
     } catch (error) {
       console.error("Failed to create goal or finish onboarding:", error);
       setSaving(false);
@@ -155,15 +151,12 @@ export default function OnboardingPage() {
   async function handleFinish() {
     setSaving(true);
     try {
-      console.log("Starting onboarding completion...");
-      const result = await completeOnboarding();
-      console.log("Onboarding completed:", result);
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      // Small delay to ensure DB sync
+      // Require completing the tour before onboarding is marked as complete
+      localStorage.setItem("exitplan_tour_required", "1");
+      localStorage.setItem("exitplan_tour_pending", "1");
+      // Small delay before redirect
       await new Promise(resolve => setTimeout(resolve, 100));
-      router.push("/dashboard");
+      router.push("/dashboard?tour=1");
     } catch (error) {
       console.error("Failed to finish onboarding:", error);
       setSaving(false);

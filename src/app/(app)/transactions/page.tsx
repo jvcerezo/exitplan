@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Minus, Plus } from "lucide-react";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 import { TransactionsTable } from "@/components/transactions/transactions-table";
 import { ImportTransactionsDialog } from "@/components/transactions/import-transactions-dialog";
@@ -11,26 +11,47 @@ export default function TransactionsPage() {
   const [importOpen, setImportOpen] = useState(false);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Manage and review all your financial activity
           </p>
         </div>
-        <div className="flex gap-2">
+
+        {/* Actions (mobile + desktop) */}
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             onClick={() => setImportOpen(true)}
-            className="gap-1.5"
+            className="gap-1.5 h-9 sm:h-10"
           >
             <Upload className="h-4 w-4" />
             Import CSV
           </Button>
-          <AddTransactionDialog type="expense" />
-          <AddTransactionDialog type="income" />
+
+          <div className="hidden sm:flex items-center gap-2">
+            <AddTransactionDialog
+              type="expense"
+              trigger={
+                <Button className="h-10">
+                  <Minus className="h-4 w-4 mr-1.5" />
+                  Add Expense
+                </Button>
+              }
+            />
+            <AddTransactionDialog
+              type="income"
+              trigger={
+                <Button variant="outline" className="h-10">
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Add Income
+                </Button>
+              }
+            />
+          </div>
         </div>
       </div>
 

@@ -15,7 +15,9 @@ export default function GoalsPage() {
             Set targets and track your progress to freedom
           </p>
         </div>
-        <AddGoalDialog />
+        <div className="hidden sm:block">
+          <AddGoalDialog />
+        </div>
       </div>
 
       {/* Overview cards */}

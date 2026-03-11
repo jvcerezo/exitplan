@@ -13,8 +13,20 @@ function isAdminRoute(pathname: string) {
   return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
+function withTourParam(fromRequest: NextRequest, targetPathname: string) {
+  const url = fromRequest.nextUrl.clone();
+  const tour = fromRequest.nextUrl.searchParams.get("tour");
+  url.pathname = targetPathname;
+  url.search = "";
+  if (tour === "1") {
+    url.searchParams.set("tour", "1");
+  }
+  return url;
+}
+
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const isTourMode = request.nextUrl.searchParams.get("tour") === "1";
 
   // Fast path: check if any Supabase auth cookies exist at all.
   // If not and the route is protected, redirect immediately — no network call.
@@ -23,7 +35,7 @@ export async function updateSession(request: NextRequest) {
     .some((c) => c.name.startsWith("sb-"));
 
   if (!hasAuthCookie && !isPublicRoute(pathname)) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(withTourParam(request, "/login"));
   }
 
   // For public routes with no auth cookie, skip Supabase entirely
@@ -61,16 +73,12 @@ export async function updateSession(request: NextRequest) {
 
   // Session cookie exists but is invalid/expired — redirect to login
   if (!user && !isPublicRoute(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(withTourParam(request, "/login"));
   }
 
   // Authenticated user on auth page (not onboarding) — redirect to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(withTourParam(request, "/dashboard"));
   }
 
   // Admin route protection (also checks onboarding)
@@ -82,15 +90,11 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     if (profile && !profile.has_completed_onboarding) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(withTourParam(request, "/onboarding"));
     }
 
     if (!profile || profile.role !== "admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(withTourParam(request, "/dashboard"));
     }
   }
 
@@ -103,9 +107,9 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     if (profile && !profile.has_completed_onboarding) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
-      return NextResponse.redirect(url);
+      if (!isTourMode) {
+        return NextResponse.redirect(withTourParam(request, "/onboarding"));
+      }
     }
   }
 
@@ -118,9 +122,7 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     if (profile?.has_completed_onboarding) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(withTourParam(request, "/dashboard"));
     }
   }
 

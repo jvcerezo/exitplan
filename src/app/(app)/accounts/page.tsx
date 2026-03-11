@@ -29,7 +29,9 @@ export default function AccountsPage() {
         </div>
         <div className="flex gap-3">
           <TransferDialog />
-          <AddAccountDialog />
+          <div className="hidden sm:block">
+            <AddAccountDialog />
+          </div>
         </div>
       </div>
 

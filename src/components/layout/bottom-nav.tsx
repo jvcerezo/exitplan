@@ -6,11 +6,11 @@ import { LayoutDashboard, ArrowLeftRight, Target, Wallet, Settings } from "lucid
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/transactions", label: "Activity", icon: ArrowLeftRight },
-  { href: "/goals", label: "Goals", icon: Target },
-  { href: "/accounts", label: "Accounts", icon: Wallet },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { href: "/transactions", label: "Activity", icon: ArrowLeftRight, tourId: "sidebar-transactions" },
+  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
+  { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
+  { href: "/settings", label: "Settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 export function BottomNav() {
@@ -25,6 +25,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={item.tourId}
               className={cn(
                 "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"

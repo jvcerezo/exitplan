@@ -25,7 +25,7 @@ export default function DashboardPage() {
             Your path to financial freedom
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="hidden sm:flex gap-2">
           <AddTransactionDialog type="expense" />
           <AddTransactionDialog type="income" />
         </div>

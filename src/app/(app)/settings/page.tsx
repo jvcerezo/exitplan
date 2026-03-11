@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw } from "lucide-react";
+import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map } from "lucide-react";
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
 import { useExchangeRates, useUpsertExchangeRate } from "@/hooks/use-exchange-rates";
 import { useMarketRates } from "@/hooks/use-market-rates";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { CURRENCIES, DEFAULT_RATES_TO_PHP } from "@/lib/constants";
+import { useTourContext } from "@/providers/tour-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export default function SettingsPage() {
   const { data: marketData, isLoading: marketLoading } = useMarketRates();
   const upsertRate = useUpsertExchangeRate();
   const queryClient = useQueryClient();
+  const { start: startTour } = useTourContext();
 
   const [mounted, setMounted] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -334,9 +336,21 @@ export default function SettingsPage() {
             Manage your account settings
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          {/* Take a Tour — mobile only (sidebar has it on desktop) */}
+          <div className="md:hidden">
+            <Button
+              variant="outline"
+              type="button"
+              className="w-full gap-2"
+              onClick={startTour}
+            >
+              <Map className="h-4 w-4" />
+              Take a Tour
+            </Button>
+          </div>
           <form action={signOut}>
-            <Button variant="outline" type="submit" className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">
+            <Button variant="outline" type="submit" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive md:w-auto">
               <LogOut className="h-4 w-4" />
               Sign Out
             </Button>

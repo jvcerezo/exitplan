@@ -112,15 +112,15 @@ export function TransactionsTable() {
 
   return (
     <div className="space-y-4">
-      {/* Segmented type control */}
-      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-0.5">
+      {/* Segmented type control — full width on mobile */}
+      <div className="flex rounded-lg border border-border bg-muted/30 p-0.5">
         {(["all", "income", "expense"] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setType(t)}
             className={cn(
-              "rounded-md px-4 py-1.5 text-sm font-medium transition-all",
+              "flex-1 rounded-md px-4 py-1.5 text-sm font-medium transition-all",
               type === t
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -441,8 +441,8 @@ export function TransactionsTable() {
                     {formatSignedCurrency(tx.amount, tx.currency)}
                   </p>
 
-                  {/* Actions */}
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Actions — always visible on touch, hover-reveal on desktop */}
+                  <div className="flex shrink-0 items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     {tx.attachment_path ? (
                       <AttachmentViewer
                         transactionId={tx.id}

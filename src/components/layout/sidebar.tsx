@@ -11,22 +11,25 @@ import {
   Settings,
   LogOut,
   Search,
+  Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/(auth)/actions";
 import { ThemeToggle } from "./theme-toggle";
+import { useTourContext } from "@/providers/tour-provider";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/goals", label: "Goals", icon: Target },
-  { href: "/budgets", label: "Budgets", icon: Calculator },
-  { href: "/accounts", label: "Accounts", icon: Wallet },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, tourId: "sidebar-transactions" },
+  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
+  { href: "/budgets", label: "Budgets", icon: Calculator, tourId: "sidebar-budgets" },
+  { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
+  { href: "/settings", label: "Settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { start } = useTourContext();
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-sidebar-border bg-sidebar">
@@ -40,6 +43,7 @@ export function Sidebar() {
       {/* Search */}
       <div className="px-3 pt-4 pb-2">
         <button
+          data-tour="sidebar-search"
           onClick={() => {
             window.dispatchEvent(
               new KeyboardEvent("keydown", { key: "k", metaKey: true })
@@ -63,6 +67,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={item.tourId}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -83,6 +88,14 @@ export function Sidebar() {
           <span className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider">Theme</span>
           <ThemeToggle />
         </div>
+        <button
+          type="button"
+          onClick={start}
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors"
+        >
+          <Map className="h-5 w-5" />
+          Take a Tour
+        </button>
         <form action={signOut}>
           <button
             type="submit"

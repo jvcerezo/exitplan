@@ -70,7 +70,7 @@ export function FAB() {
       )}
 
       {/* FAB container */}
-      <div className="md:hidden fixed bottom-20 right-4 z-50 flex flex-col-reverse items-end gap-3">
+      <div data-tour="fab" className="md:hidden fixed bottom-20 right-4 z-50 flex flex-col-reverse items-end gap-3">
         {/* Main FAB button */}
         <button
           onClick={() => setMenuOpen((v) => !v)}
