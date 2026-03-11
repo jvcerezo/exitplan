@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { enqueueOfflineMutation } from "@/lib/offline/store";
+import { addOfflineAccountToCache } from "@/lib/offline/query-cache";
+import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Account, AccountInsert } from "@/lib/types/database";
 
@@ -24,6 +27,35 @@ export function useAddAccount() {
 
   return useMutation({
     mutationFn: async (account: AccountInsert) => {
+      if (isBrowserOffline()) {
+        const localId = createOfflineId("account");
+        const offlineAccount: Account = {
+          id: localId,
+          created_at: new Date().toISOString(),
+          user_id: "offline",
+          name: account.name.trim(),
+          type: account.type,
+          currency: account.currency,
+          balance: Number(account.balance ?? 0),
+          is_archived: false,
+        };
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "addAccount",
+          payload: {
+            localId,
+            name: offlineAccount.name,
+            type: offlineAccount.type,
+            currency: offlineAccount.currency,
+            balance: offlineAccount.balance,
+          },
+        });
+
+        addOfflineAccountToCache(queryClient, offlineAccount);
+        return offlineAccount;
+      }
+
       const supabase = createClient();
       const {
         data: { user },
@@ -115,7 +147,7 @@ export function useAddAccount() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast.success("Account added");
+      toast.success(isBrowserOffline() ? "Account saved offline" : "Account added");
     },
     onError: (error) => {
       toast.error("Failed to add account", { description: error.message });

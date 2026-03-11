@@ -1,4 +1,11 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project for `ExitPlan`, a personal finance tracker focused on budgeting, goals, transactions, and financial freedom planning.
+
+## Offline Support
+
+The current offline rollout plan is documented in `docs/offline-strategy.md`.
+
+- Phase 1 includes cached reads, an offline banner, and service worker-based route fallback.
+- The next phase adds queued offline writes and sync recovery.
 
 ## Getting Started
 

@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { enqueueOfflineMutation } from "@/lib/offline/store";
+import {
+  addOfflineTransactionToCache,
+  updateOfflineAccountBalance,
+} from "@/lib/offline/query-cache";
+import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Transaction, TransactionInsert } from "@/lib/types/database";
 
@@ -138,6 +144,52 @@ export function useAddTransaction() {
 
   return useMutation({
     mutationFn: async (transaction: TransactionInsert) => {
+      if (isBrowserOffline()) {
+        if (!transaction.account_id) {
+          throw new Error("Select an account before adding this transaction");
+        }
+
+        const localId = createOfflineId("transaction");
+        const offlineTransaction: Transaction = {
+          id: localId,
+          created_at: new Date().toISOString(),
+          user_id: "offline",
+          amount: transaction.amount,
+          category: transaction.category,
+          description: transaction.description,
+          date: transaction.date,
+          currency: transaction.currency,
+          attachment_path: transaction.attachment_path ?? null,
+          account_id: transaction.account_id ?? null,
+          transfer_id: transaction.transfer_id ?? null,
+          tags: transaction.tags ?? null,
+        };
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "addTransaction",
+          payload: {
+            localId,
+            amount: transaction.amount,
+            category: transaction.category,
+            description: transaction.description,
+            date: transaction.date,
+            currency: transaction.currency,
+            account_id: transaction.account_id ?? null,
+            transfer_id: transaction.transfer_id ?? null,
+            tags: transaction.tags ?? null,
+            attachment_path: transaction.attachment_path ?? null,
+          },
+        });
+
+        addOfflineTransactionToCache(queryClient, offlineTransaction);
+        if (transaction.account_id) {
+          updateOfflineAccountBalance(queryClient, transaction.account_id, transaction.amount);
+        }
+
+        return offlineTransaction;
+      }
+
       const supabase = createClient();
 
       const { data: activeAccounts, error: accountsError } = await supabase
@@ -173,7 +225,7 @@ export function useAddTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast.success("Transaction added");
+      toast.success(isBrowserOffline() ? "Transaction saved offline" : "Transaction added");
     },
     onError: (error) => {
       toast.error("Failed to add transaction", { description: error.message });

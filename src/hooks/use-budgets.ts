@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { enqueueOfflineMutation } from "@/lib/offline/store";
+import { addOfflineBudgetToCache } from "@/lib/offline/query-cache";
+import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Budget, BudgetInsert } from "@/lib/types/database";
 
@@ -118,6 +121,34 @@ export function useAddBudget() {
 
   return useMutation({
     mutationFn: async (budget: BudgetInsert) => {
+      if (isBrowserOffline()) {
+        const localId = createOfflineId("budget");
+        const offlineBudget: Budget = {
+          id: localId,
+          created_at: new Date().toISOString(),
+          user_id: "offline",
+          category: budget.category,
+          amount: budget.amount,
+          month: budget.month,
+          rollover: budget.rollover ?? false,
+        };
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "addBudget",
+          payload: {
+            localId,
+            category: budget.category,
+            amount: budget.amount,
+            month: budget.month,
+            rollover: budget.rollover ?? false,
+          },
+        });
+
+        addOfflineBudgetToCache(queryClient, offlineBudget);
+        return offlineBudget;
+      }
+
       const supabase = createClient();
       const {
         data: { user },
@@ -135,7 +166,7 @@ export function useAddBudget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      toast.success("Budget added");
+      toast.success(isBrowserOffline() ? "Budget saved offline" : "Budget added");
     },
     onError: (error) => {
       toast.error("Failed to add budget", { description: error.message });

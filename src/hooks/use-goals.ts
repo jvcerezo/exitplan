@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { enqueueOfflineMutation } from "@/lib/offline/store";
+import { addOfflineGoalToCache } from "@/lib/offline/query-cache";
+import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Goal, GoalInsert } from "@/lib/types/database";
 
@@ -58,6 +61,37 @@ export function useAddGoal() {
 
   return useMutation({
     mutationFn: async (goal: GoalInsert) => {
+      if (isBrowserOffline()) {
+        const localId = createOfflineId("goal");
+        const offlineGoal: Goal = {
+          id: localId,
+          created_at: new Date().toISOString(),
+          user_id: "offline",
+          name: goal.name,
+          target_amount: goal.target_amount,
+          current_amount: goal.current_amount,
+          deadline: goal.deadline,
+          category: goal.category,
+          is_completed: false,
+        };
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "addGoal",
+          payload: {
+            localId,
+            name: goal.name,
+            target_amount: goal.target_amount,
+            current_amount: goal.current_amount,
+            deadline: goal.deadline,
+            category: goal.category,
+          },
+        });
+
+        addOfflineGoalToCache(queryClient, offlineGoal);
+        return offlineGoal;
+      }
+
       const supabase = createClient();
       const {
         data: { user },
@@ -75,7 +109,7 @@ export function useAddGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
-      toast.success("Goal created");
+      toast.success(isBrowserOffline() ? "Goal saved offline" : "Goal created");
     },
     onError: (error) => {
       toast.error("Failed to create goal", { description: error.message });

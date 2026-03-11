@@ -17,6 +17,7 @@
     "@tanstack/react-query-persist-client": "^5.90.24",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dexie": "^4.3.0",
     "framer-motion": "^12.34.2",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",

@@ -15,6 +15,7 @@ import {
   Mail,
   Database,
 } from "lucide-react";
+import { OfflineSyncHealth } from "@/components/admin/offline-sync-health";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminOverviewCharts } from "@/components/admin/admin-overview-charts";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -476,41 +477,44 @@ export default async function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent Signups</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {metrics.recentUsers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No users yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {metrics.recentUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between gap-4 text-sm"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">
-                        {user.full_name || "No name"}
-                      </p>
-                      <p className="text-muted-foreground text-xs truncate">
-                        {user.email || "No email"}
-                      </p>
+        <div className="space-y-4">
+          <OfflineSyncHealth />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Recent Signups</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {metrics.recentUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No users yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {metrics.recentUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between gap-4 text-sm"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">
+                          {user.full_name || "No name"}
+                        </p>
+                        <p className="text-muted-foreground text-xs truncate">
+                          {user.email || "No email"}
+                        </p>
+                      </div>
+                      <div className="text-xs text-muted-foreground shrink-0">
+                        {new Date(user.created_at).toLocaleDateString("en-PH", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground shrink-0">
-                      {new Date(user.created_at).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

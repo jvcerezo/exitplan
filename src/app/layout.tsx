@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { OfflineStatusBanner } from "@/components/layout/offline-status-banner";
+import { OfflineSyncRuntime } from "@/components/layout/offline-sync-runtime";
+import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "sonner";
@@ -33,8 +35,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <OfflineStatusBanner />
-          <QueryProvider>{children}</QueryProvider>
+          <ServiceWorkerRegister />
+          <QueryProvider>
+            <OfflineSyncRuntime />
+            <OfflineStatusBanner />
+            {children}
+          </QueryProvider>
           <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>
