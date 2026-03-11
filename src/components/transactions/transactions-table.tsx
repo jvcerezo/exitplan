@@ -143,12 +143,12 @@ export function TransactionsTable() {
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
           />
           <div className="flex items-center gap-2 shrink-0">
-            {transactions && transactions.length > 0 && (
+            {filteredTransactions && filteredTransactions.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 text-xs text-muted-foreground"
-                onClick={() => exportCSV(transactions)}
+                onClick={() => exportCSV(filteredTransactions)}
               >
                 <Download className="h-3.5 w-3.5 mr-1" />
                 CSV
@@ -291,17 +291,36 @@ export function TransactionsTable() {
             </div>
 
             {/* Tag filter */}
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                Tag
-              </p>
-              <input
-                value={tagFilter}
-                onChange={(e) => setTagFilter(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
-                placeholder="Filter by tag..."
-                className="w-full rounded-md border bg-transparent px-3 py-1.5 text-xs outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
-              />
-            </div>
+            {(() => {
+              const allTags = Array.from(
+                new Set(transactions?.flatMap((tx) => tx.tags ?? []) ?? [])
+              ).sort();
+              if (allTags.length === 0) return null;
+              return (
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    Tag
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
+                        className={cn(
+                          "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                          tagFilter === tag
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background text-muted-foreground border border-border/60 hover:text-foreground hover:border-border"
+                        )}
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Clear + done */}
             <div className="flex items-center justify-between pt-1">

@@ -57,6 +57,37 @@ export function useCreateTransfer() {
       ]);
 
       if (error) throw new Error(error.message);
+
+      // Fetch both account balances
+      const [fromResult, toResult] = await Promise.all([
+        supabase.from("accounts").select("balance").eq("id", fromAccountId).single(),
+        supabase.from("accounts").select("balance").eq("id", toAccountId).single(),
+      ]);
+
+      if (fromResult.error) throw new Error(fromResult.error.message);
+      if (toResult.error) throw new Error(toResult.error.message);
+
+      const absAmount = Math.abs(amount);
+
+      if (fromResult.data.balance < absAmount) {
+        throw new Error("Insufficient balance in source account");
+      }
+
+      // Update both balances atomically
+      const [fromUpdate, toUpdate] = await Promise.all([
+        supabase
+          .from("accounts")
+          .update({ balance: Math.round((fromResult.data.balance - absAmount) * 100) / 100 })
+          .eq("id", fromAccountId),
+        supabase
+          .from("accounts")
+          .update({ balance: Math.round((toResult.data.balance + absAmount) * 100) / 100 })
+          .eq("id", toAccountId),
+      ]);
+
+      if (fromUpdate.error) throw new Error(fromUpdate.error.message);
+      if (toUpdate.error) throw new Error(toUpdate.error.message);
+
       return transferId;
     },
     onSuccess: () => {

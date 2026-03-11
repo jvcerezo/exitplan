@@ -22,6 +22,15 @@ export function TransferDialog() {
   const createTransfer = useCreateTransfer();
 
   const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const fromAccount = activeAccounts.find((a) => a.id === fromId);
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setFromId("");
+      setToId("");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,15 +44,13 @@ export function TransferDialog() {
       description: (formData.get("description") as string) || undefined,
     });
 
-    setOpen(false);
-    setFromId("");
-    setToId("");
+    handleOpenChange(false);
   }
 
   if (activeAccounts.length < 2) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <ArrowRightLeft className="h-4 w-4 mr-2" />
@@ -126,12 +133,17 @@ export function TransferDialog() {
               inputMode="decimal"
               step="0.01"
               min="0.01"
-              max="9999999999.99"
+              max={fromAccount ? String(fromAccount.balance) : "9999999999.99"}
               placeholder="0.00"
               required
               className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
+          {fromAccount && (
+            <p className="text-xs text-muted-foreground -mt-3">
+              Available: {formatCurrency(fromAccount.balance, fromAccount.currency)}
+            </p>
+          )}
 
           {/* Note + Date */}
           <div className="grid grid-cols-[1fr_auto] gap-2">

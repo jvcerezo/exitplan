@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { completeOnboarding } from "@/app/(auth)/actions";
 
 export interface TourStep {
   /** CSS selector for the element to highlight. null = centered modal (no highlight) */
@@ -151,7 +150,7 @@ export function useTour() {
     localStorage.setItem(STORAGE_KEY, "1");
   }, [isRequiredRun]);
 
-  const next = useCallback(async () => {
+  const next = useCallback(() => {
     const isLastStep = currentStep >= TOUR_STEPS.length - 1;
     if (!isLastStep) {
       setCurrentStep((s) => s + 1);
@@ -162,10 +161,6 @@ export function useTour() {
     localStorage.setItem(STORAGE_KEY, "1");
 
     if (isRequiredRun) {
-      const result = await completeOnboarding();
-      if (result?.error) {
-        console.error("Failed to finalize onboarding after tour:", result.error);
-      }
       localStorage.removeItem(REQUIRED_KEY);
       setIsRequiredRun(false);
     }

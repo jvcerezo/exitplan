@@ -116,7 +116,7 @@ export function BudgetAlerts() {
               const isOver = percentage > 100;
               const remaining = Math.round((budget.amount - spent) * 100) / 100;
               const statusColor =
-                percentage >= 75 ? (isOver ? "text-red-500" : "text-yellow-500") : "text-green-600";
+                percentage >= 75 ? (isOver ? "text-foreground" : "text-yellow-500") : "text-green-600";
               const barColor =
                 percentage >= 75 ? (isOver ? "bg-red-500" : "bg-yellow-500") : "bg-green-600";
 

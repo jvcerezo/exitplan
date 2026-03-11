@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { useProfile } from "@/hooks/use-profile";
 import { useAddAccount } from "@/hooks/use-accounts";
 import { useAddGoal } from "@/hooks/use-goals";
+import { completeOnboarding } from "@/app/(auth)/actions";
 import { COMMON_ACCOUNTS, GOAL_CATEGORIES, ACCOUNT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -136,6 +137,7 @@ export default function OnboardingPage() {
         deadline: null,
         category: goalCategory,
       });
+      await completeOnboarding();
       // Require completing the tour before onboarding is marked as complete
       localStorage.setItem("exitplan_tour_required", "1");
       localStorage.setItem("exitplan_tour_pending", "1");
@@ -151,6 +153,7 @@ export default function OnboardingPage() {
   async function handleFinish() {
     setSaving(true);
     try {
+      await completeOnboarding();
       // Require completing the tour before onboarding is marked as complete
       localStorage.setItem("exitplan_tour_required", "1");
       localStorage.setItem("exitplan_tour_pending", "1");

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import {
   AreaChart,
   Area,
@@ -12,9 +13,38 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNetWorthOverTime } from "@/hooks/use-chart-data";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
+
+const MILESTONES = [
+  10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
+];
+
+function checkMilestone(prev: number, current: number): number | null {
+  for (const m of MILESTONES) {
+    if (prev < m && current >= m) return m;
+  }
+  return null;
+}
 
 export function NetWorthChart() {
   const { data, isLoading } = useNetWorthOverTime();
+  const prevNetWorthRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+    const current = data[data.length - 1].balance;
+    const prev = prevNetWorthRef.current;
+    if (prev !== null) {
+      const milestone = checkMilestone(prev, current);
+      if (milestone !== null) {
+        toast.success(`🎉 Net worth milestone reached!`, {
+          description: `You've crossed ${formatCurrency(milestone)} in net worth. Keep it up!`,
+          duration: 6000,
+        });
+      }
+    }
+    prevNetWorthRef.current = current;
+  }, [data]);
 
   if (isLoading) {
     return (

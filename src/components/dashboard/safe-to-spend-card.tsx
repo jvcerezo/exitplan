@@ -48,7 +48,7 @@ export function SafeToSpendCard() {
   const isEmpty = data.safeToSpend <= 0;
 
   const statusColor = isEmpty
-    ? "text-red-500"
+    ? "text-foreground"
     : isLow
     ? "text-amber-500"
     : "text-green-600";

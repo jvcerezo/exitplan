@@ -113,6 +113,17 @@ export default function BudgetsPage() {
               {formatCurrency(data.totalBudget - data.totalSpent)}
             </span>
           </div>
+          {data.totalRollover > 0 && (
+            <>
+              <Separator orientation="vertical" className="hidden sm:block h-4" />
+              <div>
+                <span className="text-muted-foreground">Rolled Over: </span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  +{formatCurrency(data.totalRollover)}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
