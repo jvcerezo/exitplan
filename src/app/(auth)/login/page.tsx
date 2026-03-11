@@ -2,33 +2,29 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { signIn } from "../actions";
+
+const BRAND_BULLETS = [
+  "Track income & expenses across all accounts",
+  "Set monthly budgets and savings goals",
+  "Visual insights on one clean dashboard",
+];
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     const formData = new FormData(e.currentTarget);
     const result = await signIn(formData);
-
     if (result?.error) {
       setError(result.error);
       setLoading(false);
@@ -36,33 +32,52 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      {/* Back to home */}
-      <div className="mb-8 w-full max-w-sm">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to home
+    <div className="min-h-screen lg:grid lg:grid-cols-2">
+      {/* ── Left brand panel (desktop only) ── */}
+      <div className="hidden lg:flex flex-col justify-between bg-primary p-12 text-primary-foreground">
+        <Link href="/" className="text-xl font-bold tracking-tight">
+          Exit<span className="opacity-60">Plan</span>
         </Link>
+
+        <div className="space-y-8">
+          <p className="text-4xl font-bold leading-tight tracking-tight">
+            Your money.<br />
+            Your plan.<br />
+            Your freedom.
+          </p>
+          <ul className="space-y-3">
+            {BRAND_BULLETS.map((b) => (
+              <li key={b} className="flex items-center gap-3 text-sm text-primary-foreground/80">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-primary-foreground/60" />
+                {b}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="text-sm text-primary-foreground/50">
+          100% free · No credit card required
+        </p>
       </div>
 
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <Link href="/" className="mx-auto mb-2">
-            <span className="text-2xl font-bold tracking-tight">
-              Exit<span className="text-primary">Plan</span>
-            </span>
-          </Link>
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to continue your financial journey
-          </CardDescription>
-        </CardHeader>
+      {/* ── Right form panel ── */}
+      <div className="flex flex-col items-center justify-center px-6 py-16 sm:px-10">
+        {/* Mobile logo */}
+        <Link href="/" className="mb-10 text-2xl font-bold tracking-tight lg:hidden">
+          Exit<span className="text-primary">Plan</span>
+        </Link>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="w-full max-w-sm">
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Sign in to continue your financial journey
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
                 {error}
@@ -83,46 +98,46 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"
-                autoComplete="current-password"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
+                <><Loader2 className="h-4 w-4 animate-spin" /> Signing in...</>
               ) : (
                 "Sign In"
               )}
             </Button>
           </form>
-        </CardContent>
 
-        <CardFooter className="flex-col gap-4">
-          <Separator />
-          <p className="text-center text-sm text-muted-foreground">
+          {/* Footer link */}
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-primary hover:text-primary/80 transition-colors"
-            >
+            <Link href="/signup" className="font-medium text-primary hover:text-primary/80 transition-colors">
               Create one free
             </Link>
           </p>
-        </CardFooter>
-      </Card>
-
-      <p className="mt-8 text-center text-xs text-muted-foreground">
-        By signing in, you agree to take control of your finances.
-      </p>
+        </div>
+      </div>
     </div>
   );
 }

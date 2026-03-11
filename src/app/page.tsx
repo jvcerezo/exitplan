@@ -22,7 +22,7 @@ const features = [
     icon: Wallet,
     title: "Track Every Peso",
     description:
-      "Log income and expenses with categories, descriptions, and dates. Filter, search, and export to CSV anytime.",
+      "Log income and expenses with categories, tags, and dates. Import directly from GCash, BDO, BPI, and most bank CSV exports.",
   },
   {
     icon: Calculator,
@@ -102,7 +102,7 @@ export default function LandingPage() {
         <div className="flex flex-col items-center py-24 text-center sm:py-32 lg:py-40">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
             <Zap className="h-3.5 w-3.5" />
-            100% free. No credit card required.
+            100% free · No credit card required
           </div>
 
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
@@ -113,25 +113,20 @@ export default function LandingPage() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Track spending, set budgets, grow savings, and see it all on one
-            smart dashboard. ExitPlan is the minimalist financial tracker
-            built for clarity, not complexity.
+            Track spending, set budgets, grow savings, and see it all in one
+            place. ExitPlan is the clean, private financial tracker built for
+            Filipinos who want clarity over complexity.
           </p>
 
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="text-base px-8" asChild>
               <Link href="/signup">
                 Start Tracking Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-base px-8"
-              asChild
-            >
-              <Link href="/login">I have an account</Link>
+            <Button variant="outline" size="lg" className="text-base px-8" asChild>
+              <Link href="/login">I already have an account</Link>
             </Button>
           </div>
         </div>
@@ -325,8 +320,8 @@ export default function LandingPage() {
               Simple by design
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              No setup wizards. No onboarding flows. Sign up and start tracking
-              in under a minute.
+              A quick guided setup gets you tracking in under a minute — no
+              technical knowledge needed.
             </p>
           </div>
 
@@ -334,9 +329,9 @@ export default function LandingPage() {
             {[
               {
                 step: "1",
-                title: "Add transactions",
+                title: "Set up your accounts",
                 description:
-                  "Log your income and expenses as they happen. Categorize them with one tap.",
+                  "Add your bank accounts, e-wallets, and cash on hand. Import existing transactions from a CSV in seconds.",
               },
               {
                 step: "2",
