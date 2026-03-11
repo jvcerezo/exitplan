@@ -248,6 +248,124 @@ CREATE POLICY "Users can delete own accounts"
 
 
 -- ============================================
+-- Atomic transfer function
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.create_account_transfer(
+  from_account_id uuid,
+  to_account_id uuid,
+  transfer_amount numeric,
+  transfer_date date,
+  transfer_description text DEFAULT NULL
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+  from_balance numeric(12, 2);
+  to_balance numeric(12, 2);
+  from_archived boolean;
+  to_archived boolean;
+  transfer_uuid uuid := gen_random_uuid();
+  normalized_amount numeric(12, 2) := ROUND(ABS(transfer_amount)::numeric, 2);
+  normalized_description text := COALESCE(NULLIF(BTRIM(transfer_description), ''), 'Transfer');
+BEGIN
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF from_account_id IS NULL OR to_account_id IS NULL THEN
+    RAISE EXCEPTION 'Both accounts are required';
+  END IF;
+
+  IF from_account_id = to_account_id THEN
+    RAISE EXCEPTION 'Source and destination accounts must be different';
+  END IF;
+
+  IF normalized_amount <= 0 THEN
+    RAISE EXCEPTION 'Transfer amount must be greater than zero';
+  END IF;
+
+  SELECT balance, is_archived
+    INTO from_balance, from_archived
+  FROM public.accounts
+  WHERE id = from_account_id
+    AND user_id = current_user_id
+  FOR UPDATE;
+
+  IF from_balance IS NULL THEN
+    RAISE EXCEPTION 'Source account not found';
+  END IF;
+
+  SELECT balance, is_archived
+    INTO to_balance, to_archived
+  FROM public.accounts
+  WHERE id = to_account_id
+    AND user_id = current_user_id
+  FOR UPDATE;
+
+  IF to_balance IS NULL THEN
+    RAISE EXCEPTION 'Destination account not found';
+  END IF;
+
+  IF from_archived OR to_archived THEN
+    RAISE EXCEPTION 'Archived accounts cannot be used for transfers';
+  END IF;
+
+  IF from_balance < normalized_amount THEN
+    RAISE EXCEPTION 'Insufficient balance in source account';
+  END IF;
+
+  UPDATE public.accounts
+  SET balance = ROUND((balance - normalized_amount)::numeric, 2)
+  WHERE id = from_account_id;
+
+  UPDATE public.accounts
+  SET balance = ROUND((balance + normalized_amount)::numeric, 2)
+  WHERE id = to_account_id;
+
+  INSERT INTO public.transactions (
+    user_id,
+    amount,
+    category,
+    description,
+    date,
+    currency,
+    account_id,
+    transfer_id
+  )
+  VALUES
+    (
+      current_user_id,
+      -normalized_amount,
+      'transfer',
+      normalized_description,
+      transfer_date,
+      'PHP',
+      from_account_id,
+      transfer_uuid
+    ),
+    (
+      current_user_id,
+      normalized_amount,
+      'transfer',
+      normalized_description,
+      transfer_date,
+      'PHP',
+      to_account_id,
+      transfer_uuid
+    );
+
+  RETURN transfer_uuid;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_account_transfer(uuid, uuid, numeric, date, text) TO authenticated;
+
+
+-- ============================================
 -- Exchange Rates table (user-defined rates)
 -- ============================================
 
