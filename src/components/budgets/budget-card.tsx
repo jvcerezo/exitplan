@@ -11,6 +11,12 @@ import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { Budget } from "@/lib/types/database";
 
+const PERIOD_LABEL: Record<string, string> = {
+  weekly: "Weekly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+};
+
 const BUDGET_QUERY_KEYS = [["budgets"]];
 
 interface BudgetCardProps {
@@ -62,8 +68,13 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="space-y-0.5">
-            <CardTitle className="text-sm font-medium capitalize">
+            <CardTitle className="text-sm font-medium capitalize flex items-center gap-2">
               {budget.category}
+              {budget.period && budget.period !== "monthly" && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                  {PERIOD_LABEL[budget.period]}
+                </span>
+              )}
             </CardTitle>
             {rollover > 0 && (
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">

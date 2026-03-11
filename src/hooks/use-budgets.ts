@@ -4,17 +4,18 @@ import { enqueueOfflineMutation } from "@/lib/offline/store";
 import { addOfflineBudgetToCache } from "@/lib/offline/query-cache";
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
-import type { Budget, BudgetInsert } from "@/lib/types/database";
+import type { Budget, BudgetInsert, BudgetPeriod } from "@/lib/types/database";
 
-export function useBudgets(month: string) {
+export function useBudgets(month: string, period: BudgetPeriod = "monthly") {
   return useQuery({
-    queryKey: ["budgets", month],
+    queryKey: ["budgets", month, period],
     queryFn: async (): Promise<Budget[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("budgets")
         .select("*")
         .eq("month", month)
+        .eq("period", period)
         .order("category", { ascending: true });
 
       if (error) throw new Error(error.message);
@@ -23,35 +24,70 @@ export function useBudgets(month: string) {
   });
 }
 
-export function useBudgetSummary(month: string) {
+export function useBudgetSummary(month: string, period: BudgetPeriod = "monthly") {
   return useQuery({
-    queryKey: ["budgets", "summary", month],
+    queryKey: ["budgets", "summary", month, period],
     queryFn: async () => {
       const supabase = createClient();
 
-      const startDate = month;
-      const [year, monthNum] = month.split("-").map(Number);
-      const endDate = new Date(year, monthNum, 0).toISOString().split("T")[0];
+      // Compute date range for the selected period
+      function getPeriodRange(startStr: string, p: BudgetPeriod): { start: string; end: string } {
+        const d = new Date(startStr);
+        if (p === "weekly") {
+          const end = new Date(d);
+          end.setDate(end.getDate() + 6);
+          return {
+            start: d.toISOString().split("T")[0],
+            end: end.toISOString().split("T")[0],
+          };
+        }
+        if (p === "quarterly") {
+          const end = new Date(d.getFullYear(), d.getMonth() + 3, 0);
+          return {
+            start: d.toISOString().split("T")[0],
+            end: end.toISOString().split("T")[0],
+          };
+        }
+        // monthly default
+        const [year, monthNum] = startStr.split("-").map(Number);
+        return {
+          start: startStr,
+          end: new Date(year, monthNum, 0).toISOString().split("T")[0],
+        };
+      }
 
-      // Previous month range for rollover computation
-      const prevDate = new Date(year, monthNum - 2, 1);
-      const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}-01`;
-      const prevMonthEnd = new Date(year, monthNum - 1, 0).toISOString().split("T")[0];
+      function getPrevPeriodStart(startStr: string, p: BudgetPeriod): string {
+        const d = new Date(startStr);
+        if (p === "weekly") {
+          d.setDate(d.getDate() - 7);
+          return d.toISOString().split("T")[0];
+        }
+        if (p === "quarterly") {
+          return new Date(d.getFullYear(), d.getMonth() - 3, 1).toISOString().split("T")[0];
+        }
+        const [year, monthNum] = startStr.split("-").map(Number);
+        const prevDate = new Date(year, monthNum - 2, 1);
+        return `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}-01`;
+      }
+
+      const { start: startDate, end: endDate } = getPeriodRange(month, period);
+      const prevStart = getPrevPeriodStart(month, period);
+      const { end: prevEnd } = getPeriodRange(prevStart, period);
 
       const [budgetsResult, txResult, prevBudgetsResult, prevTxResult] = await Promise.all([
-        supabase.from("budgets").select("*").eq("month", month),
+        supabase.from("budgets").select("*").eq("month", month).eq("period", period),
         supabase
           .from("transactions")
           .select("amount, category")
           .gte("date", startDate)
           .lte("date", endDate)
           .lt("amount", 0),
-        supabase.from("budgets").select("*").eq("month", prevMonth),
+        supabase.from("budgets").select("*").eq("month", prevStart).eq("period", period),
         supabase
           .from("transactions")
           .select("amount, category")
-          .gte("date", prevMonth)
-          .lte("date", prevMonthEnd)
+          .gte("date", prevStart)
+          .lte("date", prevEnd)
           .lt("amount", 0),
       ]);
 
@@ -130,6 +166,7 @@ export function useAddBudget() {
           category: budget.category,
           amount: budget.amount,
           month: budget.month,
+          period: budget.period ?? "monthly",
           rollover: budget.rollover ?? false,
         };
 
@@ -141,6 +178,7 @@ export function useAddBudget() {
             category: budget.category,
             amount: budget.amount,
             month: budget.month,
+            period: budget.period ?? "monthly",
             rollover: budget.rollover ?? false,
           },
         });
@@ -236,9 +274,11 @@ export function useCopyBudgetsFromMonth() {
     mutationFn: async ({
       sourceMonth,
       targetMonth,
+      period = "monthly",
     }: {
       sourceMonth: string;
       targetMonth: string;
+      period?: BudgetPeriod;
     }) => {
       const supabase = createClient();
       const {
@@ -249,13 +289,14 @@ export function useCopyBudgetsFromMonth() {
       // Fetch source budgets
       const { data: sourceBudgets, error: fetchError } = await supabase
         .from("budgets")
-        .select("category, amount")
+        .select("category, amount, period")
         .eq("month", sourceMonth)
+        .eq("period", period)
         .eq("user_id", user.id);
 
       if (fetchError) throw new Error(fetchError.message);
       if (!sourceBudgets || sourceBudgets.length === 0) {
-        throw new Error("No budgets found in the previous month");
+        throw new Error("No budgets found in the previous period");
       }
 
       // Check what already exists in target month
@@ -263,6 +304,7 @@ export function useCopyBudgetsFromMonth() {
         .from("budgets")
         .select("category")
         .eq("month", targetMonth)
+        .eq("period", period)
         .eq("user_id", user.id);
 
       const existingCategories = new Set(
@@ -272,15 +314,16 @@ export function useCopyBudgetsFromMonth() {
       // Only copy categories that don't already exist
       const newBudgets = sourceBudgets
         .filter((b: { category: string }) => !existingCategories.has(b.category))
-        .map((b: { category: string; amount: number }) => ({
+        .map((b: { category: string; amount: number; period: string }) => ({
           category: b.category,
           amount: b.amount,
           month: targetMonth,
+          period,
           user_id: user.id,
         }));
 
       if (newBudgets.length === 0) {
-        throw new Error("All categories already have budgets this month");
+        throw new Error("All categories already have budgets this period");
       }
 
       const { error: insertError } = await supabase

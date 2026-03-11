@@ -542,8 +542,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   primary_currency            text DEFAULT 'PHP' NOT NULL,
   has_completed_onboarding    boolean DEFAULT false NOT NULL,
   role                        text DEFAULT 'user' NOT NULL CHECK (role IN ('user', 'admin')),
-  created_at                  timestamptz DEFAULT now() NOT NULL
+  created_at                  timestamptz DEFAULT now() NOT NULL,
+  avatar_url                  text
 );
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url text;
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -621,12 +624,20 @@ CREATE TABLE IF NOT EXISTS public.budgets (
   user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   category    text NOT NULL,
   amount      numeric(12, 2) NOT NULL,
-  month       date NOT NULL, -- first day of the month (e.g. 2026-02-01)
+  month       date NOT NULL, -- first day of the period (week, month, or quarter)
+  period      text NOT NULL DEFAULT 'monthly' CHECK (period IN ('weekly', 'monthly', 'quarterly')),
   rollover    boolean DEFAULT false NOT NULL
 );
 
 ALTER TABLE public.budgets
   ADD COLUMN IF NOT EXISTS rollover boolean DEFAULT false NOT NULL;
+
+ALTER TABLE public.budgets
+  ADD COLUMN IF NOT EXISTS period text NOT NULL DEFAULT 'monthly'
+  CHECK (period IN ('weekly', 'monthly', 'quarterly'));
+
+-- Re-create the unique index to be period-scoped
+DROP INDEX IF EXISTS idx_budgets_user_month_category_unique;
 
 DO $$
 BEGIN
@@ -652,8 +663,8 @@ BEGIN
   END IF;
 END $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_user_month_category_unique
-  ON public.budgets (user_id, month, category);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_user_period_month_category_unique
+  ON public.budgets (user_id, period, month, category);
 
 CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON public.budgets USING btree (user_id);
 CREATE INDEX IF NOT EXISTS idx_budgets_month ON public.budgets USING btree (month);
@@ -975,3 +986,42 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.complete_onboarding() TO authenticated;
+
+
+-- ============================================
+-- Avatars storage bucket
+-- Run once in the Supabase Dashboard → Storage tab,
+-- or paste in the SQL editor after enabling pg_storage.
+-- ============================================
+
+-- Create the public "avatars" bucket (idempotent)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow authenticated users to upload only to their own folder
+CREATE POLICY "Authenticated users can upload own avatar"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  );
+
+CREATE POLICY "Authenticated users can update own avatar"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  );
+
+CREATE POLICY "Authenticated users can delete own avatar"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  );
+
+-- Public read for avatar URLs (bucket is already public, this is optional)
+CREATE POLICY "Public can view avatars"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'avatars');

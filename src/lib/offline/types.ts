@@ -44,6 +44,7 @@ export interface AddBudgetOfflinePayload {
   category: string;
   amount: number;
   month: string;
+  period?: string;
   rollover?: boolean;
 }
 

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { signOut } from "@/app/(auth)/actions";
 import { ThemeToggle } from "./theme-toggle";
 import { useTourContext } from "@/providers/tour-provider";
+import { useProfile } from "@/hooks/use-profile";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
@@ -30,6 +31,14 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { start } = useTourContext();
+  const { data: profile } = useProfile();
+
+  const initials = (profile?.full_name ?? profile?.email ?? "?")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-sidebar-border bg-sidebar">
@@ -84,6 +93,29 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-3 py-4 border-t border-sidebar-border space-y-1">
+        {/* User avatar row */}
+        {profile && (
+          <Link
+            href="/settings"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 mb-1 hover:bg-sidebar-accent transition-colors"
+          >
+            <div className="h-7 w-7 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0 border border-sidebar-border">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-[10px] font-bold text-primary">{initials}</span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-sidebar-foreground truncate">
+                {profile.full_name || profile.email || "Account"}
+              </p>
+              {profile.full_name && (
+                <p className="text-[10px] text-sidebar-foreground/50 truncate">{profile.email}</p>
+              )}
+            </div>
+          </Link>
+        )}
         <div className="flex items-center justify-between px-3 py-1">
           <span className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider">Theme</span>
           <ThemeToggle />

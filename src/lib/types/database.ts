@@ -45,7 +45,10 @@ export interface Profile {
   created_at: string;
   primary_currency: string;
   has_completed_onboarding: boolean;
+  avatar_url: string | null;
 }
+
+export type BudgetPeriod = "weekly" | "monthly" | "quarterly";
 
 export interface Budget {
   id: string;
@@ -54,10 +57,12 @@ export interface Budget {
   category: string;
   amount: number;
   month: string;
+  period: BudgetPeriod;
   rollover: boolean;
 }
 
-export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id" | "rollover"> & {
+export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id" | "rollover" | "period"> & {
+  period?: BudgetPeriod;
   rollover?: boolean;
 };
 

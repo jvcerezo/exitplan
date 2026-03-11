@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map } from "lucide-react";
-import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
+import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X } from "lucide-react";
+import { useProfile, useUpdateProfile, useUploadAvatar, useRemoveAvatar } from "@/hooks/use-profile";
 import { useExchangeRates, useUpsertExchangeRate } from "@/hooks/use-exchange-rates";
 import { useMarketRates } from "@/hooks/use-market-rates";
 import { signOut } from "@/app/(auth)/actions";
@@ -34,12 +34,15 @@ export const dynamic = "force-dynamic";
 export default function SettingsPage() {
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
+  const uploadAvatar = useUploadAvatar();
+  const removeAvatar = useRemoveAvatar();
   const { theme, setTheme } = useTheme();
   const { data: exchangeRates } = useExchangeRates();
   const { data: marketData, isLoading: marketLoading } = useMarketRates();
   const upsertRate = useUpsertExchangeRate();
   const queryClient = useQueryClient();
   const { start: startTour } = useTourContext();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [mounted, setMounted] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -63,6 +66,25 @@ export default function SettingsPage() {
   const handleSaveCurrency = () => {
     updateProfile.mutate({ primary_currency: primaryCurrency });
   };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Image must be under 2 MB");
+      return;
+    }
+    uploadAvatar.mutate(file);
+    e.target.value = "";
+  };
+
+  // Initials fallback
+  const initials = (profile?.full_name ?? profile?.email ?? "?")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString("en-PH", {
@@ -107,6 +129,76 @@ export default function SettingsPage() {
             </div>
           ) : (
             <>
+              {/* Avatar */}
+              <div className="flex items-center gap-5">
+                <div className="relative group">
+                  <div className="h-20 w-20 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center border-2 border-border">
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl font-bold text-primary">{initials}</span>
+                    )}
+                  </div>
+                  {/* Overlay */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadAvatar.isPending}
+                    className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    aria-label="Change avatar"
+                  >
+                    {uploadAvatar.isPending ? (
+                      <Loader2 className="h-5 w-5 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-5 w-5 text-white" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">{profile?.full_name || "No name set"}</p>
+                  <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadAvatar.isPending}
+                    >
+                      {uploadAvatar.isPending ? "Uploading..." : "Change Photo"}
+                    </Button>
+                    {profile?.avatar_url && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-destructive hover:text-destructive"
+                        onClick={() => removeAvatar.mutate()}
+                        disabled={removeAvatar.isPending}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/60">JPG, PNG or WebP · Max 2 MB</p>
+                </div>
+              </div>
+
+              <Separator />
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

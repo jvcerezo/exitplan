@@ -61,7 +61,7 @@ export function addOfflineGoalToCache(queryClient: QueryClient, goal: Goal) {
 }
 
 export function addOfflineBudgetToCache(queryClient: QueryClient, budget: Budget) {
-  queryClient.setQueryData<Budget[] | undefined>(["budgets", budget.month], (current) =>
+  queryClient.setQueryData<Budget[] | undefined>(["budgets", budget.month, budget.period ?? "monthly"], (current) =>
     prependUniqueById(current, budget).sort((left, right) => left.category.localeCompare(right.category))
   );
 }

@@ -156,6 +156,7 @@ async function syncAddBudget(payload: AddBudgetOfflinePayload, userId: string) {
     category: payload.category,
     amount: payload.amount,
     month: payload.month,
+    period: payload.period ?? "monthly",
     rollover: payload.rollover ?? false,
     user_id: userId,
   });
