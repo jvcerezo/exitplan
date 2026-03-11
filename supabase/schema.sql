@@ -22,6 +22,11 @@ CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts USING btree (
 
 ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own accounts" ON public.accounts;
+DROP POLICY IF EXISTS "Users can insert own accounts" ON public.accounts;
+DROP POLICY IF EXISTS "Users can update own accounts" ON public.accounts;
+DROP POLICY IF EXISTS "Users can delete own accounts" ON public.accounts;
+
 CREATE POLICY "Users can view own accounts"
   ON public.accounts FOR SELECT TO authenticated
   USING ((SELECT auth.uid()) = user_id);
@@ -73,6 +78,11 @@ CREATE INDEX IF NOT EXISTS idx_transactions_date    ON public.transactions USING
 
 -- 3. Enable Row Level Security
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own transactions" ON public.transactions;
+DROP POLICY IF EXISTS "Users can insert own transactions" ON public.transactions;
+DROP POLICY IF EXISTS "Users can update own transactions" ON public.transactions;
+DROP POLICY IF EXISTS "Users can delete own transactions" ON public.transactions;
 
 -- 4. RLS Policies — users can only access their own transactions
 
@@ -319,6 +329,11 @@ CREATE INDEX IF NOT EXISTS idx_goals_user_id ON public.goals USING btree (user_i
 
 ALTER TABLE public.goals ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own goals" ON public.goals;
+DROP POLICY IF EXISTS "Users can insert own goals" ON public.goals;
+DROP POLICY IF EXISTS "Users can update own goals" ON public.goals;
+DROP POLICY IF EXISTS "Users can delete own goals" ON public.goals;
+
 CREATE POLICY "Users can view own goals"
   ON public.goals FOR SELECT
   TO authenticated
@@ -373,6 +388,11 @@ CREATE INDEX IF NOT EXISTS idx_goal_fundings_goal_id ON public.goal_fundings USI
 CREATE INDEX IF NOT EXISTS idx_goal_fundings_account_id ON public.goal_fundings USING btree (account_id);
 
 ALTER TABLE public.goal_fundings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own goal fundings" ON public.goal_fundings;
+DROP POLICY IF EXISTS "Users can insert own goal fundings" ON public.goal_fundings;
+DROP POLICY IF EXISTS "Users can update own goal fundings" ON public.goal_fundings;
+DROP POLICY IF EXISTS "Users can delete own goal fundings" ON public.goal_fundings;
 
 CREATE POLICY "Users can view own goal fundings"
   ON public.goal_fundings FOR SELECT
@@ -550,6 +570,9 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url text;
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+
 -- Users can read their own profile
 CREATE POLICY "Users can view own profile"
   ON public.profiles FOR SELECT
@@ -609,7 +632,9 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
@@ -639,6 +664,10 @@ ALTER TABLE public.budgets
 -- Re-create the unique index to be period-scoped
 DROP INDEX IF EXISTS idx_budgets_user_month_category_unique;
 
+-- Replace the old monthly-only constraint with a period-aware start-date rule.
+ALTER TABLE public.budgets
+  DROP CONSTRAINT IF EXISTS budgets_month_is_first_day;
+
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -656,10 +685,14 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1
     FROM pg_constraint
-    WHERE conname = 'budgets_month_is_first_day'
+    WHERE conname = 'budgets_period_start_valid'
   ) THEN
     ALTER TABLE public.budgets
-      ADD CONSTRAINT budgets_month_is_first_day CHECK (month = date_trunc('month', month)::date) NOT VALID;
+      ADD CONSTRAINT budgets_period_start_valid CHECK (
+        (period = 'monthly' AND month = date_trunc('month', month)::date)
+        OR (period = 'quarterly' AND month = date_trunc('quarter', month)::date)
+        OR (period = 'weekly' AND EXTRACT(DOW FROM month) = 0)
+      ) NOT VALID;
   END IF;
 END $$;
 
@@ -670,6 +703,11 @@ CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON public.budgets USING btree (us
 CREATE INDEX IF NOT EXISTS idx_budgets_month ON public.budgets USING btree (month);
 
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own budgets" ON public.budgets;
+DROP POLICY IF EXISTS "Users can insert own budgets" ON public.budgets;
+DROP POLICY IF EXISTS "Users can update own budgets" ON public.budgets;
+DROP POLICY IF EXISTS "Users can delete own budgets" ON public.budgets;
 
 CREATE POLICY "Users can view own budgets"
   ON public.budgets FOR SELECT TO authenticated
@@ -833,6 +871,11 @@ CREATE INDEX IF NOT EXISTS idx_exchange_rates_user_id ON public.exchange_rates U
 
 ALTER TABLE public.exchange_rates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own exchange rates" ON public.exchange_rates;
+DROP POLICY IF EXISTS "Users can insert own exchange rates" ON public.exchange_rates;
+DROP POLICY IF EXISTS "Users can update own exchange rates" ON public.exchange_rates;
+DROP POLICY IF EXISTS "Users can delete own exchange rates" ON public.exchange_rates;
+
 CREATE POLICY "Users can view own exchange rates"
   ON public.exchange_rates FOR SELECT TO authenticated
   USING ((SELECT auth.uid()) = user_id);
@@ -956,6 +999,8 @@ CREATE INDEX IF NOT EXISTS idx_market_rates_currency ON public.market_rates USIN
 
 ALTER TABLE public.market_rates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Authenticated users can view market rates" ON public.market_rates;
+
 -- Anyone authenticated can view market rates (no user_id column)
 CREATE POLICY "Authenticated users can view market rates"
   ON public.market_rates FOR SELECT TO authenticated
@@ -998,6 +1043,11 @@ GRANT EXECUTE ON FUNCTION public.complete_onboarding() TO authenticated;
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('avatars', 'avatars', true)
 ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Authenticated users can upload own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Public can view avatars" ON storage.objects;
 
 -- Allow authenticated users to upload only to their own folder
 CREATE POLICY "Authenticated users can upload own avatar"

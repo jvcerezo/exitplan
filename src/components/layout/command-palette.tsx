@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ArrowLeftRight, Target, Calculator } from "lucide-react";
+import { Search, ArrowLeftRight, Target, Calculator, Wallet } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useGlobalSearch, type SearchResult } from "@/hooks/use-global-search";
 import { cn } from "@/lib/utils";
@@ -11,12 +11,14 @@ const typeIcons = {
   transaction: ArrowLeftRight,
   goal: Target,
   budget: Calculator,
+  account: Wallet,
 };
 
 const typeLabels = {
   transaction: "Transactions",
   goal: "Goals",
   budget: "Budgets",
+  account: "Accounts",
 };
 
 export function CommandPalette() {
@@ -111,7 +113,7 @@ export function CommandPalette() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Search transactions, goals, budgets..."
+                placeholder="Search transactions, accounts, goals, budgets..."
                 className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
               <kbd className="hidden sm:inline-flex h-5 select-none items-center rounded border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">

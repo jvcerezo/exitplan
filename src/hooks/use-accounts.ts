@@ -25,6 +25,14 @@ export function useAccounts() {
 export function useAddAccount() {
   const queryClient = useQueryClient();
 
+  function upsertAccountInCache(account: Account) {
+    queryClient.setQueryData<Account[] | undefined>(["accounts"], (current) => {
+      const next = (current ?? []).filter((existing) => existing.id !== account.id);
+      next.push(account);
+      return next.sort((left, right) => left.name.localeCompare(right.name));
+    });
+  }
+
   return useMutation({
     mutationFn: async (account: AccountInsert) => {
       if (isBrowserOffline()) {
@@ -145,8 +153,14 @@ export function useAddAccount() {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (account) => {
+      upsertAccountInCache(account);
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
       toast.success(isBrowserOffline() ? "Account saved offline" : "Account added");
     },
     onError: (error) => {

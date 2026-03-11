@@ -93,6 +93,9 @@ export function useTransactionsSummary() {
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
+      if (accountResult.error) throw new Error(accountResult.error.message);
+      if (goalsResult.error) throw new Error(goalsResult.error.message);
+      if (budgetsResult.error) throw new Error(budgetsResult.error.message);
 
       const transactions = txResult.data;
       const accounts = accountResult.data ?? [];

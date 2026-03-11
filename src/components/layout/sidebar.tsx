@@ -54,9 +54,7 @@ export function Sidebar() {
         <button
           data-tour="sidebar-search"
           onClick={() => {
-            window.dispatchEvent(
-              new KeyboardEvent("keydown", { key: "k", metaKey: true })
-            );
+            window.dispatchEvent(new Event("open-command-palette"));
           }}
           className="flex w-full items-center gap-3 rounded-lg border border-sidebar-border bg-sidebar px-3 py-2 text-sm text-sidebar-foreground/50 hover:bg-sidebar-accent transition-colors"
         >
