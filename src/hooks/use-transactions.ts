@@ -191,6 +191,14 @@ export function useUpdateTransaction() {
       ...updates
     }: Partial<TransactionInsert> & { id: string }) => {
       const supabase = createClient();
+      const { data: existing, error: existingError } = await supabase
+        .from("transactions")
+        .select("amount, account_id")
+        .eq("id", id)
+        .single();
+
+      if (existingError) throw new Error(existingError.message);
+
       const { data, error } = await supabase
         .from("transactions")
         .update(updates)
@@ -199,10 +207,45 @@ export function useUpdateTransaction() {
         .single();
 
       if (error) throw new Error(error.message);
+
+      const deltas: Record<string, number> = {};
+
+      if (existing.account_id) {
+        deltas[existing.account_id] =
+          (deltas[existing.account_id] ?? 0) - Number(existing.amount);
+      }
+
+      if (data.account_id) {
+        deltas[data.account_id] =
+          (deltas[data.account_id] ?? 0) + Number(data.amount);
+      }
+
+      for (const [accountId, delta] of Object.entries(deltas)) {
+        if (Math.abs(delta) < 0.000001) continue;
+
+        const { data: account, error: accountError } = await supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", accountId)
+          .single();
+
+        if (accountError) throw new Error(accountError.message);
+
+        const { error: updateAccountError } = await supabase
+          .from("accounts")
+          .update({
+            balance: Math.round((Number(account.balance) + delta) * 100) / 100,
+          })
+          .eq("id", accountId);
+
+        if (updateAccountError) throw new Error(updateAccountError.message);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
       toast.success("Transaction updated");
     },
     onError: (error) => {
@@ -273,6 +316,35 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
+      const { data: existing, error: existingError } = await supabase
+        .from("transactions")
+        .select("amount, account_id")
+        .eq("id", id)
+        .single();
+
+      if (existingError) throw new Error(existingError.message);
+
+      if (existing.account_id) {
+        const { data: account, error: accountError } = await supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", existing.account_id)
+          .single();
+
+        if (accountError) throw new Error(accountError.message);
+
+        const { error: updateAccountError } = await supabase
+          .from("accounts")
+          .update({
+            balance:
+              Math.round((Number(account.balance) - Number(existing.amount)) * 100) /
+              100,
+          })
+          .eq("id", existing.account_id);
+
+        if (updateAccountError) throw new Error(updateAccountError.message);
+      }
+
       const { error } = await supabase
         .from("transactions")
         .delete()
@@ -312,6 +384,7 @@ export function useDeleteTransaction() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
   });
 }

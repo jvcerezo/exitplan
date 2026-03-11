@@ -7,7 +7,8 @@ import { toast } from "sonner";
 
 export function useUndoDelete(
   table: string,
-  queryKeys: string[][]
+  queryKeys: string[][],
+  deleteFn?: (id: string) => Promise<void>
 ) {
   const queryClient = useQueryClient();
   const pendingRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
@@ -42,9 +43,15 @@ export function useUndoDelete(
       // Schedule real delete after 5 seconds
       const timeout = setTimeout(async () => {
         pendingRef.current.delete(id);
-        const supabase = createClient();
-        const { error } = await supabase.from(table).delete().eq("id", id);
-        if (error) {
+        try {
+          if (deleteFn) {
+            await deleteFn(id);
+          } else {
+            const supabase = createClient();
+            const { error } = await supabase.from(table).delete().eq("id", id);
+            if (error) throw error;
+          }
+        } catch {
           for (const snap of snapshots) {
             queryClient.setQueryData(snap.key, snap.data);
           }
@@ -71,7 +78,7 @@ export function useUndoDelete(
         duration: 5000,
       });
     },
-    [queryClient, table, queryKeys]
+    [deleteFn, queryClient, table, queryKeys]
   );
 
   return execute;
