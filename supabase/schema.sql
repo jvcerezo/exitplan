@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   tags            text[] DEFAULT '{}'
 );
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'transactions_amount_nonzero'
+  ) THEN
+    ALTER TABLE public.transactions
+      ADD CONSTRAINT transactions_amount_nonzero CHECK (amount <> 0) NOT VALID;
+  END IF;
+END $$;
+
 -- 2. Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions USING btree (user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date    ON public.transactions USING btree (date DESC);
@@ -251,6 +263,30 @@ CREATE TABLE IF NOT EXISTS public.goals (
   is_completed    boolean DEFAULT false NOT NULL
 );
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'goals_target_amount_positive'
+  ) THEN
+    ALTER TABLE public.goals
+      ADD CONSTRAINT goals_target_amount_positive CHECK (target_amount > 0) NOT VALID;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'goals_current_amount_nonnegative'
+  ) THEN
+    ALTER TABLE public.goals
+      ADD CONSTRAINT goals_current_amount_nonnegative CHECK (current_amount >= 0) NOT VALID;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_goals_user_id ON public.goals USING btree (user_id);
 
 ALTER TABLE public.goals ENABLE ROW LEVEL SECURITY;
@@ -291,6 +327,18 @@ CREATE TABLE IF NOT EXISTS public.goal_fundings (
   note          text,
   funding_date  date NOT NULL
 );
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'goal_fundings_amount_positive'
+  ) THEN
+    ALTER TABLE public.goal_fundings
+      ADD CONSTRAINT goal_fundings_amount_positive CHECK (amount > 0) NOT VALID;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_goal_fundings_user_id ON public.goal_fundings USING btree (user_id);
 CREATE INDEX IF NOT EXISTS idx_goal_fundings_goal_id ON public.goal_fundings USING btree (goal_id);
@@ -425,6 +473,42 @@ GRANT EXECUTE ON FUNCTION public.add_funds_to_goal(uuid, uuid, numeric, text, da
 
 
 -- ============================================
+-- Admin registry
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.admin_users (
+  user_id      uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at   timestamptz DEFAULT now() NOT NULL,
+  granted_by   uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  note         text
+);
+
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.is_admin_user(p_user_id uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF p_user_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.admin_users
+    WHERE user_id = p_user_id
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin_user(uuid) TO authenticated;
+
+
+-- ============================================
 -- Profiles table (for admin role tracking)
 -- ============================================
 
@@ -516,8 +600,39 @@ CREATE TABLE IF NOT EXISTS public.budgets (
   user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   category    text NOT NULL,
   amount      numeric(12, 2) NOT NULL,
-  month       date NOT NULL -- first day of the month (e.g. 2026-02-01)
+  month       date NOT NULL, -- first day of the month (e.g. 2026-02-01)
+  rollover    boolean DEFAULT false NOT NULL
 );
+
+ALTER TABLE public.budgets
+  ADD COLUMN IF NOT EXISTS rollover boolean DEFAULT false NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'budgets_amount_positive'
+  ) THEN
+    ALTER TABLE public.budgets
+      ADD CONSTRAINT budgets_amount_positive CHECK (amount > 0) NOT VALID;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'budgets_month_is_first_day'
+  ) THEN
+    ALTER TABLE public.budgets
+      ADD CONSTRAINT budgets_month_is_first_day CHECK (month = date_trunc('month', month)::date) NOT VALID;
+  END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_user_month_category_unique
+  ON public.budgets (user_id, month, category);
 
 CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON public.budgets USING btree (user_id);
 CREATE INDEX IF NOT EXISTS idx_budgets_month ON public.budgets USING btree (month);
@@ -710,6 +825,21 @@ CREATE TABLE IF NOT EXISTS public.exchange_rates (
   rate          numeric(12, 6) NOT NULL
 );
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'exchange_rates_rate_positive'
+  ) THEN
+    ALTER TABLE public.exchange_rates
+      ADD CONSTRAINT exchange_rates_rate_positive CHECK (rate > 0) NOT VALID;
+  END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_exchange_rates_user_pair_unique
+  ON public.exchange_rates (user_id, from_currency, to_currency);
+
 CREATE INDEX IF NOT EXISTS idx_exchange_rates_user_id ON public.exchange_rates USING btree (user_id);
 
 ALTER TABLE public.exchange_rates ENABLE ROW LEVEL SECURITY;
@@ -743,6 +873,95 @@ CREATE TABLE IF NOT EXISTS public.market_rates (
   currency    text NOT NULL UNIQUE,
   rate_to_php numeric(12, 6) NOT NULL
 );
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'market_rates_rate_positive'
+  ) THEN
+    ALTER TABLE public.market_rates
+      ADD CONSTRAINT market_rates_rate_positive CHECK (rate_to_php > 0) NOT VALID;
+  END IF;
+END $$;
+
+
+-- ============================================
+-- Cross-table ownership guardrails
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.validate_transaction_relationships()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  account_owner uuid;
+BEGIN
+  IF NEW.account_id IS NOT NULL THEN
+    SELECT user_id INTO account_owner
+    FROM public.accounts
+    WHERE id = NEW.account_id;
+
+    IF account_owner IS NULL THEN
+      RAISE EXCEPTION 'Referenced account does not exist';
+    END IF;
+
+    IF account_owner IS DISTINCT FROM NEW.user_id THEN
+      RAISE EXCEPTION 'Transaction account must belong to the same user';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS validate_transaction_relationships_before_write ON public.transactions;
+
+CREATE TRIGGER validate_transaction_relationships_before_write
+  BEFORE INSERT OR UPDATE ON public.transactions
+  FOR EACH ROW EXECUTE FUNCTION public.validate_transaction_relationships();
+
+
+CREATE OR REPLACE FUNCTION public.validate_goal_funding_relationships()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  account_owner uuid;
+  goal_owner uuid;
+BEGIN
+  SELECT user_id INTO account_owner
+  FROM public.accounts
+  WHERE id = NEW.account_id;
+
+  IF account_owner IS NULL THEN
+    RAISE EXCEPTION 'Referenced funding account does not exist';
+  END IF;
+
+  SELECT user_id INTO goal_owner
+  FROM public.goals
+  WHERE id = NEW.goal_id;
+
+  IF goal_owner IS NULL THEN
+    RAISE EXCEPTION 'Referenced goal does not exist';
+  END IF;
+
+  IF account_owner IS DISTINCT FROM NEW.user_id OR goal_owner IS DISTINCT FROM NEW.user_id THEN
+    RAISE EXCEPTION 'Goal funding references must belong to the same user';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS validate_goal_funding_relationships_before_write ON public.goal_fundings;
+
+CREATE TRIGGER validate_goal_funding_relationships_before_write
+  BEFORE INSERT OR UPDATE ON public.goal_fundings
+  FOR EACH ROW EXECUTE FUNCTION public.validate_goal_funding_relationships();
 
 CREATE INDEX IF NOT EXISTS idx_market_rates_currency ON public.market_rates USING btree (currency);
 

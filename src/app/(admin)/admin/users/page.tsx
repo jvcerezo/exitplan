@@ -20,7 +20,7 @@ interface UserWithStats {
 async function getUsers(): Promise<UserWithStats[]> {
   const supabase = createAdminClient();
 
-  const [{ data: profiles }, { data: transactions }, { data: goals }] =
+  const [{ data: profiles }, { data: transactions }, { data: goals }, { data: adminUsers }] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -28,9 +28,12 @@ async function getUsers(): Promise<UserWithStats[]> {
         .order("created_at", { ascending: false }),
       supabase.from("transactions").select("user_id, amount"),
       supabase.from("goals").select("user_id"),
+      supabase.from("admin_users").select("user_id"),
     ]);
 
   if (!profiles) return [];
+
+  const adminIds = new Set((adminUsers ?? []).map((entry) => entry.user_id));
 
   // Group transactions by user
   const txByUser = new Map<
@@ -66,7 +69,7 @@ async function getUsers(): Promise<UserWithStats[]> {
       id: p.id,
       email: p.email,
       full_name: p.full_name,
-      role: p.role,
+      role: adminIds.has(p.id) ? "admin" : "user",
       created_at: p.created_at,
       transactionCount: txStats.count,
       totalIncome: txStats.income,

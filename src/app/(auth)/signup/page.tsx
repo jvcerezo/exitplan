@@ -48,6 +48,7 @@ function getPasswordStrength(password: string): PasswordStrength {
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [successEmail, setSuccessEmail] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -57,6 +58,7 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setSuccessEmail(null);
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -82,6 +84,12 @@ export default function SignupPage() {
     const result = await signUp(formData);
     if (result?.error) {
       setError(result.error);
+      setLoading(false);
+      return;
+    }
+
+    if (result?.requiresEmailConfirmation) {
+      setSuccessEmail(result.email ?? (formData.get("email") as string));
       setLoading(false);
     }
   }
@@ -133,6 +141,11 @@ export default function SignupPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {successEmail && (
+              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+                Check your inbox for a confirmation link sent to <span className="font-medium">{successEmail}</span>. After confirming, you&apos;ll continue to onboarding.
+              </div>
+            )}
             {error && (
               <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
                 {error}
@@ -271,7 +284,7 @@ export default function SignupPage() {
               {loading ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Creating account...</>
               ) : (
-                "Create Account"
+                successEmail ? "Resend / Try again" : "Create Account"
               )}
             </Button>
           </form>

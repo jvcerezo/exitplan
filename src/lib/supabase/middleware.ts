@@ -71,6 +71,48 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let profile:
+    | {
+        has_completed_onboarding: boolean;
+      }
+    | null
+    | undefined;
+
+  let isAdmin: boolean | undefined;
+
+  async function getProfile() {
+    if (profile !== undefined || !user) {
+      return profile ?? null;
+    }
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("has_completed_onboarding")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    profile = data;
+    return profile ?? null;
+  }
+
+  async function getIsAdmin() {
+    if (isAdmin !== undefined || !user) {
+      return isAdmin ?? false;
+    }
+
+    const { data, error } = await supabase.rpc("is_admin_user", {
+      p_user_id: user.id,
+    });
+
+    if (error) {
+      isAdmin = false;
+      return false;
+    }
+
+    isAdmin = Boolean(data);
+    return isAdmin;
+  }
+
   // Session cookie exists but is invalid/expired — redirect to login
   if (!user && !isPublicRoute(pathname)) {
     return NextResponse.redirect(withTourParam(request, "/login"));
@@ -83,28 +125,21 @@ export async function updateSession(request: NextRequest) {
 
   // Admin route protection (also checks onboarding)
   if (user && isAdminRoute(pathname)) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, has_completed_onboarding")
-      .eq("id", user.id)
-      .single();
+    const profile = await getProfile();
+    const isAdmin = await getIsAdmin();
 
     if (profile && !profile.has_completed_onboarding) {
       return NextResponse.redirect(withTourParam(request, "/onboarding"));
     }
 
-    if (!profile || profile.role !== "admin") {
+    if (!profile || !isAdmin) {
       return NextResponse.redirect(withTourParam(request, "/dashboard"));
     }
   }
 
   // Onboarding enforcement for non-onboarding protected routes
   if (user && !isAdminRoute(pathname) && pathname !== "/onboarding") {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("has_completed_onboarding")
-      .eq("id", user.id)
-      .single();
+    const profile = await getProfile();
 
     if (profile && !profile.has_completed_onboarding) {
       if (!isTourMode) {
@@ -115,11 +150,7 @@ export async function updateSession(request: NextRequest) {
 
   // Already-onboarded user visiting /onboarding — redirect to dashboard
   if (user && pathname === "/onboarding") {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("has_completed_onboarding")
-      .eq("id", user.id)
-      .single();
+    const profile = await getProfile();
 
     if (profile?.has_completed_onboarding) {
       return NextResponse.redirect(withTourParam(request, "/dashboard"));

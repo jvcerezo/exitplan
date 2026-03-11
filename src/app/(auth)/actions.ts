@@ -1,23 +1,49 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+async function getBaseUrl() {
+  const headerStore = await headers();
+  const origin = headerStore.get("origin");
+  if (origin) return origin;
+
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+
+  if (host) {
+    return `${proto}://${host}`;
+  }
+
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  return "http://localhost:3000";
+}
 
 export async function signUp(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("fullName") as string;
 
-  // Use admin client to create user without email verification
-  const admin = createAdminClient();
-  
-  const { data, error } = await admin.auth.admin.createUser({
+  const supabase = await createClient();
+  const baseUrl = await getBaseUrl();
+
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    email_confirm: true, // Auto-confirm email
-    user_metadata: {
-      full_name: fullName,
+    options: {
+      data: {
+        full_name: fullName,
+      },
+      emailRedirectTo: `${baseUrl}/auth/callback?next=/onboarding`,
     },
   });
 
@@ -25,19 +51,15 @@ export async function signUp(formData: FormData) {
     return { error: error.message };
   }
 
-  // Sign in the user immediately
-  const supabase = await createClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (signInError) {
-    return { error: signInError.message };
+  if (data.session) {
+    redirect("/onboarding");
   }
 
-  // Redirect to onboarding immediately
-  redirect("/onboarding");
+  return {
+    success: true,
+    requiresEmailConfirmation: true,
+    email,
+  };
 }
 
 export async function signIn(formData: FormData) {

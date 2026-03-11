@@ -15,13 +15,11 @@ export default async function AdminLayout({
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: isAdmin, error } = await supabase.rpc("is_admin_user", {
+    p_user_id: user.id,
+  });
 
-  if (profile?.role !== "admin") redirect("/dashboard");
+  if (error || !isAdmin) redirect("/dashboard");
 
   return (
     <div className="min-h-screen bg-background">
