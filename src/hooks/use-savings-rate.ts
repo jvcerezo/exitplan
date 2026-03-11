@@ -12,6 +12,7 @@ export interface SavingsRateData {
 export function useSavingsRate() {
   return useQuery({
     queryKey: ["savings-rate"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<SavingsRateData> => {
       const supabase = createClient();
       const now = new Date();

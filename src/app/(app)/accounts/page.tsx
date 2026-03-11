@@ -8,8 +8,6 @@ import { formatCurrency } from "@/lib/utils";
 import { Loader2, Wallet } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 
-export const dynamic = "force-dynamic";
-
 export default function AccountsPage() {
   const { data: accounts, isLoading } = useAccounts();
 

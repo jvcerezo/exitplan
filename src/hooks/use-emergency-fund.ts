@@ -4,19 +4,22 @@ import { createClient } from "@/lib/supabase/client";
 export interface EmergencyFundData {
   currentAmount: number;
   monthlyExpenses: number;
-  targetMonths: number; // 3, 4, 5, or 6
+  targetMonths: number;
   targetAmount: number;
   monthsCovered: number;
   progressPercent: number;
+  hasGoal: boolean;
+  goalName: string | null;
+  goalTargetAmount: number | null;
 }
 
 export function useEmergencyFund(targetMonths: number = 3) {
   return useQuery({
     queryKey: ["emergency-fund", targetMonths],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<EmergencyFundData> => {
       const supabase = createClient();
 
-      // Get current month's expenses
       const now = new Date();
       const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
         .toISOString()
@@ -25,41 +28,65 @@ export function useEmergencyFund(targetMonths: number = 3) {
         .toISOString()
         .split("T")[0];
 
-      // Fetch transactions for current month to calculate average monthly expenses
-      const { data: currentTx, error: txError } = await supabase
-        .from("transactions")
-        .select("amount")
-        .gte("date", currentMonthStart)
-        .lte("date", currentMonthEnd)
-        .lt("amount", 0); // only expenses
+      const [txResult, accountResult, goalResult] = await Promise.all([
+        supabase
+          .from("transactions")
+          .select("amount")
+          .gte("date", currentMonthStart)
+          .lte("date", currentMonthEnd)
+          .lt("amount", 0),
+        supabase
+          .from("accounts")
+          .select("balance")
+          .eq("is_archived", false),
+        supabase
+          .from("goals")
+          .select("name, current_amount, target_amount")
+          .ilike("category", "emergency fund")
+          .eq("is_completed", false)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-      if (txError) throw new Error(txError.message);
+      if (txResult.error) throw new Error(txResult.error.message);
+      if (accountResult.error) throw new Error(accountResult.error.message);
 
-      // Get total non-archived account balances
-      const { data: accounts, error: accountError } = await supabase
-        .from("accounts")
-        .select("balance")
-        .eq("is_archived", false);
-
-      if (accountError) throw new Error(accountError.message);
-
-      const monthlyExpenses = (currentTx || []).reduce(
+      const monthlyExpenses = (txResult.data || []).reduce(
         (sum, t) => sum + Math.abs(t.amount),
         0
       );
 
-      const currentAmount = (accounts || []).reduce(
-        (sum, a) => sum + Number(a.balance),
-        0
-      );
+      const goal = goalResult.data ?? null;
 
-      const targetAmount = monthlyExpenses * targetMonths;
-      const monthsCovered = monthlyExpenses > 0 
-        ? Math.round((currentAmount / monthlyExpenses) * 10) / 10 
-        : 0;
-      const progressPercent = targetAmount > 0 
-        ? Math.min(100, Math.round((currentAmount / targetAmount) * 100))
-        : 0;
+      let currentAmount: number;
+      let targetAmount: number;
+      const hasGoal = !!goal;
+      const goalName = goal?.name ?? null;
+      const goalTargetAmount = goal ? Number(goal.target_amount) : null;
+
+      if (goal) {
+        // Use the goal's saved amount and target as source of truth
+        currentAmount = Number(goal.current_amount);
+        targetAmount = Number(goal.target_amount);
+      } else {
+        // Fall back to total account balances vs expense-based target
+        currentAmount = (accountResult.data || []).reduce(
+          (sum, a) => sum + Number(a.balance),
+          0
+        );
+        targetAmount = monthlyExpenses * targetMonths;
+      }
+
+      const monthsCovered =
+        monthlyExpenses > 0
+          ? Math.round((currentAmount / monthlyExpenses) * 10) / 10
+          : 0;
+
+      const progressPercent =
+        targetAmount > 0
+          ? Math.min(100, Math.round((currentAmount / targetAmount) * 100))
+          : 0;
 
       return {
         currentAmount: Math.round(currentAmount * 100) / 100,
@@ -68,6 +95,9 @@ export function useEmergencyFund(targetMonths: number = 3) {
         targetAmount: Math.round(targetAmount * 100) / 100,
         monthsCovered,
         progressPercent,
+        hasGoal,
+        goalName,
+        goalTargetAmount: goalTargetAmount !== null ? Math.round(goalTargetAmount * 100) / 100 : null,
       };
     },
   });

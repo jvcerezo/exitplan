@@ -15,6 +15,7 @@ interface MonthlyTrend {
 export function useSpendingByCategory() {
   return useQuery({
     queryKey: ["transactions", "spending-by-category"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<SpendingByCategory[]> => {
       const supabase = createClient();
 
@@ -71,6 +72,7 @@ interface NetWorthPoint {
 export function useNetWorthOverTime() {
   return useQuery({
     queryKey: ["transactions", "net-worth"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<NetWorthPoint[]> => {
       const supabase = createClient();
       const now = new Date();
@@ -178,6 +180,7 @@ interface SpendingComparison {
 export function useSpendingComparison() {
   return useQuery({
     queryKey: ["transactions", "spending-comparison"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<SpendingComparison[]> => {
       const supabase = createClient();
       const now = new Date();
@@ -238,6 +241,7 @@ export function useSpendingComparison() {
 export function useMonthlyTrend() {
   return useQuery({
     queryKey: ["transactions", "monthly-trend"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<MonthlyTrend[]> => {
       const supabase = createClient();
 

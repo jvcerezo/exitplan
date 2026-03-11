@@ -16,6 +16,7 @@ export interface HealthScore {
 export function useHealthScore() {
   return useQuery({
     queryKey: ["health-score"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<HealthScore> => {
       const supabase = createClient();
       const now = new Date();

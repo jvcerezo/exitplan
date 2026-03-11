@@ -2,8 +2,6 @@ import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
 import { GoalsOverview } from "@/components/goals/goals-overview";
 import { GoalsList } from "@/components/goals/goals-list";
 
-export const dynamic = "force-dynamic";
-
 export default function GoalsPage() {
   return (
     <div className="space-y-8">

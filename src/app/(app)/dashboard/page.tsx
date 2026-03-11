@@ -12,8 +12,6 @@ import { SavingsRateIndicator } from "@/components/dashboard/savings-rate-indica
 import { EmergencyFundStatus } from "@/components/dashboard/emergency-fund-status";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 
-export const dynamic = "force-dynamic";
-
 export default function DashboardPage() {
   return (
     <div className="space-y-6">

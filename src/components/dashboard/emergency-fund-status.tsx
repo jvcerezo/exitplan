@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Shield } from "lucide-react";
 import { useEmergencyFund } from "@/hooks/use-emergency-fund";
@@ -52,12 +53,18 @@ export function EmergencyFundStatus({ targetMonths = 3 }) {
   if (!data) return null;
 
   const isFunded = data.monthsCovered >= data.targetMonths;
-  const statusColor = isFunded 
+  const hasExpenseData = data.monthlyExpenses > 0;
+  const { hasGoal } = data;
+  const statusColor = !hasExpenseData && !hasGoal
+    ? "text-muted-foreground"
+    : isFunded 
     ? "text-green-600" 
     : data.progressPercent >= 50 
     ? "text-yellow-500" 
     : "text-amber-600";
-  const progressColor = isFunded 
+  const progressColor = !hasExpenseData && !hasGoal
+    ? "bg-muted-foreground/40"
+    : isFunded 
     ? "bg-green-500" 
     : data.progressPercent >= 50 
     ? "bg-yellow-500" 
@@ -66,9 +73,20 @@ export function EmergencyFundStatus({ targetMonths = 3 }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-base">Emergency Fund</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-base">Emergency Fund</CardTitle>
+          </div>
+          {hasGoal && (
+            <Link
+              href="/goals"
+              className="text-xs text-muted-foreground hover:text-primary transition-colors truncate max-w-[140px]"
+              title={data.goalName ?? undefined}
+            >
+              {data.goalName}
+            </Link>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -83,7 +101,11 @@ export function EmergencyFundStatus({ targetMonths = 3 }) {
               </p>
             </div>
             <p className="text-xs text-muted-foreground text-right">
-              Target: {formatCurrency(data.targetAmount)}
+              {hasGoal
+                ? `Goal: ${formatCurrency(data.targetAmount)}`
+                : hasExpenseData
+                ? `Target: ${formatCurrency(data.targetAmount)}`
+                : "No expense data yet"}
             </p>
           </div>
 
@@ -106,12 +128,14 @@ export function EmergencyFundStatus({ targetMonths = 3 }) {
           <div className="space-y-1">
             <p className="text-muted-foreground">Target Goal</p>
             <p className="font-semibold">
-              {data.targetMonths} months expenses
+              {hasGoal
+                ? formatCurrency(data.targetAmount)
+                : `${data.targetMonths} months expenses`}
             </p>
           </div>
         </div>
 
-        {!isFunded && (
+        {!isFunded && (hasGoal || hasExpenseData) && (
           <div className={cn("text-xs p-2 rounded", 
             data.progressPercent >= 50 
               ? "bg-yellow-500/10" 
@@ -121,6 +145,14 @@ export function EmergencyFundStatus({ targetMonths = 3 }) {
                 ? "text-yellow-700 dark:text-yellow-300" 
                 : "text-amber-700 dark:text-amber-300")}>
               {formatCurrency(data.targetAmount - data.currentAmount)} more to reach target
+            </p>
+          </div>
+        )}
+
+        {!isFunded && !hasGoal && !hasExpenseData && (
+          <div className="text-xs p-2 rounded bg-muted/50">
+            <p className="text-muted-foreground font-medium">
+              Add expense transactions to calculate your target
             </p>
           </div>
         )}
