@@ -11,7 +11,6 @@ export function useAccounts() {
       const { data, error } = await supabase
         .from("accounts")
         .select("*")
-        .order("is_archived", { ascending: true })
         .order("name", { ascending: true });
 
       if (error) throw new Error(error.message);
@@ -40,7 +39,7 @@ export function useAddAccount() {
 
       const { data: existing, error: existingError } = await supabase
         .from("accounts")
-        .select("id, balance, is_archived")
+        .select("id")
         .eq("user_id", user.id)
         .eq("name", normalizedName)
         .eq("type", account.type)
@@ -65,13 +64,6 @@ export function useAddAccount() {
 
           if (txError) throw new Error(txError.message);
         }
-
-        const { error: unarchiveError } = await supabase
-          .from("accounts")
-          .update({ is_archived: false })
-          .eq("id", existing.id);
-
-        if (unarchiveError) throw new Error(unarchiveError.message);
 
         const { data: refreshed, error: refreshedError } = await supabase
           .from("accounts")

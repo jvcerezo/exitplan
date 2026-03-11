@@ -21,7 +21,7 @@ export function TransferDialog() {
   const { data: accounts } = useAccounts();
   const createTransfer = useCreateTransfer();
 
-  const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const activeAccounts = accounts ?? [];
   const fromAccount = activeAccounts.find((a) => a.id === fromId);
 
   function handleOpenChange(next: boolean) {

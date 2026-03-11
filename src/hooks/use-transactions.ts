@@ -81,8 +81,7 @@ export function useTransactionsSummary() {
         supabase.from("transactions").select("amount, account_id"),
         supabase
           .from("accounts")
-          .select("balance")
-          .eq("is_archived", false),
+          .select("balance"),
         supabase.from("goals").select("current_amount"),
         supabase.from("budgets").select("amount"),
       ]);
@@ -144,7 +143,6 @@ export function useAddTransaction() {
       const { data: activeAccounts, error: accountsError } = await supabase
         .from("accounts")
         .select("id")
-        .eq("is_archived", false)
         .limit(1);
 
       if (accountsError) throw new Error(accountsError.message);

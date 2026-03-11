@@ -86,8 +86,7 @@ export function useNetWorthOverTime() {
           .order("date", { ascending: true }),
         supabase
           .from("accounts")
-          .select("balance")
-          .eq("is_archived", false),
+          .select("balance"),
         supabase.from("goals").select("current_amount"),
       ]);
 

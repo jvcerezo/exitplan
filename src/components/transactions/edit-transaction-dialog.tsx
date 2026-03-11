@@ -72,7 +72,7 @@ export function EditTransactionDialog({
   const updateTransaction = useUpdateTransaction();
   const { data: accounts } = useAccounts();
 
-  const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const activeAccounts = accounts ?? [];
   const selectedAccount = activeAccounts.find((a) => a.id === accountId);
   const currencySymbol =
     CURRENCIES.find(

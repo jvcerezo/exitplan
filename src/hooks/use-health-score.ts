@@ -40,8 +40,7 @@ export function useHealthScore() {
         supabase.from("goals").select("*"),
         supabase
           .from("accounts")
-          .select("balance")
-          .eq("is_archived", false),
+          .select("balance"),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);

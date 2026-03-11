@@ -11,9 +11,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 export default function AccountsPage() {
   const { data: accounts, isLoading } = useAccounts();
 
-  const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
-  const archivedAccounts = accounts?.filter((a) => a.is_archived) ?? [];
-  const totalBalance = activeAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const displayedAccounts = accounts ?? [];
+  const totalBalance = displayedAccounts.reduce((sum, a) => sum + a.balance, 0);
 
   return (
     <div className="space-y-6">
@@ -47,32 +46,17 @@ export default function AccountsPage() {
         <>
           {/* Total balance */}
           <div className="text-sm text-muted-foreground">
-            Total active balance:{" "}
+            Total balance:{" "}
             <span className="font-semibold text-foreground">
               {formatCurrency(totalBalance)}
             </span>
           </div>
 
-          {/* Active accounts */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {activeAccounts.map((account) => (
+            {displayedAccounts.map((account) => (
               <AccountCard key={account.id} account={account} />
             ))}
           </div>
-
-          {/* Archived */}
-          {archivedAccounts.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Archived ({archivedAccounts.length})
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {archivedAccounts.map((account) => (
-                  <AccountCard key={account.id} account={account} />
-                ))}
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>

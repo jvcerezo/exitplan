@@ -87,10 +87,9 @@ async function getMetrics() {
 
   // Account metrics
   const totalAccounts = accounts?.length ?? 0;
-  const activeAccounts = accounts?.filter((a) => !a.is_archived).length ?? 0;
+  const activeAccounts = totalAccounts;
   const totalAccountBalance =
     accounts
-      ?.filter((a) => !a.is_archived)
       .reduce((sum, a) => sum + Number(a.balance), 0) ?? 0;
   const accountTypes: Record<string, number> = {};
   for (const a of accounts ?? []) {

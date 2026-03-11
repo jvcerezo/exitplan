@@ -32,7 +32,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
   const addTransaction = useAddTransaction();
   const deleteTransaction = useDeleteTransaction();
   const { data: accounts } = useAccounts();
-  const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const activeAccounts = accounts ?? [];
 
   const isExpense = transaction.amount < 0;
   const totalAbs = Math.abs(transaction.amount);

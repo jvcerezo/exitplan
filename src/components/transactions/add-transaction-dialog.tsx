@@ -92,7 +92,7 @@ export function AddTransactionDialog({
   const { data: accounts } = useAccounts();
   const addTransaction = useAddTransaction();
 
-  const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const activeAccounts = accounts ?? [];
   const hasNoAccounts = accounts !== undefined && activeAccounts.length === 0;
   const selectedAccount = activeAccounts.find((a) => a.id === accountId);
   const currencySymbol =

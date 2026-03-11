@@ -120,7 +120,6 @@ AS $$
 DECLARE
   current_user_id uuid := auth.uid();
   account_balance numeric(12, 2);
-  account_archived boolean;
   inserted_row public.transactions;
 BEGIN
   IF current_user_id IS NULL THEN
@@ -131,8 +130,8 @@ BEGIN
     RAISE EXCEPTION 'Account is required for income and expense transactions';
   END IF;
 
-  SELECT balance, is_archived
-    INTO account_balance, account_archived
+  SELECT balance
+    INTO account_balance
   FROM public.accounts
   WHERE id = p_account_id
     AND user_id = current_user_id
@@ -140,10 +139,6 @@ BEGIN
 
   IF account_balance IS NULL THEN
     RAISE EXCEPTION 'Account not found';
-  END IF;
-
-  IF account_archived THEN
-    RAISE EXCEPTION 'Archived accounts cannot be used';
   END IF;
 
   UPDATE public.accounts
@@ -203,7 +198,6 @@ DECLARE
   tx_attachment_path text;
   tx_tags text[];
   account_balance numeric(12, 2);
-  account_archived boolean;
   inserted_count integer := 0;
 BEGIN
   IF current_user_id IS NULL THEN
@@ -230,8 +224,8 @@ BEGIN
     );
 
     IF tx_account_id IS NOT NULL THEN
-      SELECT balance, is_archived
-        INTO account_balance, account_archived
+      SELECT balance
+        INTO account_balance
       FROM public.accounts
       WHERE id = tx_account_id
         AND user_id = current_user_id
@@ -239,10 +233,6 @@ BEGIN
 
       IF account_balance IS NULL THEN
         RAISE EXCEPTION 'Account not found for imported transaction';
-      END IF;
-
-      IF account_archived THEN
-        RAISE EXCEPTION 'Archived accounts cannot be used in import';
       END IF;
 
       UPDATE public.accounts
@@ -424,7 +414,6 @@ AS $$
 DECLARE
   current_user_id uuid := auth.uid();
   account_balance numeric(12, 2);
-  account_archived boolean;
   goal_current_amount numeric(12, 2);
   goal_target_amount numeric(12, 2);
   normalized_amount numeric(12, 2) := ROUND(ABS(p_amount)::numeric, 2);
@@ -443,8 +432,8 @@ BEGIN
     RAISE EXCEPTION 'Amount must be greater than zero';
   END IF;
 
-  SELECT balance, is_archived
-    INTO account_balance, account_archived
+  SELECT balance
+    INTO account_balance
   FROM public.accounts
   WHERE id = p_account_id
     AND user_id = current_user_id
@@ -452,10 +441,6 @@ BEGIN
 
   IF account_balance IS NULL THEN
     RAISE EXCEPTION 'Account not found';
-  END IF;
-
-  IF account_archived THEN
-    RAISE EXCEPTION 'Cannot fund from an archived account';
   END IF;
 
   IF account_balance < normalized_amount THEN
@@ -712,8 +697,6 @@ DECLARE
   current_user_id uuid := auth.uid();
   from_balance numeric(12, 2);
   to_balance numeric(12, 2);
-  from_archived boolean;
-  to_archived boolean;
   transfer_uuid uuid := gen_random_uuid();
   normalized_amount numeric(12, 2) := ROUND(ABS(transfer_amount)::numeric, 2);
   normalized_description text := COALESCE(NULLIF(BTRIM(transfer_description), ''), 'Transfer');
@@ -734,8 +717,8 @@ BEGIN
     RAISE EXCEPTION 'Transfer amount must be greater than zero';
   END IF;
 
-  SELECT balance, is_archived
-    INTO from_balance, from_archived
+  SELECT balance
+    INTO from_balance
   FROM public.accounts
   WHERE id = from_account_id
     AND user_id = current_user_id
@@ -745,8 +728,8 @@ BEGIN
     RAISE EXCEPTION 'Source account not found';
   END IF;
 
-  SELECT balance, is_archived
-    INTO to_balance, to_archived
+  SELECT balance
+    INTO to_balance
   FROM public.accounts
   WHERE id = to_account_id
     AND user_id = current_user_id
@@ -754,10 +737,6 @@ BEGIN
 
   IF to_balance IS NULL THEN
     RAISE EXCEPTION 'Destination account not found';
-  END IF;
-
-  IF from_archived OR to_archived THEN
-    RAISE EXCEPTION 'Archived accounts cannot be used for transfers';
   END IF;
 
   IF from_balance < normalized_amount THEN

@@ -357,7 +357,7 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: accounts } = useAccounts();
   const importMutation = useImportTransactions();
-  const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const activeAccounts = accounts ?? [];
   const mustCreateAccount = step === "preview" && accounts !== undefined && activeAccounts.length === 0;
   const showAccountCreation = showNewAccountForm || mustCreateAccount;
 

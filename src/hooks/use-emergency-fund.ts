@@ -37,8 +37,7 @@ export function useEmergencyFund(targetMonths: number = 3) {
           .lt("amount", 0),
         supabase
           .from("accounts")
-          .select("balance")
-          .eq("is_archived", false),
+          .select("balance"),
         supabase
           .from("goals")
           .select("name, current_amount, target_amount")

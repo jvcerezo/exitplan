@@ -24,7 +24,7 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
   const addFundsToGoal = useAddFundsToGoal();
   const { data: accounts } = useAccounts();
 
-  const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const activeAccounts = accounts ?? [];
   const selectedAccount = activeAccounts.find((a) => a.id === accountId);
   const remaining = Math.round((goal.target_amount - goal.current_amount) * 100) / 100;
   const isPending = addFundsToGoal.isPending;
