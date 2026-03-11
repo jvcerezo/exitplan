@@ -93,6 +93,153 @@ CREATE POLICY "Users can delete own goals"
 
 
 -- ============================================
+-- Goal Funding ledger (audit trail)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.goal_fundings (
+  id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at    timestamptz DEFAULT now() NOT NULL,
+  user_id       uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  goal_id       uuid REFERENCES public.goals(id) ON DELETE CASCADE NOT NULL,
+  account_id    uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
+  amount        numeric(12, 2) NOT NULL,
+  note          text,
+  funding_date  date NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_goal_fundings_user_id ON public.goal_fundings USING btree (user_id);
+CREATE INDEX IF NOT EXISTS idx_goal_fundings_goal_id ON public.goal_fundings USING btree (goal_id);
+CREATE INDEX IF NOT EXISTS idx_goal_fundings_account_id ON public.goal_fundings USING btree (account_id);
+
+ALTER TABLE public.goal_fundings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own goal fundings"
+  ON public.goal_fundings FOR SELECT
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own goal fundings"
+  ON public.goal_fundings FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can update own goal fundings"
+  ON public.goal_fundings FOR UPDATE
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id)
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can delete own goal fundings"
+  ON public.goal_fundings FOR DELETE
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+
+-- ============================================
+-- Atomic goal funding function
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.add_funds_to_goal(
+  p_goal_id uuid,
+  p_account_id uuid,
+  p_amount numeric,
+  p_note text DEFAULT NULL,
+  p_funding_date date DEFAULT CURRENT_DATE
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+  account_balance numeric(12, 2);
+  account_archived boolean;
+  goal_current_amount numeric(12, 2);
+  goal_target_amount numeric(12, 2);
+  normalized_amount numeric(12, 2) := ROUND(ABS(p_amount)::numeric, 2);
+  new_goal_amount numeric(12, 2);
+  funding_id uuid := gen_random_uuid();
+BEGIN
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF p_goal_id IS NULL OR p_account_id IS NULL THEN
+    RAISE EXCEPTION 'Goal and account are required';
+  END IF;
+
+  IF normalized_amount <= 0 THEN
+    RAISE EXCEPTION 'Amount must be greater than zero';
+  END IF;
+
+  SELECT balance, is_archived
+    INTO account_balance, account_archived
+  FROM public.accounts
+  WHERE id = p_account_id
+    AND user_id = current_user_id
+  FOR UPDATE;
+
+  IF account_balance IS NULL THEN
+    RAISE EXCEPTION 'Account not found';
+  END IF;
+
+  IF account_archived THEN
+    RAISE EXCEPTION 'Cannot fund from an archived account';
+  END IF;
+
+  IF account_balance < normalized_amount THEN
+    RAISE EXCEPTION 'Insufficient account balance';
+  END IF;
+
+  SELECT current_amount, target_amount
+    INTO goal_current_amount, goal_target_amount
+  FROM public.goals
+  WHERE id = p_goal_id
+    AND user_id = current_user_id
+  FOR UPDATE;
+
+  IF goal_current_amount IS NULL THEN
+    RAISE EXCEPTION 'Goal not found';
+  END IF;
+
+  new_goal_amount := ROUND((goal_current_amount + normalized_amount)::numeric, 2);
+
+  UPDATE public.accounts
+  SET balance = ROUND((balance - normalized_amount)::numeric, 2)
+  WHERE id = p_account_id;
+
+  UPDATE public.goals
+  SET
+    current_amount = new_goal_amount,
+    is_completed = new_goal_amount >= goal_target_amount
+  WHERE id = p_goal_id;
+
+  INSERT INTO public.goal_fundings (
+    id,
+    user_id,
+    goal_id,
+    account_id,
+    amount,
+    note,
+    funding_date
+  ) VALUES (
+    funding_id,
+    current_user_id,
+    p_goal_id,
+    p_account_id,
+    normalized_amount,
+    NULLIF(BTRIM(p_note), ''),
+    COALESCE(p_funding_date, CURRENT_DATE)
+  );
+
+  RETURN funding_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.add_funds_to_goal(uuid, uuid, numeric, text, date) TO authenticated;
+
+
+-- ============================================
 -- Profiles table (for admin role tracking)
 -- ============================================
 

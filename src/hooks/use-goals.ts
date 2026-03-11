@@ -126,48 +126,15 @@ export function useAddFundsToGoal() {
       amount: number;
     }) => {
       const supabase = createClient();
+      const { error } = await supabase.rpc("add_funds_to_goal", {
+        p_goal_id: goalId,
+        p_account_id: accountId,
+        p_amount: Math.abs(amount),
+        p_note: null,
+        p_funding_date: new Date().toISOString().split("T")[0],
+      });
 
-      const [goalResult, accountResult] = await Promise.all([
-        supabase
-          .from("goals")
-          .select("current_amount, target_amount")
-          .eq("id", goalId)
-          .single(),
-        supabase
-          .from("accounts")
-          .select("balance")
-          .eq("id", accountId)
-          .single(),
-      ]);
-
-      if (goalResult.error) throw new Error(goalResult.error.message);
-      if (accountResult.error) throw new Error(accountResult.error.message);
-
-      if (!accountId) throw new Error("Account is required");
-      if (!amount || amount <= 0) throw new Error("Amount must be greater than zero");
-      if (accountResult.data.balance < amount) {
-        throw new Error("Insufficient account balance");
-      }
-
-      const newGoalAmount =
-        Math.round((goalResult.data.current_amount + amount) * 100) / 100;
-      const newAccountBalance =
-        Math.round((accountResult.data.balance - amount) * 100) / 100;
-      const isCompleted = newGoalAmount >= goalResult.data.target_amount;
-
-      const [goalUpdate, accountUpdate] = await Promise.all([
-        supabase
-          .from("goals")
-          .update({ current_amount: newGoalAmount, is_completed: isCompleted })
-          .eq("id", goalId),
-        supabase
-          .from("accounts")
-          .update({ balance: newAccountBalance })
-          .eq("id", accountId),
-      ]);
-
-      if (goalUpdate.error) throw new Error(goalUpdate.error.message);
-      if (accountUpdate.error) throw new Error(accountUpdate.error.message);
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
