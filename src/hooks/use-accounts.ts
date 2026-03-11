@@ -33,6 +33,10 @@ export function useAddAccount() {
 
       const normalizedName = account.name.trim();
       const incomingBalance = Number(account.balance ?? 0);
+      const normalizedIncomingBalance = Number.isFinite(incomingBalance)
+        ? Math.max(0, incomingBalance)
+        : 0;
+      const transactionDate = new Date().toISOString().split("T")[0];
 
       const { data: existing, error: existingError } = await supabase
         .from("accounts")
@@ -46,23 +50,75 @@ export function useAddAccount() {
       if (existingError) throw new Error(existingError.message);
 
       if (existing) {
-        const updatedBalance = Number(existing.balance ?? 0) + incomingBalance;
-        const { error: updateError } = await supabase
+        if (normalizedIncomingBalance > 0) {
+          const { error: txError } = await supabase.rpc("create_user_transaction", {
+            p_amount: normalizedIncomingBalance,
+            p_category: "salary",
+            p_description: `Opening balance: ${normalizedName}`,
+            p_date: transactionDate,
+            p_currency: account.currency,
+            p_account_id: existing.id,
+            p_transfer_id: null,
+            p_tags: ["opening-balance"],
+            p_attachment_path: null,
+          });
+
+          if (txError) throw new Error(txError.message);
+        }
+
+        const { error: unarchiveError } = await supabase
           .from("accounts")
-          .update({ balance: updatedBalance, is_archived: false })
+          .update({ is_archived: false })
           .eq("id", existing.id);
 
-        if (updateError) throw new Error(updateError.message);
-        return { ...existing, balance: updatedBalance, is_archived: false } as Account;
+        if (unarchiveError) throw new Error(unarchiveError.message);
+
+        const { data: refreshed, error: refreshedError } = await supabase
+          .from("accounts")
+          .select("*")
+          .eq("id", existing.id)
+          .single();
+
+        if (refreshedError) throw new Error(refreshedError.message);
+        return refreshed as Account;
       }
 
       const { data, error } = await supabase
         .from("accounts")
-        .insert({ ...account, name: normalizedName, user_id: user.id })
+        .insert({ ...account, name: normalizedName, user_id: user.id, balance: 0 })
         .select()
         .single();
 
       if (error) throw new Error(error.message);
+
+      if (normalizedIncomingBalance > 0) {
+        const { error: txError } = await supabase.rpc("create_user_transaction", {
+          p_amount: normalizedIncomingBalance,
+          p_category: "salary",
+          p_description: `Opening balance: ${normalizedName}`,
+          p_date: transactionDate,
+          p_currency: account.currency,
+          p_account_id: data.id,
+          p_transfer_id: null,
+          p_tags: ["opening-balance"],
+          p_attachment_path: null,
+        });
+
+        if (txError) {
+          await supabase.from("accounts").delete().eq("id", data.id);
+          throw new Error(txError.message);
+        }
+
+        const { data: refreshed, error: refreshedError } = await supabase
+          .from("accounts")
+          .select("*")
+          .eq("id", data.id)
+          .single();
+
+        if (refreshedError) throw new Error(refreshedError.message);
+        return refreshed as Account;
+      }
+
       return data;
     },
     onSuccess: () => {

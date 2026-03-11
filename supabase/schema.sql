@@ -127,26 +127,28 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  IF p_account_id IS NOT NULL THEN
-    SELECT balance, is_archived
-      INTO account_balance, account_archived
-    FROM public.accounts
-    WHERE id = p_account_id
-      AND user_id = current_user_id
-    FOR UPDATE;
-
-    IF account_balance IS NULL THEN
-      RAISE EXCEPTION 'Account not found';
-    END IF;
-
-    IF account_archived THEN
-      RAISE EXCEPTION 'Archived accounts cannot be used';
-    END IF;
-
-    UPDATE public.accounts
-    SET balance = ROUND((balance + p_amount)::numeric, 2)
-    WHERE id = p_account_id;
+  IF p_account_id IS NULL THEN
+    RAISE EXCEPTION 'Account is required for income and expense transactions';
   END IF;
+
+  SELECT balance, is_archived
+    INTO account_balance, account_archived
+  FROM public.accounts
+  WHERE id = p_account_id
+    AND user_id = current_user_id
+  FOR UPDATE;
+
+  IF account_balance IS NULL THEN
+    RAISE EXCEPTION 'Account not found';
+  END IF;
+
+  IF account_archived THEN
+    RAISE EXCEPTION 'Archived accounts cannot be used';
+  END IF;
+
+  UPDATE public.accounts
+  SET balance = ROUND((balance + p_amount)::numeric, 2)
+  WHERE id = p_account_id;
 
   INSERT INTO public.transactions (
     user_id,

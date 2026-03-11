@@ -140,6 +140,22 @@ export function useAddTransaction() {
   return useMutation({
     mutationFn: async (transaction: TransactionInsert) => {
       const supabase = createClient();
+
+      const { data: activeAccounts, error: accountsError } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("is_archived", false)
+        .limit(1);
+
+      if (accountsError) throw new Error(accountsError.message);
+      if (!activeAccounts || activeAccounts.length === 0) {
+        throw new Error("Create an account first before adding income or expense");
+      }
+
+      if (!transaction.account_id) {
+        throw new Error("Select an account before adding this transaction");
+      }
+
       const { data, error } = await supabase.rpc("create_user_transaction", {
         p_amount: transaction.amount,
         p_category: transaction.category,

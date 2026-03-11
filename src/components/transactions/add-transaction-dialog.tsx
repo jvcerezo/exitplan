@@ -93,6 +93,7 @@ export function AddTransactionDialog({
   const addTransaction = useAddTransaction();
 
   const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const hasNoAccounts = accounts !== undefined && activeAccounts.length === 0;
   const selectedAccount = activeAccounts.find((a) => a.id === accountId);
   const currencySymbol =
     CURRENCIES.find((c) => c.code === (selectedAccount?.currency ?? "PHP"))?.symbol ?? "₱";
@@ -156,6 +157,12 @@ export function AddTransactionDialog({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (hasNoAccounts) {
+      toast.error("Create an account first before adding income or expense");
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const date = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
     const description = (formData.get("description") as string) || "";
@@ -191,6 +198,11 @@ export function AddTransactionDialog({
         })
       );
     } else {
+      if (!accountId) {
+        toast.error("Select an account before adding this transaction");
+        return;
+      }
+
       const rawAmount = parseFloat(formData.get("amount") as string);
       const amount = type === "expense" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
       await addTransaction.mutateAsync({
@@ -316,6 +328,17 @@ export function AddTransactionDialog({
               </div>
             )}
 
+            {hasNoAccounts && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+                <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                  Add an account first
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Income and expenses must be linked to an account.
+                </p>
+              </div>
+            )}
+
             <div className="flex items-baseline gap-2 py-2">
               <span className="text-3xl font-bold text-muted-foreground/50">{currencySymbol}</span>
               <input
@@ -337,7 +360,7 @@ export function AddTransactionDialog({
             <Button
               type="submit"
               className="w-full"
-              disabled={addTransaction.isPending || !category}
+              disabled={addTransaction.isPending || !category || hasNoAccounts || !accountId}
             >
               {addTransaction.isPending ? "Adding..." : `Add ${label}`}
             </Button>
@@ -493,6 +516,7 @@ export function AddTransactionDialog({
               className="w-full"
               disabled={
                 addTransaction.isPending ||
+                hasNoAccounts ||
                 !isBalanced ||
                 !category ||
                 !allSplitAccountsSelected ||
@@ -519,7 +543,11 @@ export function AddTransactionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant={type === "expense" ? "outline" : "default"}>
+          <Button
+            variant={type === "expense" ? "outline" : "default"}
+            disabled={hasNoAccounts}
+            title={hasNoAccounts ? "Create an account first" : undefined}
+          >
             {type === "expense" ? (
               <Minus className="h-4 w-4 mr-2" />
             ) : (

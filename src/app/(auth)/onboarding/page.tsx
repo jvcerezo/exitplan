@@ -52,6 +52,29 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   "e-wallet": "E-Wallet",
 };
 
+/** Formats a raw numeric string like "10000.50" → "10,000.50" for display. */
+function formatAmount(raw: string): string {
+  if (!raw) return "";
+  // Split on decimal point
+  const [intPart, decPart] = raw.split(".");
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
+}
+
+/**
+ * Handles a change event on a money text input.
+ * Strips commas, allows only digits and a single decimal point,
+ * then returns the clean numeric string to store in state.
+ */
+function parseAmountInput(value: string): string {
+  // Remove all commas, then strip any char that isn't a digit or decimal
+  const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  // Prevent multiple decimal points
+  const parts = stripped.split(".");
+  if (parts.length > 2) return parts[0] + "." + parts.slice(1).join("");
+  return stripped;
+}
+
 interface AddedAccount {
   name: string;
   type: string;
@@ -149,6 +172,62 @@ function GoalsScreenshot() {
   );
 }
 
+// ── Shared panel renderer ──────────────────────────────────────────────────
+// Defined OUTSIDE OnboardingPage so React's component identity is stable
+// across re-renders. If defined inside, every keystroke recreates the
+// component, unmounting/remounting inputs and losing focus.
+function StepPanel({
+  screenshot,
+  url,
+  caption,
+  captionSub,
+  title,
+  step: stepLabel,
+  children,
+}: {
+  screenshot: React.ReactNode;
+  url: string;
+  caption: string;
+  captionSub: string;
+  title: string;
+  step: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row w-full h-full">
+      {/* Screenshot panel — mobile: top 45% of screen, desktop: left 42% */}
+      <div className="flex flex-col sm:w-[42%] bg-muted/40 border-b sm:border-b-0 sm:border-r flex-shrink-0 sm:flex-shrink sm:min-h-full" style={{ height: 'clamp(200px, 45dvh, 320px)' }}>
+        <div className="flex items-center gap-2 px-4 pt-3 pb-2 shrink-0">
+          <div className="flex gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-red-400/60" />
+            <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/60" />
+            <div className="h-2.5 w-2.5 rounded-full bg-green-400/60" />
+          </div>
+          <div className="flex-1 h-5 rounded bg-muted text-[9px] text-muted-foreground flex items-center justify-center">
+            {url}
+          </div>
+        </div>
+        <div className="flex-1 overflow-hidden min-h-0">
+          {screenshot}
+        </div>
+        <div className="hidden sm:block px-5 py-4 border-t bg-background/60 shrink-0">
+          <p className="text-sm font-medium">{caption}</p>
+          <p className="text-xs text-muted-foreground mt-1">{captionSub}</p>
+        </div>
+      </div>
+
+      {/* Form panel — takes remaining height, scrollable */}
+      <div className="flex-1 flex flex-col p-5 sm:p-8 gap-4 sm:gap-6 overflow-y-auto min-h-0">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">{title}</h2>
+          <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap pt-1">{stepLabel}</span>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { data: profile } = useProfile();
@@ -167,6 +246,7 @@ export default function OnboardingPage() {
   const [goalCategory, setGoalCategory] = useState("");
   const [goalName, setGoalName] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
+  const handleGoalTargetChange = (value: string) => setGoalTarget(parseAmountInput(value));
 
   const [saving, setSaving] = useState(false);
 
@@ -195,9 +275,10 @@ export default function OnboardingPage() {
     setAddedAccounts((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function updateAccountBalance(index: number, balance: string) {
+  function updateAccountBalance(index: number, raw: string) {
+    const cleaned = parseAmountInput(raw);
     setAddedAccounts((prev) =>
-      prev.map((a, i) => (i === index ? { ...a, balance } : a))
+      prev.map((a, i) => (i === index ? { ...a, balance: cleaned } : a))
     );
   }
 
@@ -259,59 +340,6 @@ export default function OnboardingPage() {
       console.error("Failed to finish onboarding:", error);
       setSaving(false);
     }
-  }
-
-  // ── Shared panel renderer ────────────────────────────────────────────────
-  function StepPanel({
-    screenshot,
-    url,
-    caption,
-    captionSub,
-    title,
-    step: stepLabel,
-    children,
-  }: {
-    screenshot: React.ReactNode;
-    url: string;
-    caption: string;
-    captionSub: string;
-    title: string;
-    step: string;
-    children: React.ReactNode;
-  }) {
-    return (
-      <div className="flex flex-col sm:flex-row w-full h-full">
-        {/* Screenshot panel — mobile: top 45% of screen, desktop: left 42% */}
-        <div className="flex flex-col sm:w-[42%] bg-muted/40 border-b sm:border-b-0 sm:border-r flex-shrink-0 sm:flex-shrink sm:min-h-full" style={{ height: 'clamp(200px, 45dvh, 320px)' }}>
-          <div className="flex items-center gap-2 px-4 pt-3 pb-2 shrink-0">
-            <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-400/60" />
-              <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/60" />
-              <div className="h-2.5 w-2.5 rounded-full bg-green-400/60" />
-            </div>
-            <div className="flex-1 h-5 rounded bg-muted text-[9px] text-muted-foreground flex items-center justify-center">
-              {url}
-            </div>
-          </div>
-          <div className="flex-1 overflow-hidden min-h-0">
-            {screenshot}
-          </div>
-          <div className="hidden sm:block px-5 py-4 border-t bg-background/60 shrink-0">
-            <p className="text-sm font-medium">{caption}</p>
-            <p className="text-xs text-muted-foreground mt-1">{captionSub}</p>
-          </div>
-        </div>
-
-        {/* Form panel — takes remaining height, scrollable */}
-        <div className="flex-1 flex flex-col p-5 sm:p-8 gap-4 sm:gap-6 overflow-y-auto min-h-0">
-          <div className="flex items-start justify-between gap-2">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">{title}</h2>
-            <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap pt-1">{stepLabel}</span>
-          </div>
-          {children}
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -436,7 +464,7 @@ export default function OnboardingPage() {
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-sm text-muted-foreground">₱</span>
-                          <input type="number" inputMode="decimal" step="0.01" min="0" placeholder="0" value={acc.balance} onChange={(e) => updateAccountBalance(i, e.target.value)} className="w-24 bg-transparent text-sm font-medium text-right outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                          <input type="text" inputMode="decimal" placeholder="0" value={formatAmount(acc.balance)} onChange={(e) => updateAccountBalance(i, e.target.value)} className="w-28 bg-transparent text-sm font-medium text-right outline-none" />
                         </div>
                         <button type="button" onClick={() => removeAccount(i)} className="text-muted-foreground hover:text-foreground transition-colors"><X className="h-4 w-4" /></button>
                       </div>
@@ -486,8 +514,8 @@ export default function OnboardingPage() {
                       <Label htmlFor="m-goalTarget">Target amount</Label>
                       <div className="relative">
                         <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">₱</span>
-                        <input id="m-goalTarget" type="number" inputMode="decimal" step="0.01" min="1" placeholder="0.00" value={goalTarget} onChange={(e) => setGoalTarget(e.target.value)}
-                          className="w-full rounded-md border border-input bg-background py-2 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        <input id="m-goalTarget" type="text" inputMode="decimal" placeholder="0.00" value={formatAmount(goalTarget)} onChange={(e) => handleGoalTargetChange(e.target.value)}
+                          className="w-full rounded-md border border-input bg-background py-2 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
                       </div>
                     </div>
                   </div>
@@ -579,7 +607,7 @@ export default function OnboardingPage() {
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="text-sm text-muted-foreground">₱</span>
-                            <input type="number" inputMode="decimal" step="0.01" min="0" placeholder="0" value={acc.balance} onChange={(e) => updateAccountBalance(i, e.target.value)} className="w-24 bg-transparent text-sm font-medium text-right outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            <input type="text" inputMode="decimal" placeholder="0" value={formatAmount(acc.balance)} onChange={(e) => updateAccountBalance(i, e.target.value)} className="w-28 bg-transparent text-sm font-medium text-right outline-none" />
                           </div>
                           <button type="button" onClick={() => removeAccount(i)} className="text-muted-foreground hover:text-foreground transition-colors"><X className="h-4 w-4" /></button>
                         </div>
@@ -629,8 +657,8 @@ export default function OnboardingPage() {
                         <Label htmlFor="d-goalTarget">Target amount</Label>
                         <div className="relative">
                           <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">₱</span>
-                          <input id="d-goalTarget" type="number" inputMode="decimal" step="0.01" min="1" placeholder="0.00" value={goalTarget} onChange={(e) => setGoalTarget(e.target.value)}
-                            className="w-full rounded-md border border-input bg-background py-2 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                          <input id="d-goalTarget" type="text" inputMode="decimal" placeholder="0.00" value={formatAmount(goalTarget)} onChange={(e) => handleGoalTargetChange(e.target.value)}
+                            className="w-full rounded-md border border-input bg-background py-2 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
                         </div>
                       </div>
                     </div>
