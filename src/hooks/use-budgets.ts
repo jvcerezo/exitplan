@@ -204,6 +204,9 @@ export function useAddBudget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success(isBrowserOffline() ? "Budget saved offline" : "Budget added");
     },
     onError: (error) => {
@@ -233,6 +236,9 @@ export function useUpdateBudget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success("Budget updated");
     },
     onError: (error) => {
@@ -259,6 +265,9 @@ export function useToggleBudgetRollover() {
     },
     onSuccess: (_, { rollover }) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success(rollover ? "Rollover enabled" : "Rollover disabled");
     },
     onError: (error) => {
@@ -335,6 +344,9 @@ export function useCopyBudgetsFromMonth() {
     },
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success(`Copied ${count} budget${count > 1 ? "s" : ""} from last month`);
     },
     onError: (error) => {
@@ -405,6 +417,9 @@ export function useDeleteBudget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success("Budget deleted");
     },
     onError: (error) => {

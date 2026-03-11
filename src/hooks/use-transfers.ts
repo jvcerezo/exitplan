@@ -37,6 +37,11 @@ export function useCreateTransfer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success("Transfer completed");
     },
     onError: (error) => {

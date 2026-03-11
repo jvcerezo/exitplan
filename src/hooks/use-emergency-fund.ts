@@ -17,6 +17,8 @@ export function useEmergencyFund(targetMonths: number = 3) {
   return useQuery({
     queryKey: ["emergency-fund", targetMonths],
     staleTime: 10 * 60 * 1000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async (): Promise<EmergencyFundData> => {
       const supabase = createClient();
 
@@ -40,23 +42,26 @@ export function useEmergencyFund(targetMonths: number = 3) {
           .select("balance"),
         supabase
           .from("goals")
-          .select("name, current_amount, target_amount")
-          .ilike("category", "emergency fund")
+          .select("name, category, current_amount, target_amount, is_completed, created_at")
           .eq("is_completed", false)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+          .order("created_at", { ascending: false }),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
       if (accountResult.error) throw new Error(accountResult.error.message);
+      if (goalResult.error) throw new Error(goalResult.error.message);
 
       const monthlyExpenses = (txResult.data || []).reduce(
         (sum, t) => sum + Math.abs(t.amount),
         0
       );
 
-      const goal = goalResult.data ?? null;
+      const activeGoals = goalResult.data ?? [];
+      const goal = activeGoals.find((goal) => {
+        const category = String(goal.category ?? "").toLowerCase();
+        const name = String(goal.name ?? "").toLowerCase();
+        return category.includes("emergency") || name.includes("emergency");
+      }) ?? null;
 
       let currentAmount: number;
       let targetAmount: number;

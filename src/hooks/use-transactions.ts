@@ -228,6 +228,11 @@ export function useAddTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success(isBrowserOffline() ? "Transaction saved offline" : "Transaction added");
     },
     onError: (error) => {
@@ -300,6 +305,11 @@ export function useUpdateTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success("Transaction updated");
     },
     onError: (error) => {
@@ -337,6 +347,11 @@ export function useImportTransactions() {
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success(`Imported ${count} transactions`);
     },
     onError: (error) => {
@@ -420,6 +435,11 @@ export function useDeleteTransaction() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
     },
   });
 }

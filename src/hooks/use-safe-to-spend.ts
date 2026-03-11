@@ -16,6 +16,8 @@ export function useSafeToSpend() {
   return useQuery({
     queryKey: ["safe-to-spend"],
     staleTime: 10 * 60 * 1000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async (): Promise<SafeToSpendData> => {
       const supabase = createClient();
       const now = new Date();
@@ -28,7 +30,7 @@ export function useSafeToSpend() {
         .split("T")[0];
       const budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
-      const [txResult, budgetResult, goalResult] = await Promise.all([
+      const [txResult, budgetResult, goalFundingResult] = await Promise.all([
         supabase
           .from("transactions")
           .select("amount")
@@ -39,17 +41,19 @@ export function useSafeToSpend() {
           .select("amount")
           .eq("month", budgetMonth),
         supabase
-          .from("goals")
-          .select("target_amount, current_amount, deadline")
-          .eq("is_completed", false),
+          .from("goal_fundings")
+          .select("amount")
+          .gte("funding_date", monthStart)
+          .lte("funding_date", monthEnd),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
       if (budgetResult.error) throw new Error(budgetResult.error.message);
+      if (goalFundingResult.error) throw new Error(goalFundingResult.error.message);
 
       const transactions = txResult.data ?? [];
       const budgets = budgetResult.data ?? [];
-      const goals = goalResult.data ?? [];
+      const goalFundings = goalFundingResult.data ?? [];
 
       // Income this month
       const monthlyIncome = transactions
@@ -64,28 +68,16 @@ export function useSafeToSpend() {
       // Total budget allocated this month (the limit they set)
       const budgetAllocated = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
 
-      // Estimated monthly goal contributions
-      // For each active goal: remaining / months_until_deadline (min 1 month)
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const goalContributions = goals.reduce((sum, g) => {
-        const remaining = Math.max(0, Number(g.target_amount) - Number(g.current_amount));
-        if (remaining <= 0) return sum;
-        if (!g.deadline) return sum; // skip goals without deadline
-        const deadline = new Date(g.deadline);
-        const monthsLeft = Math.max(
-          1,
-          Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * daysInMonth))
-        );
-        return sum + remaining / monthsLeft;
-      }, 0);
+      // Actual goal contributions this month from the funding ledger.
+      const goalContributions = goalFundings.reduce(
+        (sum, funding) => sum + Number(funding.amount),
+        0
+      );
 
       // Remaining budget after what's already spent
       const remainingBudget = Math.max(0, budgetAllocated - alreadySpent);
 
-      // Safe to spend = income - budget committed - goal contributions - already spent
-      // But we want: what's truly free to spend beyond their plan?
-      // = Monthly income - budget allocated - goal contributions
-      // Then subtract what's already been spent OUTSIDE budget categories (unbudgeted spending)
+      // Safe to spend = income - budget limits - this month's goal contributions.
       const safeToSpend = Math.max(
         0,
         Math.round(

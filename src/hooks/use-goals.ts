@@ -109,6 +109,11 @@ export function useAddGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success(isBrowserOffline() ? "Goal saved offline" : "Goal created");
     },
     onError: (error) => {
@@ -138,6 +143,11 @@ export function useUpdateGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success("Goal updated");
     },
     onError: (error) => {
@@ -172,8 +182,13 @@ export function useAddFundsToGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       toast.success("Funds added to goal");
     },
     onError: (error) => {
@@ -214,6 +229,11 @@ export function useDeleteGoal() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
+      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+      queryClient.invalidateQueries({ queryKey: ["health-score"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
     },
   });
 }
