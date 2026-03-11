@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Upload, FileText, X, AlertCircle, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import { useImportTransactions } from "@/hooks/use-transactions";
 import { useAccounts, useAddAccount } from "@/hooks/use-accounts";
 import { CURRENCIES, ACCOUNT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // ── CSV parsing ───────────────────────────────────────────────────────────────
 
@@ -93,6 +94,130 @@ interface ParsedRow {
   amount: number;
   category: string;
   skip: boolean;
+}
+
+async function extractPDFText(file: File): Promise<string> {
+  const [{ getDocument }, arrayBuffer] = await Promise.all([
+    import("pdfjs-dist/legacy/build/pdf.mjs"),
+    file.arrayBuffer(),
+  ]);
+
+  const pdf = await getDocument({
+    data: arrayBuffer,
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    disableAutoFetch: true,
+    disableStream: true,
+    disableRange: true,
+  }).promise;
+
+  const pages: string[] = [];
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ");
+    pages.push(pageText);
+  }
+
+  return pages.join("\n");
+}
+
+function normalizeDescription(text: string): string {
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/^(transaction|description|details)\s*[:\-]?/i, "")
+    .trim();
+}
+
+function parseGCashPDF(text: string): ParsedRow[] {
+  const rawLines = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
+  const lines = rawLines.filter(
+    (line) =>
+      !/^(gcash|transaction history|running balance|balance|reference|ref no|page \d+)/i.test(line)
+  );
+
+  const dateAtStart =
+    /^(\d{4}[/-]\d{1,2}[/-]\d{1,2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|[A-Za-z]{3,9}\s+\d{1,2},\s+\d{4}|\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4})\s+(.*)$/;
+  const amountAnywhere = /([+-]?\s*₱?\s*[\d,]+(?:\.\d{1,2})?)(?!.*[+-]?\s*₱?\s*[\d,]+(?:\.\d{1,2})?)/;
+
+  const result: ParsedRow[] = [];
+  let pendingDate: string | null = null;
+  let pendingDescription = "";
+
+  const inferSign = (description: string) => {
+    const lower = description.toLowerCase();
+    if (/(cash in|received|receive money|refund|interest|deposit)/.test(lower)) return 1;
+    if (/(send money|cash out|payment|paid|transfer to|withdraw)/.test(lower)) return -1;
+    return null;
+  };
+
+  const pushRow = (date: string, description: string, rawAmount: string) => {
+    const parsedDate = parseDate(date);
+    const parsedAmount = parseAmount(rawAmount.replace("₱", ""));
+    if (!parsedDate || parsedAmount === null) return;
+
+    const hasNegative = /-/.test(rawAmount);
+    const hasPositive = /\+/.test(rawAmount);
+    const signByDesc = inferSign(description);
+
+    let signedAmount = Math.abs(parsedAmount);
+    if (hasNegative) signedAmount = -Math.abs(parsedAmount);
+    else if (hasPositive) signedAmount = Math.abs(parsedAmount);
+    else if (signByDesc === -1) signedAmount = -Math.abs(parsedAmount);
+    else signedAmount = Math.abs(parsedAmount);
+
+    const cleanDescription = normalizeDescription(description || "Imported GCash transaction");
+    result.push({
+      id: result.length,
+      date: parsedDate,
+      description: cleanDescription || "Imported GCash transaction",
+      amount: signedAmount,
+      category: guessCategory(cleanDescription),
+      skip: false,
+    });
+  };
+
+  for (const line of lines) {
+    const dateMatch = line.match(dateAtStart);
+
+    if (dateMatch) {
+      const [, datePart, rest] = dateMatch;
+      const amountMatch = rest.match(amountAnywhere);
+
+      if (amountMatch) {
+        const amountRaw = amountMatch[1];
+        const desc = rest.replace(amountRaw, "").trim();
+        pushRow(datePart, desc, amountRaw);
+        pendingDate = null;
+        pendingDescription = "";
+      } else {
+        pendingDate = datePart;
+        pendingDescription = rest.trim();
+      }
+      continue;
+    }
+
+    if (pendingDate) {
+      const amountMatch = line.match(amountAnywhere);
+      if (amountMatch) {
+        pushRow(pendingDate, pendingDescription || line.replace(amountMatch[1], "").trim(), amountMatch[1]);
+        pendingDate = null;
+        pendingDescription = "";
+      } else {
+        pendingDescription = `${pendingDescription} ${line}`.trim();
+      }
+    }
+  }
+
+  return result;
 }
 
 function parseFile(text: string): ParsedRow[] {
@@ -233,50 +358,57 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
   const { data: accounts } = useAccounts();
   const importMutation = useImportTransactions();
   const activeAccounts = accounts?.filter((a) => !a.is_archived) ?? [];
+  const mustCreateAccount = step === "preview" && accounts !== undefined && activeAccounts.length === 0;
+  const showAccountCreation = showNewAccountForm || mustCreateAccount;
 
-  // Auto-open new account form when there are no accounts
-  useEffect(() => {
-    if (step === "preview" && accounts !== undefined && activeAccounts.length === 0) {
-      setShowNewAccountForm(true);
-    }
-  }, [step, accounts, activeAccounts.length]);
+  function resetDialogState() {
+    setStep("upload");
+    setFileName("");
+    setRows([]);
+    setParseError(false);
+    setShowNewAccountForm(false);
+  }
 
-  useEffect(() => {
-    if (!open) {
-      setStep("upload");
-      setFileName("");
-      setRows([]);
-      setParseError(false);
-      setShowNewAccountForm(false);
-    }
-  }, [open]);
+  async function handleFile(file: File) {
+    setParseError(false);
+    setFileName(file.name);
 
-  function handleFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const parsed = parseFile(text);
-      setFileName(file.name);
+    try {
+      const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      let parsed: ParsedRow[] = [];
+
+      if (isPDF) {
+        const text = await extractPDFText(file);
+        parsed = parseGCashPDF(text);
+      } else {
+        const text = await file.text();
+        parsed = parseFile(text);
+      }
+
       if (parsed.length === 0) {
         setParseError(true);
         return;
       }
-      setParseError(false);
+
       setRows(parsed);
       if (activeAccounts[0]) {
         setCurrency(activeAccounts[0].currency);
         setAccountId(activeAccounts[0].id);
       }
       setStep("preview");
-    };
-    reader.readAsText(file);
+    } catch {
+      setParseError(true);
+      toast.error("Could not parse this file", {
+        description: "Try a CSV export if the PDF format is unsupported.",
+      });
+    }
   }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    if (file) void handleFile(file);
   }
 
   function toggleSkip(id: number) {
@@ -320,10 +452,16 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
 
   if (step === "upload") {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          onOpenChange(nextOpen);
+          if (!nextOpen) resetDialogState();
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Import from CSV</DialogTitle>
+            <DialogTitle>Import transactions</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -353,12 +491,12 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
                       Couldn&apos;t read &ldquo;{fileName}&rdquo;
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Make sure the CSV has Date and Amount columns
+                      Make sure the file contains recognizable Date and Amount entries
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-medium">Drop your CSV file here</p>
+                    <p className="text-sm font-medium">Drop your CSV or PDF file here</p>
                     <p className="text-xs text-muted-foreground mt-1">or click to browse</p>
                   </>
                 )}
@@ -368,17 +506,17 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,.txt"
+              accept=".csv,.txt,.pdf"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) handleFile(file);
+                if (file) void handleFile(file);
                 e.target.value = "";
               }}
             />
 
             <p className="text-xs text-muted-foreground text-center">
-              Works with BDO, BPI, GCash, Metrobank, UnionBank, and most bank CSV exports
+              Works with bank CSV exports and GCash PDF/CSV transaction history
             </p>
           </div>
         </DialogContent>
@@ -389,7 +527,13 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
   // ── Preview step ──────────────────────────────────────────────────────────
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        onOpenChange(nextOpen);
+        if (!nextOpen) resetDialogState();
+      }}
+    >
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Preview & import</DialogTitle>
@@ -417,7 +561,7 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
               )}
             </div>
 
-            {!showNewAccountForm ? (
+            {!showAccountCreation ? (
               <Select value={accountId || "__none__"} onValueChange={handleAccountSelect}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select an account" />
@@ -442,11 +586,11 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
               </Select>
             ) : null}
 
-            {showNewAccountForm && (
+            {showAccountCreation && (
               <NewAccountForm
                 currency={currency}
                 onCreated={handleAccountCreated}
-                onCancel={activeAccounts.length > 0 ? () => setShowNewAccountForm(false) : undefined}
+                onCancel={!mustCreateAccount && activeAccounts.length > 0 ? () => setShowNewAccountForm(false) : undefined}
               />
             )}
           </div>
@@ -524,7 +668,7 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
             <Button
               type="button"
               className="flex-1"
-              disabled={selectedCount === 0 || importMutation.isPending || showNewAccountForm}
+              disabled={selectedCount === 0 || importMutation.isPending || showAccountCreation}
               onClick={handleImport}
             >
               {importMutation.isPending
