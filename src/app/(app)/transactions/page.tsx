@@ -34,20 +34,20 @@ export default function TransactionsPage() {
 
           <div className="hidden sm:flex items-center gap-2">
             <AddTransactionDialog
-              type="expense"
+              type="income"
               trigger={
                 <Button className="h-10">
-                  <Minus className="h-4 w-4 mr-1.5" />
-                  Add Expense
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Add Income
                 </Button>
               }
             />
             <AddTransactionDialog
-              type="income"
+              type="expense"
               trigger={
                 <Button variant="outline" className="h-10">
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  Add Income
+                  <Minus className="h-4 w-4 mr-1.5" />
+                  Add Expense
                 </Button>
               }
             />

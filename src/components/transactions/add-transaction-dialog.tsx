@@ -519,7 +519,7 @@ export function AddTransactionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant={type === "income" ? "outline" : "default"}>
+          <Button variant={type === "expense" ? "outline" : "default"}>
             {type === "expense" ? (
               <Minus className="h-4 w-4 mr-2" />
             ) : (

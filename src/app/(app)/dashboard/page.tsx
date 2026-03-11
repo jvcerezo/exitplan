@@ -25,8 +25,8 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="hidden sm:flex gap-2">
-          <AddTransactionDialog type="expense" />
           <AddTransactionDialog type="income" />
+          <AddTransactionDialog type="expense" />
         </div>
       </div>
 
