@@ -51,6 +51,191 @@ CREATE POLICY "Users can delete own transactions"
 
 
 -- ============================================
+-- Atomic transaction write functions
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.create_user_transaction(
+  p_amount numeric,
+  p_category text,
+  p_description text,
+  p_date date,
+  p_currency text DEFAULT 'PHP',
+  p_account_id uuid DEFAULT NULL,
+  p_transfer_id uuid DEFAULT NULL,
+  p_tags text[] DEFAULT NULL,
+  p_attachment_path text DEFAULT NULL
+)
+RETURNS public.transactions
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+  account_balance numeric(12, 2);
+  account_archived boolean;
+  inserted_row public.transactions;
+BEGIN
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF p_account_id IS NOT NULL THEN
+    SELECT balance, is_archived
+      INTO account_balance, account_archived
+    FROM public.accounts
+    WHERE id = p_account_id
+      AND user_id = current_user_id
+    FOR UPDATE;
+
+    IF account_balance IS NULL THEN
+      RAISE EXCEPTION 'Account not found';
+    END IF;
+
+    IF account_archived THEN
+      RAISE EXCEPTION 'Archived accounts cannot be used';
+    END IF;
+
+    UPDATE public.accounts
+    SET balance = ROUND((balance + p_amount)::numeric, 2)
+    WHERE id = p_account_id;
+  END IF;
+
+  INSERT INTO public.transactions (
+    user_id,
+    amount,
+    category,
+    description,
+    date,
+    currency,
+    attachment_path,
+    account_id,
+    transfer_id,
+    tags
+  )
+  VALUES (
+    current_user_id,
+    ROUND(p_amount::numeric, 2),
+    p_category,
+    p_description,
+    p_date,
+    COALESCE(NULLIF(BTRIM(p_currency), ''), 'PHP'),
+    NULLIF(BTRIM(p_attachment_path), ''),
+    p_account_id,
+    p_transfer_id,
+    p_tags
+  )
+  RETURNING * INTO inserted_row;
+
+  RETURN inserted_row;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_user_transaction(numeric, text, text, date, text, uuid, uuid, text[], text) TO authenticated;
+
+
+CREATE OR REPLACE FUNCTION public.import_transactions_with_balance(
+  p_transactions jsonb
+)
+RETURNS integer
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+  tx jsonb;
+  tx_amount numeric(12, 2);
+  tx_category text;
+  tx_description text;
+  tx_date date;
+  tx_currency text;
+  tx_account_id uuid;
+  tx_transfer_id uuid;
+  tx_attachment_path text;
+  tx_tags text[];
+  account_balance numeric(12, 2);
+  account_archived boolean;
+  inserted_count integer := 0;
+BEGIN
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF p_transactions IS NULL OR jsonb_typeof(p_transactions) <> 'array' THEN
+    RAISE EXCEPTION 'Transactions payload must be an array';
+  END IF;
+
+  FOR tx IN SELECT * FROM jsonb_array_elements(p_transactions)
+  LOOP
+    tx_amount := ROUND(COALESCE((tx->>'amount')::numeric, 0)::numeric, 2);
+    tx_category := COALESCE(NULLIF(BTRIM(tx->>'category'), ''), 'other');
+    tx_description := COALESCE(NULLIF(BTRIM(tx->>'description'), ''), tx_category);
+    tx_date := COALESCE((tx->>'date')::date, CURRENT_DATE);
+    tx_currency := COALESCE(NULLIF(BTRIM(tx->>'currency'), ''), 'PHP');
+    tx_account_id := NULLIF(BTRIM(tx->>'account_id'), '')::uuid;
+    tx_transfer_id := NULLIF(BTRIM(tx->>'transfer_id'), '')::uuid;
+    tx_attachment_path := NULLIF(BTRIM(tx->>'attachment_path'), '');
+
+    tx_tags := ARRAY(
+      SELECT jsonb_array_elements_text(COALESCE(tx->'tags', '[]'::jsonb))
+    );
+
+    IF tx_account_id IS NOT NULL THEN
+      SELECT balance, is_archived
+        INTO account_balance, account_archived
+      FROM public.accounts
+      WHERE id = tx_account_id
+        AND user_id = current_user_id
+      FOR UPDATE;
+
+      IF account_balance IS NULL THEN
+        RAISE EXCEPTION 'Account not found for imported transaction';
+      END IF;
+
+      IF account_archived THEN
+        RAISE EXCEPTION 'Archived accounts cannot be used in import';
+      END IF;
+
+      UPDATE public.accounts
+      SET balance = ROUND((balance + tx_amount)::numeric, 2)
+      WHERE id = tx_account_id;
+    END IF;
+
+    INSERT INTO public.transactions (
+      user_id,
+      amount,
+      category,
+      description,
+      date,
+      currency,
+      attachment_path,
+      account_id,
+      transfer_id,
+      tags
+    )
+    VALUES (
+      current_user_id,
+      tx_amount,
+      tx_category,
+      tx_description,
+      tx_date,
+      tx_currency,
+      tx_attachment_path,
+      tx_account_id,
+      tx_transfer_id,
+      tx_tags
+    );
+
+    inserted_count := inserted_count + 1;
+  END LOOP;
+
+  RETURN inserted_count;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.import_transactions_with_balance(jsonb) TO authenticated;
+
+
+-- ============================================
 -- Goals table
 -- ============================================
 

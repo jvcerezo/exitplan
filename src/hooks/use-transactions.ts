@@ -140,34 +140,19 @@ export function useAddTransaction() {
   return useMutation({
     mutationFn: async (transaction: TransactionInsert) => {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { data, error } = await supabase
-        .from("transactions")
-        .insert({ ...transaction, user_id: user.id })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc("create_user_transaction", {
+        p_amount: transaction.amount,
+        p_category: transaction.category,
+        p_description: transaction.description,
+        p_date: transaction.date,
+        p_currency: transaction.currency,
+        p_account_id: transaction.account_id ?? null,
+        p_transfer_id: transaction.transfer_id ?? null,
+        p_tags: transaction.tags ?? null,
+        p_attachment_path: transaction.attachment_path ?? null,
+      });
 
       if (error) throw new Error(error.message);
-
-      // Sync account balance
-      if (transaction.account_id) {
-        const { data: account } = await supabase
-          .from("accounts")
-          .select("balance")
-          .eq("id", transaction.account_id)
-          .single();
-
-        if (account) {
-          await supabase
-            .from("accounts")
-            .update({ balance: account.balance + transaction.amount })
-            .eq("id", transaction.account_id);
-        }
-      }
 
       return data;
     },
@@ -260,49 +245,30 @@ export function useImportTransactions() {
   return useMutation({
     mutationFn: async (transactions: TransactionInsert[]) => {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const payload = transactions.map((transaction) => ({
+        amount: transaction.amount,
+        category: transaction.category,
+        description: transaction.description,
+        date: transaction.date,
+        currency: transaction.currency,
+        account_id: transaction.account_id ?? null,
+        transfer_id: transaction.transfer_id ?? null,
+        tags: transaction.tags ?? null,
+        attachment_path: transaction.attachment_path ?? null,
+      }));
 
-      const rows = transactions.map((t) => ({ ...t, user_id: user.id }));
-
-      const { data, error } = await supabase
-        .from("transactions")
-        .insert(rows)
-        .select();
+      const { data, error } = await supabase.rpc("import_transactions_with_balance", {
+        p_transactions: payload,
+      });
 
       if (error) throw new Error(error.message);
 
-      // Accumulate deltas per account and update balances
-      const deltas: Record<string, number> = {};
-      for (const t of transactions) {
-        if (t.account_id) {
-          deltas[t.account_id] = (deltas[t.account_id] ?? 0) + t.amount;
-        }
-      }
-
-      for (const [accountId, delta] of Object.entries(deltas)) {
-        const { data: account } = await supabase
-          .from("accounts")
-          .select("balance")
-          .eq("id", accountId)
-          .single();
-
-        if (account) {
-          await supabase
-            .from("accounts")
-            .update({ balance: account.balance + delta })
-            .eq("id", accountId);
-        }
-      }
-
-      return data;
+      return Number(data ?? 0);
     },
-    onSuccess: (data) => {
+    onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast.success(`Imported ${data?.length ?? 0} transactions`);
+      toast.success(`Imported ${count} transactions`);
     },
     onError: (error) => {
       toast.error("Import failed", { description: error.message });
