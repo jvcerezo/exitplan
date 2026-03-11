@@ -3,7 +3,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 async function getBaseUrl() {
   const headerStore = await headers();
@@ -93,12 +92,7 @@ export async function completeOnboarding() {
     return { error: "Not authenticated" };
   }
 
-  // Use admin client to bypass RLS
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("profiles")
-    .update({ has_completed_onboarding: true })
-    .eq("id", user.id);
+  const { error } = await supabase.rpc("complete_onboarding");
 
   if (error) {
     console.error("Error completing onboarding:", error);

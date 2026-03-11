@@ -1,283 +1,449 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, ArrowLeft, ArrowRight, Map } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  CircleDollarSign,
+  Landmark,
+  LayoutDashboard,
+  Map,
+  PiggyBank,
+  Plane,
+  Plus,
+  Receipt,
+  Search,
+  Settings,
+  Shield,
+  Target,
+  TrendingUp,
+  X,
+} from "lucide-react";
 import { TOUR_STEPS } from "@/hooks/use-tour";
 import { useTourContext } from "@/providers/tour-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { TourStep } from "@/hooks/use-tour";
 
-interface Rect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
-const PADDING = 8; // px around the spotlight highlight
-
-function getTargetRect(selector: string): Rect | null {
-  const el = document.querySelector(selector);
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  return {
-    top: r.top - PADDING,
-    left: r.left - PADDING,
-    width: r.width + PADDING * 2,
-    height: r.height + PADDING * 2,
-  };
-}
-
-interface TooltipPosition {
-  top?: number | string;
-  left?: number | string;
-  right?: number | string;
-  bottom?: number | string;
-  transform?: string;
-}
-
-function calcTooltipPos(
-  rect: Rect | null,
-  placement: TourStep["placement"],
-  tooltipW: number,
-  tooltipH: number,
-  vw: number,
-  vh: number
-): TooltipPosition {
-  if (!rect || placement === "center") {
-    return {
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-    };
-  }
-
-  const gap = 16;
-  let top: number, left: number;
-
-  switch (placement) {
-    case "right":
-      top = rect.top + rect.height / 2 - tooltipH / 2;
-      left = rect.left + rect.width + gap;
-      break;
-    case "left":
-      top = rect.top + rect.height / 2 - tooltipH / 2;
-      left = rect.left - tooltipW - gap;
-      break;
-    case "bottom":
-      top = rect.top + rect.height + gap;
-      left = rect.left + rect.width / 2 - tooltipW / 2;
-      break;
-    case "top":
-    default:
-      top = rect.top - tooltipH - gap;
-      left = rect.left + rect.width / 2 - tooltipW / 2;
-      break;
-  }
-
-  // Clamp to viewport
-  left = Math.max(12, Math.min(left, vw - tooltipW - 12));
-  top = Math.max(12, Math.min(top, vh - tooltipH - 12));
-
-  return { top, left };
-}
-
-// SVG clip-path spotlight mask
-function SpotlightMask({ rect }: { rect: Rect | null }) {
-  const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
-  const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
-
-  if (!rect) {
-    // Full dark overlay for centered steps
-    return (
-      <motion.div
-        key="full-overlay"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-[9998] bg-black/60 pointer-events-none"
-      />
-    );
-  }
-
-  const r = 8; // border-radius of the cutout
-
-  const path = `
-    M 0 0 L ${vw} 0 L ${vw} ${vh} L 0 ${vh} Z
-    M ${rect.left + r} ${rect.top}
-    L ${rect.left + rect.width - r} ${rect.top}
-    Q ${rect.left + rect.width} ${rect.top} ${rect.left + rect.width} ${rect.top + r}
-    L ${rect.left + rect.width} ${rect.top + rect.height - r}
-    Q ${rect.left + rect.width} ${rect.top + rect.height} ${rect.left + rect.width - r} ${rect.top + rect.height}
-    L ${rect.left + r} ${rect.top + rect.height}
-    Q ${rect.left} ${rect.top + rect.height} ${rect.left} ${rect.top + rect.height - r}
-    L ${rect.left} ${rect.top + r}
-    Q ${rect.left} ${rect.top} ${rect.left + r} ${rect.top}
-    Z
-  `.trim();
-
+function DashboardMockup() {
   return (
-    <motion.svg
-      key="spotlight-mask"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-[9998] pointer-events-none"
-      width={vw}
-      height={vh}
-      style={{ top: 0, left: 0 }}
-    >
-      <path d={path} fill="rgba(0,0,0,0.6)" fillRule="evenodd" />
-      {/* Glowing border around the cutout */}
-      <rect
-        x={rect.left}
-        y={rect.top}
-        width={rect.width}
-        height={rect.height}
-        rx={r}
-        fill="none"
-        stroke="hsl(var(--primary))"
-        strokeWidth="2"
-        opacity="0.8"
-      />
-    </motion.svg>
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 text-[10px] font-bold">Dashboard</div>
+      <div className="grid grid-cols-3 gap-1.5">
+        {[
+          { label: "Balance", val: "PHP 42,267", color: "text-foreground" },
+          { label: "Income", val: "PHP 33,500", color: "text-green-500" },
+          { label: "Expenses", val: "PHP 7,232", color: "text-rose-500" },
+        ].map((card) => (
+          <div key={card.label} className="space-y-0.5 rounded-lg border bg-card px-2 py-2">
+            <div className="text-[8px] text-muted-foreground">{card.label}</div>
+            <div className={cn("text-[10px] font-bold", card.color)}>{card.val}</div>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 rounded-lg border bg-card p-2">
+        <div className="flex h-full items-end gap-1 overflow-hidden">
+          {[40, 65, 45, 80, 55, 70, 48, 90, 60, 75, 50, 85].map((height, index) => (
+            <div
+              key={index}
+              className="flex-1 rounded-sm bg-primary/30"
+              style={{ height: `${height}%` }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary">
+          <span className="text-[9px] font-bold text-primary">82</span>
+        </div>
+        <div>
+          <div className="text-[9px] font-semibold">Financial Health</div>
+          <div className="text-[8px] text-muted-foreground">Good - improving</div>
+        </div>
+        <TrendingUp className="ml-auto h-3 w-3 text-green-500" />
+      </div>
+    </div>
   );
 }
 
-function TargetHighlight({ rect }: { rect: Rect | null }) {
-  if (!rect) return null;
+function TransactionsMockup() {
+  const rows = [
+    { name: "Salary", cat: "Income", amt: "+PHP 33,500", color: "text-green-500" },
+    { name: "Groceries", cat: "Food", amt: "-PHP 2,100", color: "text-rose-500" },
+    { name: "GCash top-up", cat: "Transfer", amt: "-PHP 5,000", color: "text-muted-foreground" },
+    { name: "Electricity", cat: "Utilities", amt: "-PHP 1,200", color: "text-rose-500" },
+  ];
 
   return (
-    <motion.div
-      key="target-highlight"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="fixed z-[9998] pointer-events-none rounded-lg"
-      style={{
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-        boxShadow: "0 0 0 2px hsl(var(--primary)), 0 0 0 6px hsl(var(--primary) / 0.22)",
-      }}
-    />
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-[10px] font-bold">Transactions</div>
+        <Receipt className="h-3 w-3 text-muted-foreground/60" />
+      </div>
+      {rows.map((row) => (
+        <div key={row.name} className="flex items-center gap-2 rounded-lg border bg-card px-2.5 py-2">
+          <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <CircleDollarSign className="h-3 w-3 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[9px] font-semibold">{row.name}</div>
+            <div className="text-[8px] text-muted-foreground">{row.cat}</div>
+          </div>
+          <div className={cn("text-[9px] font-mono font-medium", row.color)}>{row.amt}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GoalsMockup() {
+  const goals = [
+    { name: "Emergency Fund", pct: 40, Icon: Shield, color: "bg-blue-500" },
+    { name: "Travel", pct: 62, Icon: Plane, color: "bg-violet-500" },
+    { name: "Savings", pct: 28, Icon: PiggyBank, color: "bg-emerald-500" },
+  ];
+
+  return (
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-[10px] font-bold">Goals</div>
+        <Target className="h-3 w-3 text-muted-foreground/60" />
+      </div>
+      <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5">
+        <CircleDollarSign className="h-3 w-3 text-primary" />
+        <span className="text-[9px] font-semibold text-primary">3 active - PHP 32,000 saved</span>
+      </div>
+      {goals.map((goal) => (
+        <div key={goal.name} className="space-y-1.5 rounded-lg border bg-card px-2.5 py-2">
+          <div className="flex items-center gap-2">
+            <div className={cn("flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full", goal.color)}>
+              <goal.Icon className="h-2.5 w-2.5 text-white" />
+            </div>
+            <span className="flex-1 truncate text-[9px] font-semibold">{goal.name}</span>
+            <span className="text-[9px] text-muted-foreground">{goal.pct}%</span>
+          </div>
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div className={cn("h-full rounded-full", goal.color)} style={{ width: `${goal.pct}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BudgetsMockup() {
+  const budgets = [
+    { name: "Food", spent: "PHP 4,200", limit: "PHP 6,000", pct: 70, color: "bg-amber-500" },
+    { name: "Transport", spent: "PHP 1,900", limit: "PHP 3,000", pct: 63, color: "bg-sky-500" },
+    { name: "Bills", spent: "PHP 2,800", limit: "PHP 4,000", pct: 70, color: "bg-violet-500" },
+  ];
+
+  return (
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-[10px] font-bold">Budgets</div>
+        <BarChart3 className="h-3 w-3 text-muted-foreground/60" />
+      </div>
+      {budgets.map((budget) => (
+        <div key={budget.name} className="space-y-1.5 rounded-lg border bg-card px-2.5 py-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-semibold">{budget.name}</span>
+            <span className="text-[8px] text-muted-foreground">{budget.spent} / {budget.limit}</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className={cn("h-full rounded-full", budget.color)} style={{ width: `${budget.pct}%` }} />
+          </div>
+        </div>
+      ))}
+      <div className="rounded-lg border border-dashed border-primary/30 px-3 py-2 text-center text-[9px] text-primary/70">
+        Monthly alerts keep you on track
+      </div>
+    </div>
+  );
+}
+
+function AccountsMockup() {
+  const accounts = [
+    { name: "GCash", type: "E-Wallet", bal: "PHP 3,200", color: "bg-blue-500" },
+    { name: "BDO", type: "Bank", bal: "PHP 18,450", color: "bg-green-500" },
+    { name: "Cash", type: "Cash", bal: "PHP 1,500", color: "bg-amber-500" },
+  ];
+
+  return (
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-[10px] font-bold">Accounts</div>
+        <Landmark className="h-3 w-3 text-muted-foreground/60" />
+      </div>
+      <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3 py-1.5">
+        <span className="text-[9px] text-muted-foreground">Total</span>
+        <span className="text-[10px] font-bold text-primary">PHP 23,150</span>
+      </div>
+      {accounts.map((account) => (
+        <div key={account.name} className="flex items-center gap-2 rounded-lg border bg-card px-2.5 py-2">
+          <div className={cn("flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full", account.color)}>
+            <Landmark className="h-3 w-3 text-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[9px] font-semibold">{account.name}</div>
+            <div className="text-[8px] text-muted-foreground">{account.type}</div>
+          </div>
+          <div className="text-[9px] font-mono font-medium">{account.bal}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FabMockup() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-4 p-4 select-none pointer-events-none">
+      <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30">
+        <Plus className="h-7 w-7 text-primary-foreground" />
+        <span
+          className="absolute h-16 w-16 rounded-full border-2 border-primary/40 animate-ping"
+          style={{ animationDuration: "2s" }}
+        />
+      </div>
+      <div className="space-y-1 text-center">
+        <p className="text-xs font-semibold">Quick Add</p>
+        <p className="text-[10px] text-muted-foreground">One tap to log any transaction</p>
+      </div>
+      <div className="flex gap-2">
+        {["Expense", "Income"].map((type) => (
+          <div
+            key={type}
+            className={cn(
+              "rounded-full border px-3 py-1 text-[10px] font-medium",
+              type === "Expense"
+                ? "border-rose-500/20 bg-rose-500/10 text-rose-500"
+                : "border-green-500/20 bg-green-500/10 text-green-500"
+            )}
+          >
+            {type}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SearchMockup() {
+  return (
+    <div className="flex h-full flex-col gap-3 p-4 select-none pointer-events-none">
+      <div className="rounded-xl border bg-card p-3 shadow-sm">
+        <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2">
+          <Search className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground">Search transactions, accounts, goals...</span>
+          <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[8px] text-muted-foreground">Ctrl K</span>
+        </div>
+      </div>
+      {["Recent transactions", "Accounts - GCash", "Goals - Emergency Fund", "Settings - Theme"].map((item) => (
+        <div key={item} className="rounded-lg border bg-card px-3 py-2 text-[9px] text-foreground/90">
+          {item}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SettingsMockup() {
+  const rows = ["Display name", "Primary currency", "Exchange rates", "Theme"];
+
+  return (
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-[10px] font-bold">Settings</div>
+        <Settings className="h-3 w-3 text-muted-foreground/60" />
+      </div>
+      {rows.map((row) => (
+        <div key={row} className="flex items-center justify-between rounded-lg border bg-card px-3 py-2">
+          <span className="text-[9px] font-medium">{row}</span>
+          <div className="h-2 w-10 rounded-full bg-muted" />
+        </div>
+      ))}
+      <div className="mt-auto rounded-lg bg-primary/10 px-3 py-2 text-[9px] text-primary">
+        Customize ExitPlan your way
+      </div>
+    </div>
+  );
+}
+
+function DoneMockup() {
+  const items = [
+    { icon: LayoutDashboard, label: "Dashboard" },
+    { icon: Receipt, label: "Transactions" },
+    { icon: Target, label: "Goals" },
+    { icon: BarChart3, label: "Budgets" },
+    { icon: Landmark, label: "Accounts" },
+  ];
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-4 select-none pointer-events-none">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+        <CheckCircle2 className="h-8 w-8 text-primary" />
+      </div>
+      <p className="text-center text-xs font-semibold">You know the essentials</p>
+      <div className="grid w-full grid-cols-5 gap-1">
+        {items.map(({ icon: Icon, label }) => (
+          <div key={label} className="flex flex-col items-center gap-1">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border bg-card">
+              <Icon className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <span className="text-center text-[8px] leading-tight text-muted-foreground">{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const SCREENSHOT_COMPONENTS: Record<NonNullable<TourStep["screenshot"]>, React.ComponentType> = {
+  dashboard: DashboardMockup,
+  transactions: TransactionsMockup,
+  goals: GoalsMockup,
+  budgets: BudgetsMockup,
+  accounts: AccountsMockup,
+  fab: FabMockup,
+  search: SearchMockup,
+  settings: SettingsMockup,
+  done: DoneMockup,
+};
+
+const SCREENSHOT_URLS: Record<NonNullable<TourStep["screenshot"]>, string> = {
+  dashboard: "exitplan.app/dashboard",
+  transactions: "exitplan.app/transactions",
+  goals: "exitplan.app/goals",
+  budgets: "exitplan.app/budgets",
+  accounts: "exitplan.app/accounts",
+  fab: "exitplan.app/dashboard",
+  search: "exitplan.app/search",
+  settings: "exitplan.app/settings",
+  done: "exitplan.app",
+};
+
+function TourCard({
+  step,
+  currentStep,
+  totalSteps,
+  isRequiredRun,
+  prev,
+  next,
+  stop,
+  tooltipRef,
+}: {
+  step: TourStep;
+  currentStep: number;
+  totalSteps: number;
+  isRequiredRun: boolean;
+  prev: () => void;
+  next: () => void;
+  stop: () => void;
+  tooltipRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const screenshotKey = step.screenshot ?? "dashboard";
+  const ScreenshotComponent = SCREENSHOT_COMPONENTS[screenshotKey];
+
+  return (
+    <div
+      ref={tooltipRef}
+      className="w-full max-w-[640px] sm:max-w-[1120px] overflow-hidden rounded-xl border bg-card text-card-foreground shadow-2xl"
+    >
+      <div className="flex flex-col sm:flex-row">
+        <div className="flex h-52 flex-col border-b bg-muted/40 sm:h-auto sm:w-5/12 sm:border-b-0 sm:border-r">
+          <div className="flex items-center gap-1.5 px-3 pb-1.5 pt-3">
+            <div className="h-2 w-2 rounded-full bg-red-400/60" />
+            <div className="h-2 w-2 rounded-full bg-yellow-400/60" />
+            <div className="h-2 w-2 rounded-full bg-green-400/60" />
+            <div className="flex h-3.5 flex-1 items-center justify-center truncate rounded bg-muted px-1 text-[7px] text-muted-foreground">
+              {SCREENSHOT_URLS[screenshotKey]}
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <ScreenshotComponent />
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-4 p-5 sm:gap-5 sm:p-7">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 sm:h-8 sm:w-8">
+                <Map className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+              </span>
+              <h3 className="text-sm font-semibold leading-tight sm:text-lg">{step.title}</h3>
+            </div>
+            <button
+              onClick={stop}
+              className="shrink-0 rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Close tour"
+              disabled={isRequiredRun}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <p className="text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">{step.description}</p>
+
+          <div className="flex items-center justify-center gap-1.5">
+            {TOUR_STEPS.map((_, index) => (
+              <span
+                key={index}
+                className={cn(
+                  "block rounded-full transition-all duration-200",
+                  index === currentStep ? "h-2 w-5 bg-primary" : "h-2 w-2 bg-muted-foreground/30"
+                )}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between gap-2 sm:pt-1">
+            {isRequiredRun ? (
+              <span className="text-xs text-muted-foreground/70 sm:text-sm">Complete tour to continue</span>
+            ) : (
+              <button
+                onClick={stop}
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-2 sm:text-sm"
+              >
+                Skip tour
+              </button>
+            )}
+
+            <div className="flex gap-2">
+              {currentStep > 0 && (
+                <Button size="sm" variant="outline" onClick={prev} className="h-8 px-3 sm:h-9 sm:px-4">
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <Button size="sm" onClick={next} className="h-8 px-4 sm:h-9 sm:px-5 sm:text-sm">
+                {currentStep === totalSteps - 1 ? (
+                  "Done"
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <p className="-mt-2 text-center text-[11px] text-muted-foreground/60 sm:text-xs">
+            {currentStep + 1} / {totalSteps}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export function TourOverlay() {
   const { isActive, isRequiredRun, currentStep, totalSteps, step, next, prev, stop } =
     useTourContext();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [rect, setRect] = useState<Rect | null>(null);
-  const [vw, setVw] = useState(1200);
-  const [vh, setVh] = useState(800);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [tooltipSize, setTooltipSize] = useState({ w: 320, h: 160 });
-  const isMobile = vw < 768;
-
-  // Ensure each tour step displays on the correct app screen
-  useEffect(() => {
-    if (!isActive || !step?.page) return;
-    if (pathname !== step.page) {
-      router.push(isRequiredRun ? `${step.page}?tour=1` : step.page);
-    }
-  }, [isActive, step?.page, pathname, router, isRequiredRun]);
-
-  // Measure viewport
-  useEffect(() => {
-    function update() {
-      setVw(window.innerWidth);
-      setVh(window.innerHeight);
-    }
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  // Recompute target rect whenever step changes
-  const updateRect = useCallback(() => {
-    if (!step?.target || step.placement === "center") {
-      setRect(null);
-      return;
-    }
-
-    if (step.page && pathname !== step.page) {
-      setRect(null);
-      return;
-    }
-
-    const r = getTargetRect(step.target);
-    setRect(r);
-    // If not found, scroll the element into view and retry
-    if (!r) {
-      const el = document.querySelector(step.target);
-      if (el) {
-        if (!isMobile) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-        setTimeout(() => setRect(getTargetRect(step.target!)), 250);
-      } else {
-        setRect(null);
-      }
-    }
-  }, [step, isMobile, pathname]);
-
-  useEffect(() => {
-    if (!isActive) return;
-    updateRect();
-    window.addEventListener("resize", updateRect);
-    if (!isMobile) {
-      window.addEventListener("scroll", updateRect, true);
-    }
-    return () => {
-      window.removeEventListener("resize", updateRect);
-      if (!isMobile) {
-        window.removeEventListener("scroll", updateRect, true);
-      }
-    };
-  }, [isActive, updateRect, isMobile]);
-
-  // Measure tooltip size after render
-  useEffect(() => {
-    if (!tooltipRef.current) return;
-    const nextSize = {
-      w: tooltipRef.current.offsetWidth,
-      h: tooltipRef.current.offsetHeight,
-    };
-    setTooltipSize((prev) =>
-      prev.w === nextSize.w && prev.h === nextSize.h ? prev : nextSize
-    );
-  }, [currentStep, isActive, vw, vh]);
-
-  const effectivePlacement: TourStep["placement"] =
-    isMobile || !rect || step?.placement === "center"
-      ? "center"
-      : (step?.placement ?? "center");
-
-  const shouldCenterCard = effectivePlacement === "center";
-  const isScreenShowcaseStep =
-    !!step?.page && !!step?.target && step?.placement !== "center";
-  const shouldDockCard = isMobile && isScreenShowcaseStep;
-  const shouldAnchorWeb = !isMobile && !!step?.target && step?.placement !== "center";
-  const isNonModalStep = shouldDockCard || shouldAnchorWeb;
-
-  const tooltipPos = calcTooltipPos(
-    rect,
-    effectivePlacement,
-    tooltipSize.w,
-    tooltipSize.h,
-    vw,
-    vh
-  );
 
   if (typeof window === "undefined") return null;
 
@@ -285,296 +451,36 @@ export function TourOverlay() {
     <AnimatePresence>
       {isActive && step && (
         <>
-          {/* Backdrop / spotlight mask */}
-          {!isNonModalStep && <SpotlightMask rect={rect} />}
-          {shouldAnchorWeb && <TargetHighlight rect={rect} />}
+          <motion.div
+            key="tour-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[9998] bg-black/60"
+          />
 
-          {/* Click-blocker (lets user interact with nothing behind overlay) */}
-          {!isNonModalStep && (
-            <div
-              className="fixed inset-0 z-[9999] pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            />
-          )}
-
-          {/* Tooltip card */}
-          {shouldDockCard ? (
-            <div className="fixed inset-x-0 bottom-4 z-[10000] flex justify-center px-3 pointer-events-none">
-              <motion.div
-                ref={tooltipRef}
-                key={`tooltip-${currentStep}`}
-                initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className={cn(
-                  "w-full max-w-[520px] max-h-[45vh] overflow-y-auto rounded-xl border bg-card/95 backdrop-blur text-card-foreground shadow-2xl pointer-events-auto",
-                  "flex flex-col gap-4 p-5"
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <Map className="h-3.5 w-3.5 text-primary" />
-                    </span>
-                    <h3 className="text-sm font-semibold leading-tight">
-                      {step.title}
-                    </h3>
-                  </div>
-                  <button
-                    onClick={stop}
-                    className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Close tour"
-                    disabled={isRequiredRun}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {step.description}
-                </p>
-
-                <div className="flex items-center justify-center gap-1.5">
-                  {TOUR_STEPS.map((_, i) => (
-                    <span
-                      key={i}
-                      className={cn(
-                        "block rounded-full transition-all duration-200",
-                        i === currentStep
-                          ? "h-2 w-5 bg-primary"
-                          : "h-2 w-2 bg-muted-foreground/30"
-                      )}
-                    />
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  {isRequiredRun ? (
-                    <span className="text-xs text-muted-foreground/70">
-                      Complete tour to continue
-                    </span>
-                  ) : (
-                    <button
-                      onClick={stop}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
-                    >
-                      Skip tour
-                    </button>
-                  )}
-
-                  <div className="flex gap-2">
-                    {currentStep > 0 && (
-                      <Button size="sm" variant="outline" onClick={prev} className="h-8 px-3">
-                        <ArrowLeft className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                    <Button size="sm" onClick={next} className="h-8 px-4">
-                      {currentStep === totalSteps - 1 ? (
-                        "Done"
-                      ) : (
-                        <>
-                          Next
-                          <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <p className="text-center text-[11px] text-muted-foreground/60 -mt-2">
-                  {currentStep + 1} / {totalSteps}
-                </p>
-              </motion.div>
-            </div>
-          ) : shouldCenterCard ? (
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 pointer-events-none">
-              <motion.div
-                ref={tooltipRef}
-                key={`tooltip-${currentStep}`}
-                initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className={cn(
-                  "w-full max-w-[360px] max-h-[calc(100vh-24px)] overflow-y-auto rounded-xl border bg-card text-card-foreground shadow-2xl pointer-events-auto",
-                  "flex flex-col gap-4 p-5"
-                )}
-              >
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <Map className="h-3.5 w-3.5 text-primary" />
-                    </span>
-                    <h3 className="text-sm font-semibold leading-tight">
-                      {step.title}
-                    </h3>
-                  </div>
-                  <button
-                    onClick={stop}
-                    className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Close tour"
-                    disabled={isRequiredRun}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* Body */}
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {step.description}
-                </p>
-
-                {/* Progress dots */}
-                <div className="flex items-center justify-center gap-1.5">
-                  {TOUR_STEPS.map((_, i) => (
-                    <span
-                      key={i}
-                      className={cn(
-                        "block rounded-full transition-all duration-200",
-                        i === currentStep
-                          ? "h-2 w-5 bg-primary"
-                          : "h-2 w-2 bg-muted-foreground/30"
-                      )}
-                    />
-                  ))}
-                </div>
-
-                {/* Controls */}
-                <div className="flex items-center justify-between gap-2">
-                  {isRequiredRun ? (
-                    <span className="text-xs text-muted-foreground/70">
-                      Complete tour to continue
-                    </span>
-                  ) : (
-                    <button
-                      onClick={stop}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
-                    >
-                      Skip tour
-                    </button>
-                  )}
-
-                  <div className="flex gap-2">
-                    {currentStep > 0 && (
-                      <Button size="sm" variant="outline" onClick={prev} className="h-8 px-3">
-                        <ArrowLeft className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                    <Button size="sm" onClick={next} className="h-8 px-4">
-                      {currentStep === totalSteps - 1 ? (
-                        "Done"
-                      ) : (
-                        <>
-                          Next
-                          <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Step counter */}
-                <p className="text-center text-[11px] text-muted-foreground/60 -mt-2">
-                  {currentStep + 1} / {totalSteps}
-                </p>
-              </motion.div>
-            </div>
-          ) : (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
-              ref={tooltipRef}
-              key={`tooltip-${currentStep}`}
-              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              key={`tour-${currentStep}`}
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className={cn(
-                "fixed z-[10000] w-[min(360px,calc(100vw-24px))] max-h-[calc(100vh-24px)] overflow-y-auto rounded-xl border bg-card text-card-foreground shadow-2xl pointer-events-auto",
-                "flex flex-col gap-4 p-5"
-              )}
-              style={{ ...tooltipPos }}
+              className="pointer-events-auto max-h-[calc(100vh-32px)] overflow-y-auto"
             >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Map className="h-3.5 w-3.5 text-primary" />
-                  </span>
-                  <h3 className="text-sm font-semibold leading-tight">
-                    {step.title}
-                  </h3>
-                </div>
-                <button
-                  onClick={stop}
-                  className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Close tour"
-                  disabled={isRequiredRun}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Body */}
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {step.description}
-              </p>
-
-              {/* Progress dots */}
-              <div className="flex items-center justify-center gap-1.5">
-                {TOUR_STEPS.map((_, i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "block rounded-full transition-all duration-200",
-                      i === currentStep
-                        ? "h-2 w-5 bg-primary"
-                        : "h-2 w-2 bg-muted-foreground/30"
-                    )}
-                  />
-                ))}
-              </div>
-
-              {/* Controls */}
-              <div className="flex items-center justify-between gap-2">
-                {isRequiredRun ? (
-                  <span className="text-xs text-muted-foreground/70">
-                    Complete tour to continue
-                  </span>
-                ) : (
-                  <button
-                    onClick={stop}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
-                  >
-                    Skip tour
-                  </button>
-                )}
-
-                <div className="flex gap-2">
-                  {currentStep > 0 && (
-                    <Button size="sm" variant="outline" onClick={prev} className="h-8 px-3">
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                  <Button size="sm" onClick={next} className="h-8 px-4">
-                    {currentStep === totalSteps - 1 ? (
-                      "Done"
-                    ) : (
-                      <>
-                        Next
-                        <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Step counter */}
-              <p className="text-center text-[11px] text-muted-foreground/60 -mt-2">
-                {currentStep + 1} / {totalSteps}
-              </p>
+              <TourCard
+                step={step}
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                isRequiredRun={isRequiredRun}
+                prev={prev}
+                next={next}
+                stop={stop}
+                tooltipRef={tooltipRef}
+              />
             </motion.div>
-          )}
+          </div>
         </>
       )}
     </AnimatePresence>,

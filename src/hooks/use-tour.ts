@@ -11,6 +11,17 @@ export interface TourStep {
   page?: string;
   /** Preferred tooltip placement relative to the target */
   placement?: "top" | "bottom" | "left" | "right" | "center";
+  /** Optional key for the screenshot mockup shown in centered modal steps */
+  screenshot?:
+    | "dashboard"
+    | "transactions"
+    | "goals"
+    | "budgets"
+    | "accounts"
+    | "fab"
+    | "search"
+    | "settings"
+    | "done";
 }
 
 export const TOUR_STEPS: TourStep[] = [
@@ -18,79 +29,81 @@ export const TOUR_STEPS: TourStep[] = [
     target: null,
     title: "Welcome to ExitPlan! 🎉",
     description:
-      "You’re in! This quick tour shows the core actions you’ll use daily so you can start tracking confidently in under a minute.",
+      "You're in! This quick tour shows the core actions you'll use daily so you can start tracking confidently in under a minute.",
     placement: "center",
+    screenshot: "dashboard",
   },
   {
-    target: "[data-tour='sidebar-dashboard']",
+    target: null,
     title: "Dashboard",
     description:
       "Your home base. See your net worth, health score, budget alerts, goals, and spending trends — all at a glance.",
-    page: "/dashboard",
-    placement: "right",
+    placement: "center",
+    screenshot: "dashboard",
   },
   {
-    target: "[data-tour='sidebar-transactions']",
+    target: null,
     title: "Transactions",
     description:
       "Log every peso coming in or going out. You can add income, expenses, or transfers between accounts.",
-    page: "/transactions",
-    placement: "right",
+    placement: "center",
+    screenshot: "transactions",
   },
   {
-    target: "[data-tour='sidebar-goals']",
+    target: null,
     title: "Goals",
     description:
       "Set savings targets — emergency fund, travel, education, or anything custom. Track progress with visual progress bars.",
-    page: "/goals",
-    placement: "right",
+    placement: "center",
+    screenshot: "goals",
   },
   {
-    target: "[data-tour='sidebar-budgets']",
+    target: null,
     title: "Budgets",
     description:
       "Define monthly spending limits per category. The dashboard will alert you when you're approaching a limit.",
-    page: "/budgets",
-    placement: "right",
+    placement: "center",
+    screenshot: "budgets",
   },
   {
-    target: "[data-tour='sidebar-accounts']",
+    target: null,
     title: "Accounts",
     description:
       "Manage all your cash, bank, and e-wallet accounts in one place. Balances update automatically as you log transactions.",
-    page: "/accounts",
-    placement: "right",
+    placement: "center",
+    screenshot: "accounts",
   },
   {
-    target: "[data-tour='fab']",
+    target: null,
     title: "Quick Add",
     description:
-      "Use this + button anytime to instantly add Expense or Income. It’s the fastest way to keep your records updated in real time.",
-    page: "/dashboard",
+      "Use this + button anytime to instantly add Expense or Income. It's the fastest way to keep your records updated in real time.",
     placement: "center",
+    screenshot: "fab",
   },
   {
-    target: "[data-tour='sidebar-search']",
+    target: null,
     title: "Search",
     description:
       "Press ⌘K (or Ctrl+K) to search transactions, accounts, and goals instantly from anywhere in the app.",
-    page: "/dashboard",
-    placement: "bottom",
+    placement: "center",
+    screenshot: "search",
   },
   {
-    target: "[data-tour='sidebar-settings']",
+    target: null,
     title: "Settings",
     description:
       "Change your display name, primary currency, exchange rates, and app theme here.",
-    page: "/settings",
-    placement: "right",
+    placement: "center",
+    screenshot: "settings",
   },
   {
     target: null,
     title: "You're all set! 🚀",
     description:
-      "That’s it — you’re ready. Start with Quick Add, then check Dashboard insights. Replay this tour anytime from Settings on mobile or Sidebar on desktop.",
+      "That's it — you're ready. Start with Quick Add, then check Dashboard insights. Replay this tour anytime from Settings on mobile or Sidebar on desktop.",
     placement: "center",
+    screenshot: "done",
   },
 ];
 
