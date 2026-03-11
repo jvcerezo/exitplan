@@ -57,7 +57,7 @@ export interface Budget {
   rollover: boolean;
 }
 
-export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id"> & {
+export type BudgetInsert = Omit<Budget, "id" | "created_at" | "user_id" | "rollover"> & {
   rollover?: boolean;
 };
 
