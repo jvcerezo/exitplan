@@ -60,6 +60,28 @@ interface AddTransactionDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
+function formatAmount(raw: string): string {
+  if (!raw) return "";
+  const [intPart, decPart] = raw.split(".");
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
+}
+
+function parseAmountInput(value: string): string {
+  const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!stripped) return "";
+
+  const [intPartRaw, ...rest] = stripped.split(".");
+  const decimalPart = rest.join("");
+  const normalizedInt = intPartRaw.replace(/^0+(?=\d)/, "");
+
+  if (rest.length > 0) {
+    return `${normalizedInt || "0"}.${decimalPart}`;
+  }
+
+  return normalizedInt;
+}
+
 export function AddTransactionDialog({
   type,
   defaultAccountId,
@@ -80,6 +102,7 @@ export function AddTransactionDialog({
 
   // Normal mode
   const [accountId, setAccountId] = useState(defaultAccountId ?? "");
+  const [amount, setAmount] = useState("");
 
   // Split mode
   const [splitMode, setSplitMode] = useState(false);
@@ -123,6 +146,7 @@ export function AddTransactionDialog({
       setCustomCategory("");
       setTags([]);
       setAccountId(firstId);
+      setAmount("");
       setSplitMode(false);
       setTotalAmount("");
       setSplitParts([
@@ -183,7 +207,7 @@ export function AddTransactionDialog({
           }
         }
       } else {
-        const rawAmount = parseFloat(formData.get("amount") as string);
+        const rawAmount = parseFloat(amount);
         if (selectedAccount && selectedAccount.balance - rawAmount < 0) {
           toast.error(`Insufficient balance in ${selectedAccount.name}`);
           return;
@@ -223,10 +247,10 @@ export function AddTransactionDialog({
         return;
       }
 
-      const rawAmount = parseFloat(formData.get("amount") as string);
-      const amount = type === "expense" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
+      const rawAmount = parseFloat(amount);
+      const signedAmount = type === "expense" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
       await addTransaction.mutateAsync({
-        amount,
+        amount: signedAmount,
         category: finalCategory,
         currency: selectedAccount?.currency ?? "PHP",
         description: description || finalCategory,
@@ -298,7 +322,7 @@ export function AddTransactionDialog({
   );
 
   const dialogContent = (
-    <DialogContent className="sm:max-w-md max-h-[90svh] overflow-y-auto">
+    <DialogContent className="sm:max-w-md max-h-[90svh] overflow-y-auto overflow-x-hidden">
       <DialogHeader>
         <div className="flex items-center justify-between pr-6">
           <DialogTitle>Add {label}</DialogTitle>
@@ -364,14 +388,13 @@ export function AddTransactionDialog({
               <input
                 ref={amountRef}
                 name="amount"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.01"
-                min="0.01"
-                max="9999999999.99"
                 placeholder="0.00"
+                value={formatAmount(amount)}
+                onChange={(e) => setAmount(parseAmountInput(e.target.value))}
                 required
-                className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-0 min-w-0 flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30"
               />
             </div>
 

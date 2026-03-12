@@ -39,7 +39,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
   const remaining = Math.round((effectiveBudget - spent) * 100) / 100;
 
   function getProgressColor(pct: number) {
-    if (pct > 100) return "bg-red-500";
+    if (pct > 100) return "bg-black dark:bg-white";
     if (pct >= 75) return "bg-yellow-500";
     return "bg-primary";
   }
@@ -201,7 +201,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
             className={cn(
               "text-xs font-medium",
               percentage > 100
-                ? "text-red-500"
+                ? "text-black dark:text-white"
                 : percentage >= 75
                   ? "text-yellow-500"
                   : "text-muted-foreground"
@@ -212,7 +212,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
           <p
             className={cn(
               "text-xs font-medium",
-              remaining < 0 ? "text-red-500" : "text-muted-foreground"
+              remaining < 0 ? "text-black dark:text-white" : "text-muted-foreground"
             )}
           >
             {remaining < 0

@@ -87,16 +87,22 @@ export function BudgetAlerts() {
         <div className="space-y-2 pb-3 border-b">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Total Spent</span>
-            <span className="font-semibold">
+            <span className="font-semibold text-black dark:text-white">
               {formatCurrency(data.totalSpent)} / {formatCurrency(data.totalBudget)}
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full transition-all"
+              className={cn(
+                "h-full rounded-full transition-all",
+                totalPct > 100
+                  ? "bg-black dark:bg-white"
+                  : totalPct > 75
+                  ? "bg-yellow-500"
+                  : "bg-green-500"
+              )}
               style={{
                 width: `${Math.min(totalPct, 100)}%`,
-                backgroundColor: totalPct > 100 ? "#ef4444" : totalPct > 75 ? "#eab308" : "#22c55e",
               }}
             />
           </div>
@@ -116,9 +122,9 @@ export function BudgetAlerts() {
               const isOver = percentage > 100;
               const remaining = Math.round((budget.amount - spent) * 100) / 100;
               const statusColor =
-                percentage >= 75 ? (isOver ? "text-foreground" : "text-yellow-500") : "text-green-600";
+                percentage >= 75 ? (isOver ? "text-black dark:text-white" : "text-yellow-500") : "text-green-600";
               const barColor =
-                percentage >= 75 ? (isOver ? "bg-red-500" : "bg-yellow-500") : "bg-green-600";
+                percentage >= 75 ? (isOver ? "bg-black dark:bg-white" : "bg-yellow-500") : "bg-green-600";
 
               return (
                 <div key={budget.id} className="space-y-1">

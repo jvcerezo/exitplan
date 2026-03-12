@@ -17,6 +17,28 @@ import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+function formatAmount(raw: string): string {
+  if (!raw) return "";
+  const [intPart, decPart] = raw.split(".");
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
+}
+
+function parseAmountInput(value: string): string {
+  const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!stripped) return "";
+
+  const [intPartRaw, ...rest] = stripped.split(".");
+  const decimalPart = rest.join("");
+  const normalizedInt = intPartRaw.replace(/^0+(?=\d)/, "");
+
+  if (rest.length > 0) {
+    return `${normalizedInt || "0"}.${decimalPart}`;
+  }
+
+  return normalizedInt;
+}
+
 export function UpdateAmountDialog({ goal }: { goal: Goal }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -80,7 +102,7 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
           Add Funds
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Add Funds to &ldquo;{goal.name}&rdquo;</DialogTitle>
         </DialogHeader>
@@ -126,17 +148,14 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
               </span>
               <input
                 name="amount"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.01"
-                min="0.01"
-                max="9999999999.99"
                 placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={formatAmount(amount)}
+                onChange={(e) => setAmount(parseAmountInput(e.target.value))}
                 required
                 autoFocus
-                className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-0 min-w-0 flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30"
               />
             </div>
           </div>

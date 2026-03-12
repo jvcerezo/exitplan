@@ -48,7 +48,7 @@ export function SafeToSpendCard() {
   const isEmpty = data.safeToSpend <= 0;
 
   const statusColor = isEmpty
-    ? "text-foreground"
+    ? "text-black dark:text-white"
     : isLow
     ? "text-amber-500"
     : "text-green-600";
@@ -113,7 +113,7 @@ export function SafeToSpendCard() {
                   "h-full rounded-full transition-all",
                   data.budgetAllocated > 0
                     ? (data.alreadySpent / data.budgetAllocated) > 0.9
-                      ? "bg-red-500"
+                      ? "bg-black dark:bg-white"
                       : (data.alreadySpent / data.budgetAllocated) > 0.7
                       ? "bg-amber-500"
                       : "bg-primary"

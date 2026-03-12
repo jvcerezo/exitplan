@@ -42,6 +42,28 @@ const GOAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 
 const ALL_KNOWN_GOAL_CATEGORIES = GOAL_CATEGORIES.map((c) => c.toLowerCase());
 
+function formatAmount(raw: string): string {
+  if (!raw) return "";
+  const [intPart, decPart] = raw.split(".");
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
+}
+
+function parseAmountInput(value: string): string {
+  const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!stripped) return "";
+
+  const [intPartRaw, ...rest] = stripped.split(".");
+  const decimalPart = rest.join("");
+  const normalizedInt = intPartRaw.replace(/^0+(?=\d)/, "");
+
+  if (rest.length > 0) {
+    return `${normalizedInt || "0"}.${decimalPart}`;
+  }
+
+  return normalizedInt;
+}
+
 export function EditGoalDialog({ goal }: { goal: Goal }) {
   const isCustom = !ALL_KNOWN_GOAL_CATEGORIES.includes(goal.category);
   const [open, setOpen] = useState(false);
@@ -95,7 +117,7 @@ export function EditGoalDialog({ goal }: { goal: Goal }) {
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Edit Goal</DialogTitle>
         </DialogHeader>
@@ -164,16 +186,13 @@ export function EditGoalDialog({ goal }: { goal: Goal }) {
               </span>
               <input
                 name="target_amount"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.01"
-                min="1"
-                max="9999999999.99"
                 placeholder="0.00"
-                value={targetAmount}
-                onChange={(e) => setTargetAmount(e.target.value)}
+                value={formatAmount(targetAmount)}
+                onChange={(e) => setTargetAmount(parseAmountInput(e.target.value))}
                 required
-                className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-0 min-w-0 flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30"
               />
             </div>
           </div>
@@ -188,14 +207,12 @@ export function EditGoalDialog({ goal }: { goal: Goal }) {
                 <span className="text-sm text-muted-foreground/50">₱</span>
                 <input
                   name="current_amount"
-                  type="number"
+                  type="text"
                   inputMode="decimal"
-                  step="0.01"
-                  min="0"
                   placeholder="0.00"
-                  value={currentAmount}
-                  onChange={(e) => setCurrentAmount(e.target.value)}
-                  className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  value={formatAmount(currentAmount)}
+                  onChange={(e) => setCurrentAmount(parseAmountInput(e.target.value))}
+                  className="w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/40"
                 />
               </div>
             </div>
