@@ -14,7 +14,9 @@ import {
   TriangleAlert,
   Mail,
   Database,
+  Bug,
 } from "lucide-react";
+import Link from "next/link";
 import { OfflineSyncHealth } from "@/components/admin/offline-sync-health";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminOverviewCharts } from "@/components/admin/admin-overview-charts";
@@ -73,6 +75,7 @@ async function getMetrics() {
     { data: goals },
     { data: budgets },
     { data: accounts },
+    { data: bugReports },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -83,6 +86,10 @@ async function getMetrics() {
     supabase.from("goals").select("id, user_id, created_at, is_completed"),
     supabase.from("budgets").select("id, user_id, created_at"),
     supabase.from("accounts").select("id, user_id, type, created_at"),
+    supabase
+      .from("bug_reports")
+      .select("id, user_id, title, severity, status, created_at")
+      .order("created_at", { ascending: false }),
   ]);
 
   const allProfiles = profiles ?? [];
@@ -90,6 +97,7 @@ async function getMetrics() {
   const allGoals = goals ?? [];
   const allBudgets = budgets ?? [];
   const allAccounts = accounts ?? [];
+  const allBugReports = bugReports ?? [];
 
   const accountTypes: Record<string, number> = {};
   for (const a of allAccounts) {
@@ -148,6 +156,22 @@ async function getMetrics() {
   const transferRows = allTransactions.filter(
     (transaction) => transaction.transfer_id != null
   ).length;
+  const openBugReports = allBugReports.filter(
+    (report) => report.status !== "resolved"
+  ).length;
+  const bugReportsLast30d = allBugReports.filter((report) =>
+    isOnOrAfter(report.created_at, thirtyDaysAgo)
+  ).length;
+
+  const profileById = new Map(allProfiles.map((profile) => [profile.id, profile]));
+  const recentBugReports = allBugReports.slice(0, 6).map((report) => {
+    const profile = profileById.get(report.user_id);
+    return {
+      ...report,
+      reporterName: profile?.full_name || profile?.email || "Unknown User",
+      reporterEmail: profile?.email || null,
+    };
+  });
   const withAttachments = allTransactions.filter(
     (transaction) => transaction.attachment_path
   ).length;
@@ -283,6 +307,9 @@ async function getMetrics() {
     avgAccountsPerUser: totalUsers === 0 ? 0 : allAccounts.length / totalUsers,
     accountsLast30d,
     accountTypes,
+    openBugReports,
+    bugReportsLast30d,
+    recentBugReports,
     trafficData,
     provisioningData,
     healthData,
@@ -445,6 +472,18 @@ export default async function AdminDashboardPage() {
             icon={Mail}
             accent={metrics.profilesMissingEmail === 0 ? "green" : "red"}
           />
+          <MetricCard
+            title="Open Bug Reports"
+            value={metrics.openBugReports.toString()}
+            icon={Bug}
+            accent={metrics.openBugReports === 0 ? "green" : "amber"}
+            detail={`${metrics.bugReportsLast30d} submitted in 30d`}
+          />
+        </div>
+        <div className="mt-3">
+          <Link href="/admin/bug-reports" className="text-sm text-primary hover:underline">
+            View and manage all open bug reports
+          </Link>
         </div>
       </div>
 
@@ -503,6 +542,43 @@ export default async function AdminDashboardPage() {
                       </div>
                       <div className="text-xs text-muted-foreground shrink-0">
                         {new Date(user.created_at).toLocaleDateString("en-PH", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Recent Bug Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {metrics.recentBugReports.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No bug reports yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {metrics.recentBugReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="flex items-start justify-between gap-3 text-sm"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{report.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {report.reporterName}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground/80 mt-0.5 uppercase">
+                          {report.severity} · {report.status.replace("_", " ")}
+                        </p>
+                      </div>
+                      <div className="text-xs text-muted-foreground shrink-0">
+                        {new Date(report.created_at).toLocaleDateString("en-PH", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",

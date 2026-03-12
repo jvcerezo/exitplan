@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X } from "lucide-react";
+import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X, Bug, Send } from "lucide-react";
 import { useProfile, useUpdateProfile, useUploadAvatar, useRemoveAvatar } from "@/hooks/use-profile";
 import { useExchangeRates, useUpsertExchangeRate } from "@/hooks/use-exchange-rates";
 import { useMarketRates } from "@/hooks/use-market-rates";
+import { useMyBugReports, useSubmitBugReport } from "@/hooks/use-bug-reports";
 import { signOut } from "@/app/(auth)/actions";
 import {
   Card,
@@ -28,6 +29,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { CURRENCIES, DEFAULT_RATES_TO_PHP } from "@/lib/constants";
 import { useTourContext } from "@/providers/tour-provider";
+import type { BugReportSeverity } from "@/lib/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +42,8 @@ export default function SettingsPage() {
   const { data: exchangeRates } = useExchangeRates();
   const { data: marketData, isLoading: marketLoading } = useMarketRates();
   const upsertRate = useUpsertExchangeRate();
+  const submitBugReport = useSubmitBugReport();
+  const { data: myBugReports } = useMyBugReports(5);
   const queryClient = useQueryClient();
   const { start: startTour } = useTourContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +51,9 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   const [fullName, setFullName] = useState("");
   const [primaryCurrency, setPrimaryCurrency] = useState("PHP");
+  const [bugTitle, setBugTitle] = useState("");
+  const [bugDescription, setBugDescription] = useState("");
+  const [bugSeverity, setBugSeverity] = useState<BugReportSeverity>("medium");
 
   useEffect(() => setMounted(true), []);
 
@@ -76,6 +83,21 @@ export default function SettingsPage() {
     }
     uploadAvatar.mutate(file);
     e.target.value = "";
+  };
+
+  const handleSubmitBugReport = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    await submitBugReport.mutateAsync({
+      title: bugTitle,
+      description: bugDescription,
+      severity: bugSeverity,
+      page_path: typeof window !== "undefined" ? window.location.pathname : "/settings",
+    });
+
+    setBugTitle("");
+    setBugDescription("");
+    setBugSeverity("medium");
   };
 
   // Initials fallback
@@ -374,6 +396,108 @@ export default function SettingsPage() {
                   return `${Math.floor(hours / 24)}d ago`;
                 })()}
               </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bug Reports Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bug className="h-5 w-5 text-muted-foreground" />
+            Report a Bug
+          </CardTitle>
+          <CardDescription>
+            Found something broken? Send details and it will appear in the admin dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmitBugReport} className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="bug-title">Title</Label>
+              <Input
+                id="bug-title"
+                placeholder="Short summary of the issue"
+                value={bugTitle}
+                onChange={(e) => setBugTitle(e.target.value)}
+                required
+                maxLength={120}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bug-severity">Severity</Label>
+              <Select
+                value={bugSeverity}
+                onValueChange={(value) => setBugSeverity(value as BugReportSeverity)}
+              >
+                <SelectTrigger id="bug-severity">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bug-description">Description</Label>
+              <textarea
+                id="bug-description"
+                placeholder="What happened? Include steps to reproduce."
+                value={bugDescription}
+                onChange={(e) => setBugDescription(e.target.value)}
+                required
+                rows={4}
+                className="w-full resize-y rounded-md border bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={submitBugReport.isPending || !bugTitle.trim() || !bugDescription.trim()}
+            >
+              {submitBugReport.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Submit Bug Report
+                </>
+              )}
+            </Button>
+          </form>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Recent Reports</p>
+            {!myBugReports || myBugReports.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No reports submitted yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {myBugReports.map((report) => (
+                  <div key={report.id} className="rounded-md border px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium truncate">{report.title}</p>
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground shrink-0">
+                        {report.status.replace("_", " ")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {report.severity.toUpperCase()} · {new Date(report.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </CardContent>

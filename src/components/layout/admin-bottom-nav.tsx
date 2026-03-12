@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, ArrowLeft, Bug } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNavItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/bug-reports", label: "Bugs", icon: Bug },
   { href: "/dashboard", label: "Back", icon: ArrowLeft },
 ];
 

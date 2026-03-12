@@ -1008,6 +1008,58 @@ CREATE POLICY "Authenticated users can view market rates"
 
 
 -- ============================================
+-- Bug reports (user feedback to admin)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.bug_reports (
+  id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at   timestamptz DEFAULT now() NOT NULL,
+  user_id      uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  title        text NOT NULL,
+  description  text NOT NULL,
+  severity     text DEFAULT 'medium' NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  status       text DEFAULT 'open' NOT NULL CHECK (status IN ('open', 'in_progress', 'resolved')),
+  page_path    text,
+  user_agent   text,
+  app_version  text,
+  resolved_at  timestamptz,
+  resolved_by  uuid REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_bug_reports_user_id ON public.bug_reports USING btree (user_id);
+CREATE INDEX IF NOT EXISTS idx_bug_reports_status ON public.bug_reports USING btree (status);
+CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at ON public.bug_reports USING btree (created_at DESC);
+
+ALTER TABLE public.bug_reports ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own bug reports" ON public.bug_reports;
+DROP POLICY IF EXISTS "Users can insert own bug reports" ON public.bug_reports;
+DROP POLICY IF EXISTS "Admins can view all bug reports" ON public.bug_reports;
+DROP POLICY IF EXISTS "Admins can update bug reports" ON public.bug_reports;
+
+CREATE POLICY "Users can view own bug reports"
+  ON public.bug_reports FOR SELECT
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own bug reports"
+  ON public.bug_reports FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Admins can view all bug reports"
+  ON public.bug_reports FOR SELECT
+  TO authenticated
+  USING (public.is_admin_user((SELECT auth.uid())));
+
+CREATE POLICY "Admins can update bug reports"
+  ON public.bug_reports FOR UPDATE
+  TO authenticated
+  USING (public.is_admin_user((SELECT auth.uid())))
+  WITH CHECK (public.is_admin_user((SELECT auth.uid())));
+
+
+-- ============================================
 -- Complete onboarding (bypasses trigger guard)
 -- ============================================
 

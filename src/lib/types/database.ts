@@ -48,6 +48,33 @@ export interface Profile {
   avatar_url: string | null;
 }
 
+export type BugReportSeverity = "low" | "medium" | "high" | "critical";
+export type BugReportStatus = "open" | "in_progress" | "resolved";
+
+export interface BugReport {
+  id: string;
+  created_at: string;
+  user_id: string;
+  title: string;
+  description: string;
+  severity: BugReportSeverity;
+  status: BugReportStatus;
+  page_path: string | null;
+  user_agent: string | null;
+  app_version: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+}
+
+export type BugReportInsert = Omit<
+  BugReport,
+  "id" | "created_at" | "user_id" | "status" | "resolved_at" | "resolved_by"
+> & {
+  status?: BugReportStatus;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
+};
+
 export type BudgetPeriod = "weekly" | "monthly" | "quarterly";
 
 export interface Budget {

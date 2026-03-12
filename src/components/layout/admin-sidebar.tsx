@@ -7,12 +7,14 @@ import {
   Users,
   ArrowLeft,
   Shield,
+  Bug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNavItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/bug-reports", label: "Bug Reports", icon: Bug },
 ];
 
 export function AdminSidebar() {
