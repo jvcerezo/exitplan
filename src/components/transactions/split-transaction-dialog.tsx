@@ -100,7 +100,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
           currency: transaction.currency,
           account_id: part.accountId || null,
           tags: transaction.tags,
-          transfer_id: splitGroupId,
+          split_group_id: splitGroupId,
         });
       })
     );

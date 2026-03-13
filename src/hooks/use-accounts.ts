@@ -14,10 +14,50 @@ export function useAccounts() {
       const { data, error } = await supabase
         .from("accounts")
         .select("*")
+        .eq("is_archived", false)
         .order("name", { ascending: true });
 
       if (error) throw new Error(error.message);
       return data;
+    },
+  });
+}
+
+export function useArchivedAccounts() {
+  return useQuery({
+    queryKey: ["accounts", "archived"],
+    queryFn: async (): Promise<Account[]> => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("accounts")
+        .select("*")
+        .eq("is_archived", true)
+        .order("name", { ascending: true });
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+}
+
+export function useArchiveAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("accounts")
+        .update({ is_archived: archive })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_data, { archive }) => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      toast.success(archive ? "Account archived" : "Account restored");
+    },
+    onError: (error) => {
+      toast.error("Failed to update account", { description: error.message });
     },
   });
 }

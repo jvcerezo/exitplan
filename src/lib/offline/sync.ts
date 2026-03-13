@@ -125,6 +125,7 @@ async function syncAddTransaction(
     p_currency: payload.currency,
     p_account_id: accountId,
     p_transfer_id: payload.transfer_id ?? null,
+    p_split_group_id: payload.split_group_id ?? null,
     p_tags: payload.tags ?? null,
     p_attachment_path: payload.attachment_path ?? null,
   });

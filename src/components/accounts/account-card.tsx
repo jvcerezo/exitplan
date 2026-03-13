@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Minus, Trash2 } from "lucide-react";
+import { Plus, Minus, Trash2, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useUndoDelete } from "@/hooks/use-undo-delete";
+import { useArchiveAccount } from "@/hooks/use-accounts";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 import { formatCurrency } from "@/lib/utils";
 import type { Account } from "@/lib/types/database";
@@ -20,6 +21,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export function AccountCard({ account }: { account: Account }) {
+  const archiveAccount = useArchiveAccount();
   const undoDelete = useUndoDelete("accounts", ACCOUNT_QUERY_KEYS);
 
   return (
@@ -38,6 +40,16 @@ export function AccountCard({ account }: { account: Account }) {
             </Badge>
           </Link>
           <div className="flex gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground hover:text-amber-600"
+              aria-label="Archive account"
+              onClick={() => archiveAccount.mutate({ id: account.id, archive: true })}
+              disabled={archiveAccount.isPending}
+            >
+              <Archive className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon-xs"

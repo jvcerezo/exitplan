@@ -47,8 +47,8 @@ export default function OfflinePage() {
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>- Logging in, signing up, and auth callbacks</p>
             <p>- Admin pages and live operational data</p>
-            <p>- Receipt uploads, OCR, and imports</p>
-            <p>- New writes until offline sync queue is implemented</p>
+            <p>- Receipt uploads, OCR, and file imports</p>
+            <p>- Editing or deleting existing records</p>
           </CardContent>
         </Card>
 

@@ -237,7 +237,7 @@ export function AddTransactionDialog({
             currency: partAcc?.currency ?? "PHP",
             account_id: part.accountId || null,
             tags: tags.length > 0 ? tags : null,
-            transfer_id: splitGroupId,
+            split_group_id: splitGroupId,
           });
         })
       );

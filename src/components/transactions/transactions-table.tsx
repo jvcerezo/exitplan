@@ -83,6 +83,8 @@ const DATE_LABELS: Record<string, string> = {
   "last-3-months": "Last 3 Months",
 };
 
+const PAGE_SIZE = 50;
+
 export function TransactionsTable() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -90,6 +92,7 @@ export function TransactionsTable() {
   const [dateRange, setDateRange] = useState("all");
   const [tagFilter, setTagFilter] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [queryLimit, setQueryLimit] = useState(PAGE_SIZE);
 
   const datePreset = getDatePreset(dateRange);
 
@@ -99,12 +102,16 @@ export function TransactionsTable() {
     type,
     dateFrom: datePreset?.from,
     dateTo: datePreset?.to,
+    limit: queryLimit,
   });
 
   // Client-side tag filter applied on top of server-side results
   const filteredTransactions = tagFilter
     ? transactions?.filter((tx) => tx.tags?.includes(tagFilter))
     : transactions;
+
+  // True if the server returned exactly the limit — there may be more rows
+  const hasMore = (transactions?.length ?? 0) === queryLimit;
 
   const hasFilters = category !== "all" || dateRange !== "all" || tagFilter !== "";
   const activeFilterCount =
@@ -120,7 +127,7 @@ export function TransactionsTable() {
           <button
             key={t}
             type="button"
-            onClick={() => setType(t)}
+            onClick={() => { setType(t); setQueryLimit(PAGE_SIZE); }}
             className={cn(
               "flex-1 rounded-md px-4 py-1.5 text-sm font-medium transition-all",
               type === t
@@ -140,7 +147,7 @@ export function TransactionsTable() {
           <input
             placeholder="Search transactions..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setQueryLimit(PAGE_SIZE); }}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
           />
           <div className="flex items-center gap-2 shrink-0">
@@ -493,6 +500,18 @@ export function TransactionsTable() {
           )}
         </CardContent>
       </Card>
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setQueryLimit((prev) => prev + PAGE_SIZE)}
+          >
+            Load more transactions
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -33,6 +33,7 @@ export function useTransactions(filters?: {
   dateFrom?: string;
   dateTo?: string;
   accountId?: string;
+  limit?: number;
 }) {
   return useQuery({
     queryKey: ["transactions", "all", filters],
@@ -68,6 +69,10 @@ export function useTransactions(filters?: {
 
       if (filters?.accountId) {
         query = query.eq("account_id", filters.accountId);
+      }
+
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
       }
 
       const { data, error } = await query;
@@ -165,6 +170,7 @@ export function useAddTransaction() {
           attachment_path: transaction.attachment_path ?? null,
           account_id: transaction.account_id ?? null,
           transfer_id: transaction.transfer_id ?? null,
+          split_group_id: transaction.split_group_id ?? null,
           tags: transaction.tags ?? null,
         };
 
@@ -180,6 +186,7 @@ export function useAddTransaction() {
             currency: transaction.currency,
             account_id: transaction.account_id ?? null,
             transfer_id: transaction.transfer_id ?? null,
+            split_group_id: transaction.split_group_id ?? null,
             tags: transaction.tags ?? null,
             attachment_path: transaction.attachment_path ?? null,
           },
@@ -219,6 +226,7 @@ export function useAddTransaction() {
         p_transfer_id: transaction.transfer_id ?? null,
         p_tags: transaction.tags ?? null,
         p_attachment_path: transaction.attachment_path ?? null,
+        p_split_group_id: transaction.split_group_id ?? null,
       });
 
       if (error) throw new Error(error.message);
@@ -250,55 +258,30 @@ export function useUpdateTransaction() {
       ...updates
     }: Partial<TransactionInsert> & { id: string }) => {
       const supabase = createClient();
+
+      // Fetch existing values so partial updates can fill in any missing fields
       const { data: existing, error: existingError } = await supabase
         .from("transactions")
-        .select("amount, account_id")
+        .select("amount, category, description, date, currency, account_id, tags, attachment_path")
         .eq("id", id)
         .single();
 
       if (existingError) throw new Error(existingError.message);
 
-      const { data, error } = await supabase
-        .from("transactions")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
+      // Use the atomic RPC — balance reversal + row update happen in one DB transaction
+      const { data, error } = await supabase.rpc("update_user_transaction", {
+        p_transaction_id: id,
+        p_amount: updates.amount ?? existing.amount,
+        p_category: updates.category ?? existing.category,
+        p_description: updates.description ?? existing.description,
+        p_date: updates.date ?? existing.date,
+        p_currency: updates.currency ?? existing.currency,
+        p_account_id: "account_id" in updates ? (updates.account_id ?? null) : existing.account_id,
+        p_tags: "tags" in updates ? (updates.tags ?? null) : existing.tags,
+        p_attachment_path: "attachment_path" in updates ? (updates.attachment_path ?? null) : existing.attachment_path,
+      });
 
       if (error) throw new Error(error.message);
-
-      const deltas: Record<string, number> = {};
-
-      if (existing.account_id) {
-        deltas[existing.account_id] =
-          (deltas[existing.account_id] ?? 0) - Number(existing.amount);
-      }
-
-      if (data.account_id) {
-        deltas[data.account_id] =
-          (deltas[data.account_id] ?? 0) + Number(data.amount);
-      }
-
-      for (const [accountId, delta] of Object.entries(deltas)) {
-        if (Math.abs(delta) < 0.000001) continue;
-
-        const { data: account, error: accountError } = await supabase
-          .from("accounts")
-          .select("balance")
-          .eq("id", accountId)
-          .single();
-
-        if (accountError) throw new Error(accountError.message);
-
-        const { error: updateAccountError } = await supabase
-          .from("accounts")
-          .update({
-            balance: Math.round((Number(account.balance) + delta) * 100) / 100,
-          })
-          .eq("id", accountId);
-
-        if (updateAccountError) throw new Error(updateAccountError.message);
-      }
 
       return data;
     },
@@ -366,39 +349,11 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
-      const { data: existing, error: existingError } = await supabase
-        .from("transactions")
-        .select("amount, account_id")
-        .eq("id", id)
-        .single();
 
-      if (existingError) throw new Error(existingError.message);
-
-      if (existing.account_id) {
-        const { data: account, error: accountError } = await supabase
-          .from("accounts")
-          .select("balance")
-          .eq("id", existing.account_id)
-          .single();
-
-        if (accountError) throw new Error(accountError.message);
-
-        const { error: updateAccountError } = await supabase
-          .from("accounts")
-          .update({
-            balance:
-              Math.round((Number(account.balance) - Number(existing.amount)) * 100) /
-              100,
-          })
-          .eq("id", existing.account_id);
-
-        if (updateAccountError) throw new Error(updateAccountError.message);
-      }
-
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", id);
+      // Use the atomic RPC — balance reversal + delete happen in one DB transaction
+      const { error } = await supabase.rpc("delete_user_transaction", {
+        p_transaction_id: id,
+      });
 
       if (error) throw new Error(error.message);
     },

@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { CURRENCIES, DEFAULT_RATES_TO_PHP } from "@/lib/constants";
 import { useTourContext } from "@/providers/tour-provider";
 import type { BugReportSeverity } from "@/lib/types/database";
@@ -78,7 +79,8 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be under 2 MB");
+      toast.error("Image must be under 2 MB");
+      e.target.value = "";
       return;
     }
     uploadAvatar.mutate(file);

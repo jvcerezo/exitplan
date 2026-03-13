@@ -26,6 +26,7 @@ export interface AddTransactionOfflinePayload {
   currency: string;
   account_id?: string | null;
   transfer_id?: string | null;
+  split_group_id?: string | null;
   tags?: string[] | null;
   attachment_path?: string | null;
 }

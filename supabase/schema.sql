@@ -72,6 +72,9 @@ BEGIN
   END IF;
 END $$;
 
+-- Add split_group_id to group split transaction parts (separate from transfer_id)
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS split_group_id uuid;
+
 -- 2. Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions USING btree (user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date    ON public.transactions USING btree (date DESC);
@@ -121,7 +124,8 @@ CREATE OR REPLACE FUNCTION public.create_user_transaction(
   p_account_id uuid DEFAULT NULL,
   p_transfer_id uuid DEFAULT NULL,
   p_tags text[] DEFAULT NULL,
-  p_attachment_path text DEFAULT NULL
+  p_attachment_path text DEFAULT NULL,
+  p_split_group_id uuid DEFAULT NULL
 )
 RETURNS public.transactions
 LANGUAGE plpgsql
@@ -165,6 +169,7 @@ BEGIN
     attachment_path,
     account_id,
     transfer_id,
+    split_group_id,
     tags
   )
   VALUES (
@@ -177,6 +182,7 @@ BEGIN
     NULLIF(BTRIM(p_attachment_path), ''),
     p_account_id,
     p_transfer_id,
+    p_split_group_id,
     p_tags
   )
   RETURNING * INTO inserted_row;
@@ -185,7 +191,135 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.create_user_transaction(numeric, text, text, date, text, uuid, uuid, text[], text) TO authenticated;
+-- Grant execute for current signature (10 args with split_group_id)
+GRANT EXECUTE ON FUNCTION public.create_user_transaction(numeric, text, text, date, text, uuid, uuid, text[], text, uuid) TO authenticated;
+
+
+-- ============================================
+-- Atomic transaction update function
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.update_user_transaction(
+  p_transaction_id uuid,
+  p_amount numeric,
+  p_category text,
+  p_description text,
+  p_date date,
+  p_currency text DEFAULT 'PHP',
+  p_account_id uuid DEFAULT NULL,
+  p_tags text[] DEFAULT NULL,
+  p_attachment_path text DEFAULT NULL
+)
+RETURNS public.transactions
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+  old_amount numeric(12, 2);
+  old_account_id uuid;
+  updated_row public.transactions;
+BEGIN
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- Lock the existing transaction and capture old balance-affecting fields
+  SELECT amount, account_id
+    INTO old_amount, old_account_id
+  FROM public.transactions
+  WHERE id = p_transaction_id
+    AND user_id = current_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Transaction not found';
+  END IF;
+
+  -- Reverse the old amount from the old account
+  IF old_account_id IS NOT NULL THEN
+    UPDATE public.accounts
+    SET balance = ROUND((balance - old_amount)::numeric, 2)
+    WHERE id = old_account_id
+      AND user_id = current_user_id;
+  END IF;
+
+  -- Apply the new amount to the new account
+  IF p_account_id IS NOT NULL THEN
+    UPDATE public.accounts
+    SET balance = ROUND((balance + p_amount)::numeric, 2)
+    WHERE id = p_account_id
+      AND user_id = current_user_id;
+  END IF;
+
+  -- Update the transaction row
+  UPDATE public.transactions
+  SET
+    amount         = ROUND(p_amount::numeric, 2),
+    category       = p_category,
+    description    = p_description,
+    date           = p_date,
+    currency       = COALESCE(NULLIF(BTRIM(p_currency), ''), 'PHP'),
+    account_id     = p_account_id,
+    tags           = p_tags,
+    attachment_path = NULLIF(BTRIM(p_attachment_path), '')
+  WHERE id = p_transaction_id
+  RETURNING * INTO updated_row;
+
+  RETURN updated_row;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_user_transaction(uuid, numeric, text, text, date, text, uuid, text[], text) TO authenticated;
+
+
+-- ============================================
+-- Atomic transaction delete function
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.delete_user_transaction(
+  p_transaction_id uuid
+)
+RETURNS void
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+  old_amount numeric(12, 2);
+  old_account_id uuid;
+BEGIN
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- Lock the transaction and capture balance-affecting fields
+  SELECT amount, account_id
+    INTO old_amount, old_account_id
+  FROM public.transactions
+  WHERE id = p_transaction_id
+    AND user_id = current_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Transaction not found';
+  END IF;
+
+  -- Reverse the amount from the account
+  IF old_account_id IS NOT NULL THEN
+    UPDATE public.accounts
+    SET balance = ROUND((balance - old_amount)::numeric, 2)
+    WHERE id = old_account_id
+      AND user_id = current_user_id;
+  END IF;
+
+  DELETE FROM public.transactions
+  WHERE id = p_transaction_id
+    AND user_id = current_user_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.delete_user_transaction(uuid) TO authenticated;
 
 
 CREATE OR REPLACE FUNCTION public.import_transactions_with_balance(
@@ -745,7 +879,9 @@ AS $$
 DECLARE
   current_user_id uuid := auth.uid();
   from_balance numeric(12, 2);
+  from_currency text;
   to_balance numeric(12, 2);
+  to_currency text;
   transfer_uuid uuid := gen_random_uuid();
   normalized_amount numeric(12, 2) := ROUND(ABS(transfer_amount)::numeric, 2);
   normalized_description text := COALESCE(NULLIF(BTRIM(transfer_description), ''), 'Transfer');
@@ -766,8 +902,8 @@ BEGIN
     RAISE EXCEPTION 'Transfer amount must be greater than zero';
   END IF;
 
-  SELECT balance
-    INTO from_balance
+  SELECT balance, currency
+    INTO from_balance, from_currency
   FROM public.accounts
   WHERE id = from_account_id
     AND user_id = current_user_id
@@ -777,8 +913,8 @@ BEGIN
     RAISE EXCEPTION 'Source account not found';
   END IF;
 
-  SELECT balance
-    INTO to_balance
+  SELECT balance, currency
+    INTO to_balance, to_currency
   FROM public.accounts
   WHERE id = to_account_id
     AND user_id = current_user_id
@@ -817,7 +953,7 @@ BEGIN
       'transfer',
       normalized_description,
       transfer_date,
-      'PHP',
+      from_currency,
       from_account_id,
       transfer_uuid
     ),
@@ -827,7 +963,7 @@ BEGIN
       'transfer',
       normalized_description,
       transfer_date,
-      'PHP',
+      to_currency,
       to_account_id,
       transfer_uuid
     );

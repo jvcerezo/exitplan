@@ -10,16 +10,18 @@ export interface Transaction {
   attachment_path: string | null;
   account_id: string | null;
   transfer_id: string | null;
+  split_group_id: string | null;
   tags: string[] | null;
 }
 
 export type TransactionInsert = Omit<
   Transaction,
-  "id" | "created_at" | "user_id" | "attachment_path" | "account_id" | "transfer_id" | "tags"
+  "id" | "created_at" | "user_id" | "attachment_path" | "account_id" | "transfer_id" | "split_group_id" | "tags"
 > & {
   attachment_path?: string | null;
   account_id?: string | null;
   transfer_id?: string | null;
+  split_group_id?: string | null;
   tags?: string[] | null;
 };
 
