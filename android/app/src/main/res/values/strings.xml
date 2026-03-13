@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ExitPlan</string>
+    <string name="title_activity_main">ExitPlan</string>
+    <string name="package_name">com.jvcerezo.exitplan</string>
+    <string name="custom_url_scheme">com.jvcerezo.exitplan</string>
+</resources>
