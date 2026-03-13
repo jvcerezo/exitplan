@@ -100,7 +100,7 @@ export default function BudgetsPage() {
             Set spending limits by period and track expenses against them
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="hidden sm:flex gap-2">
           {data && data.budgets.length === 0 && (
             <Button
               variant="outline"

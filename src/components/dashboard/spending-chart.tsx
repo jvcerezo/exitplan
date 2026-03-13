@@ -55,12 +55,12 @@ export function SpendingChart() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Spending by Category</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Spending by Category</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-1">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[250px] sm:h-[300px]">
+          <div className="flex items-center justify-center h-[220px] sm:h-[300px]">
             <div className="h-40 w-40 rounded-full bg-muted animate-pulse" />
           </div>
         ) : error ? (
@@ -76,22 +76,22 @@ export function SpendingChart() {
             </div>
           </div>
         ) : !data || data.length === 0 ? (
-          <div className="flex items-center justify-center h-[250px] sm:h-[300px]">
+          <div className="flex items-center justify-center h-[220px] sm:h-[300px]">
             <p className="text-sm text-muted-foreground">
               No spending data this month
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="h-[250px] sm:h-[300px]">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="h-[220px] sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={data}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
+                    innerRadius={50}
+                    outerRadius={82}
                     paddingAngle={2}
                     dataKey="amount"
                     nameKey="category"
@@ -107,9 +107,9 @@ export function SpendingChart() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-3">
               {data.map((item, index) => (
-                <div key={item.category} className="flex items-center gap-2">
+                <div key={item.category} className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5">
                   <div
                     className="w-3 h-3 rounded-full shrink-0"
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}

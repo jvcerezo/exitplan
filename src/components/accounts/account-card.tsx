@@ -1,7 +1,8 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
-import { Plus, Minus, Trash2, Archive } from "lucide-react";
+import { Plus, Minus, Trash2, Archive, Building2, Smartphone, Banknote, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,20 @@ const TYPE_LABELS: Record<string, string> = {
   "credit-card": "Credit Card",
 };
 
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  bank: Building2,
+  "e-wallet": Smartphone,
+  cash: Banknote,
+  "credit-card": CreditCard,
+};
+
+const TYPE_COLORS: Record<string, string> = {
+  bank: "text-blue-500 bg-blue-500/10",
+  "e-wallet": "text-violet-500 bg-violet-500/10",
+  cash: "text-green-600 bg-green-600/10",
+  "credit-card": "text-orange-500 bg-orange-500/10",
+};
+
 export function AccountCard({ account }: { account: Account }) {
   const archiveAccount = useArchiveAccount();
   const undoDelete = useUndoDelete("accounts", ACCOUNT_QUERY_KEYS);
@@ -30,14 +45,25 @@ export function AccountCard({ account }: { account: Account }) {
         <div className="flex items-start justify-between">
           <Link
             href={`/accounts/${account.id}`}
-            className="min-w-0 hover:opacity-70 transition-opacity"
+            className="min-w-0 hover:opacity-70 transition-opacity flex items-start gap-3"
           >
-            <CardTitle className="text-sm font-medium truncate">
-              {account.name}
-            </CardTitle>
-            <Badge variant="secondary" className="mt-1 text-xs">
-              {TYPE_LABELS[account.type] ?? account.type}
-            </Badge>
+            {(() => {
+              const Icon = TYPE_ICONS[account.type];
+              const colorClass = TYPE_COLORS[account.type] ?? "text-muted-foreground bg-muted";
+              return Icon ? (
+                <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${colorClass}`}>
+                  <Icon className="h-4.5 w-4.5" />
+                </div>
+              ) : null;
+            })()}
+            <div className="min-w-0">
+              <CardTitle className="text-sm font-medium truncate">
+                {account.name}
+              </CardTitle>
+              <Badge variant="secondary" className="mt-1 text-xs">
+                {TYPE_LABELS[account.type] ?? account.type}
+              </Badge>
+            </div>
           </Link>
           <div className="flex gap-0.5">
             <Button

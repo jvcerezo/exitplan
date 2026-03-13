@@ -16,8 +16,8 @@ export function AdminBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background">
-      <div className="flex h-16 items-center justify-around px-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/80 bg-background/95 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex h-16 items-center justify-around px-1">
         {adminNavItems.map((item) => {
           const isActive =
             item.href === "/admin"
@@ -30,10 +30,10 @@ export function AdminBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                "flex min-h-12 min-w-16 flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 text-xs font-medium transition-all",
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary/12 text-primary"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               )}
             >
               <item.icon className="h-5 w-5" />

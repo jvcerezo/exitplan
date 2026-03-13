@@ -44,6 +44,8 @@ interface AddBudgetDialogProps {
   month: string;
   existingCategories: string[];
   period?: BudgetPeriod;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 function formatAmount(raw: string): string {
@@ -68,8 +70,12 @@ function parseAmountInput(value: string): string {
   return normalizedInt;
 }
 
-export function AddBudgetDialog({ month, existingCategories, period: defaultPeriod = "monthly" }: AddBudgetDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddBudgetDialog({ month, existingCategories, period: defaultPeriod = "monthly", open: controlledOpen, onOpenChange: controlledOnOpenChange }: AddBudgetDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
+
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [period, setPeriod] = useState<BudgetPeriod>(defaultPeriod);
@@ -100,7 +106,7 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
     setPeriod(defaultPeriod);
   }
 
-  if (availableCategories.length === 0) {
+  if (availableCategories.length === 0 && !isControlled) {
     return (
       <Button disabled>
         <Plus className="h-4 w-4 mr-2" />
@@ -111,12 +117,14 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Budget
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Budget
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Add Budget</DialogTitle>

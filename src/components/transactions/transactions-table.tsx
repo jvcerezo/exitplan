@@ -120,16 +120,16 @@ export function TransactionsTable() {
     (tagFilter !== "" ? 1 : 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Segmented type control — full width on mobile */}
-      <div className="flex rounded-lg border border-border bg-muted/30 p-0.5">
+      <div className="flex rounded-xl border border-border bg-muted/30 p-1">
         {(["all", "income", "expense"] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => { setType(t); setQueryLimit(PAGE_SIZE); }}
             className={cn(
-              "flex-1 rounded-md px-4 py-1.5 text-sm font-medium transition-all",
+              "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
               type === t
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -142,14 +142,16 @@ export function TransactionsTable() {
 
       <Card>
         {/* Search + filter bar */}
-        <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <input
-            placeholder="Search transactions..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setQueryLimit(PAGE_SIZE); }}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
-          />
+        <div className="flex flex-wrap items-center gap-2 border-b border-border/50 px-3 py-3 sm:px-4">
+          <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg bg-muted/40 px-2.5">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              placeholder="Search transactions..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setQueryLimit(PAGE_SIZE); }}
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
+            />
+          </div>
           <div className="flex items-center gap-2 shrink-0">
             {filteredTransactions && filteredTransactions.length > 0 && (
               <Button
@@ -159,7 +161,7 @@ export function TransactionsTable() {
                 onClick={() => exportCSV(filteredTransactions)}
               >
                 <Download className="h-3.5 w-3.5 mr-1" />
-                CSV
+                <span className="hidden sm:inline">CSV</span>
               </Button>
             )}
             <button
@@ -185,7 +187,7 @@ export function TransactionsTable() {
 
         {/* Active filter chips */}
         {hasFilters && !filtersOpen && (
-          <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2">
+          <div className="flex items-center gap-2 overflow-x-auto border-b border-border/50 px-3 py-2 whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-4">
             {dateRange !== "all" && (
               <button
                 type="button"
@@ -359,14 +361,14 @@ export function TransactionsTable() {
         )}
 
         {/* Results count */}
-        <div className="px-4 pt-3 pb-1">
+        <div className="px-3 pt-3 pb-1 sm:px-4">
           <p className="text-xs text-muted-foreground tabular-nums">
             {filteredTransactions?.length ?? 0}{" "}
             {(filteredTransactions?.length ?? 0) === 1 ? "transaction" : "transactions"}
           </p>
         </div>
 
-        <CardContent className="pt-2">
+        <CardContent className="px-3 pt-2 sm:px-6">
           {isLoading ? (
             <div className="space-y-2">
               {[...Array(6)].map((_, i) => (
@@ -410,11 +412,11 @@ export function TransactionsTable() {
               }
             />
           ) : (
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {filteredTransactions?.map((tx) => (
                 <div
                   key={tx.id}
-                  className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/40"
+                  className="group flex items-start gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-muted/40 sm:items-center sm:px-3"
                 >
                   {/* Icon */}
                   <div
@@ -463,36 +465,38 @@ export function TransactionsTable() {
                     </div>
                   </div>
 
-                  {/* Amount */}
-                  <p
-                    className={cn(
-                      "text-sm font-semibold tabular-nums shrink-0",
-                      tx.category === "transfer"
-                        ? "text-blue-600"
-                        : tx.amount > 0
-                        ? "text-emerald-600"
-                        : "text-foreground"
-                    )}
-                  >
-                    {formatSignedCurrency(tx.amount, tx.currency)}
-                  </p>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    {/* Amount */}
+                    <p
+                      className={cn(
+                        "text-sm font-semibold tabular-nums",
+                        tx.category === "transfer"
+                          ? "text-blue-600"
+                          : tx.amount > 0
+                          ? "text-emerald-600"
+                          : "text-foreground"
+                      )}
+                    >
+                      {formatSignedCurrency(tx.amount, tx.currency)}
+                    </p>
 
-                  {/* Actions — always visible on touch, hover-reveal on desktop */}
-                  <div className="flex shrink-0 items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    {tx.attachment_path ? (
-                      <AttachmentViewer
-                        transactionId={tx.id}
-                        path={tx.attachment_path}
+                    {/* Actions — always visible on touch, hover-reveal on desktop */}
+                    <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      {tx.attachment_path ? (
+                        <AttachmentViewer
+                          transactionId={tx.id}
+                          path={tx.attachment_path}
+                        />
+                      ) : (
+                        <AttachmentUpload transactionId={tx.id} />
+                      )}
+                      <SplitTransactionDialog transaction={tx} />
+                      <EditTransactionDialog transaction={tx} />
+                      <DeleteTransactionDialog
+                        id={tx.id}
+                        description={tx.description}
                       />
-                    ) : (
-                      <AttachmentUpload transactionId={tx.id} />
-                    )}
-                    <SplitTransactionDialog transaction={tx} />
-                    <EditTransactionDialog transaction={tx} />
-                    <DeleteTransactionDialog
-                      id={tx.id}
-                      description={tx.description}
-                    />
+                    </div>
                   </div>
                 </div>
               ))}

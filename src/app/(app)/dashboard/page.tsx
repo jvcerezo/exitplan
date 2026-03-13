@@ -15,7 +15,7 @@ import { AddTransactionDialog } from "@/components/transactions/add-transaction-
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -30,37 +30,59 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tier 1: Essential Overview */}
-      <BalanceCard />
-      <HealthScoreCard />
+      <div className="flex flex-col gap-6">
+        {/* Mobile-first: balance + charts first */}
+        <section className="order-1 md:order-1 space-y-2">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Overview
+          </p>
+          <BalanceCard />
+        </section>
 
-      {/* Tier 2: Core Status + Key Goals */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <BudgetAlerts />
-        <GoalsSnapshot />
+        <section className="order-2 md:order-5 space-y-2">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Trends
+          </p>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SpendingChart />
+            <MonthlyTrendChart />
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <NetWorthChart />
+            <SpendingComparison />
+          </div>
+        </section>
+
+        <section className="order-3 md:order-2">
+          <HealthScoreCard />
+        </section>
+
+        <section className="order-4 md:order-3 space-y-6">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Planning
+          </p>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <BudgetAlerts />
+            <GoalsSnapshot />
+          </div>
+        </section>
+
+        <section className="order-5 md:order-4 space-y-6">
+          <SafeToSpendCard />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SavingsRateIndicator />
+            <EmergencyFundStatus targetMonths={3} />
+          </div>
+        </section>
+
+        <section className="order-6 md:order-6">
+          <SpendingInsights />
+        </section>
+
+        <section className="order-7 md:order-7">
+          <RecentTransactions />
+        </section>
       </div>
-
-      {/* Tier 2: Savings & Emergency Fund */}
-      <SafeToSpendCard />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SavingsRateIndicator />
-        <EmergencyFundStatus targetMonths={3} />
-      </div>
-
-      {/* Tier 3: Analytics & Trends */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SpendingChart />
-        <MonthlyTrendChart />
-      </div>
-
-      {/* Tier 3: Additional Context */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <NetWorthChart />
-        <SpendingInsights />
-      </div>
-
-      {/* Tier 3: Recent Activity */}
-      <RecentTransactions />
     </div>
   );
 }

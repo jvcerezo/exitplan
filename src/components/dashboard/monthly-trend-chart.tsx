@@ -60,12 +60,12 @@ export function MonthlyTrendChart() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Monthly Trend</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Monthly Trend</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-1">
         {isLoading ? (
-          <div className="flex items-end gap-2 justify-center h-[250px] sm:h-[300px] px-4 pb-8">
+          <div className="flex items-end gap-2 justify-center h-[220px] sm:h-[300px] px-3 pb-6 sm:px-4 sm:pb-8">
             {[40, 65, 55, 80, 45, 70].map((h, i) => (
               <div key={i} className="flex gap-1 items-end flex-1">
                 <div
@@ -92,13 +92,13 @@ export function MonthlyTrendChart() {
             </div>
           </div>
         ) : !data || data.length === 0 ? (
-          <div className="flex items-center justify-center h-[250px] sm:h-[300px]">
+          <div className="flex items-center justify-center h-[220px] sm:h-[300px]">
             <p className="text-sm text-muted-foreground">
               No transaction data available
             </p>
           </div>
         ) : (
-          <div className="h-[250px] sm:h-[300px]">
+          <div className="h-[220px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />

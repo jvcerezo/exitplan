@@ -18,11 +18,24 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 10 * 60 * 1000, // 10 minutes — reuse cache on page nav
-            gcTime: 30 * 60 * 1000, // 30 minutes — keep in memory longer
+            // Serve cached data immediately; treat it as fresh for 10 min
+            staleTime: 10 * 60 * 1000,
+            // Keep in memory for 24 h (matches persister maxAge)
+            gcTime: 24 * 60 * 60 * 1000,
+            // Don't refetch just because the window was focused
             refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
+            // DO refetch stale queries once we reconnect
+            refetchOnReconnect: true,
+            // Only retry once; don't hammer Supabase when offline
             retry: 1,
+            // Show cached data even when a fetch is in-flight or failed
+            // This is the key setting that makes the app usable offline
+            networkMode: "offlineFirst",
+          },
+          mutations: {
+            // Queue mutations; don't retry automatically (we have our own queue)
+            networkMode: "offlineFirst",
+            retry: 0,
           },
         },
       })
@@ -42,7 +55,13 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       client={queryClient}
       persistOptions={{
         persister,
+        // Keep persisted cache for 24 hours
         maxAge: 1000 * 60 * 60 * 24,
+        // Don't wipe the cache during hydration on page load — use it immediately
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) =>
+            query.state.status === "success",
+        },
       }}
     >
       {children}

@@ -1,8 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useRealtimeSync } from "@/hooks/use-realtime";
+import { useOfflineStatus } from "@/hooks/use-offline-status";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { TourProvider } from "@/providers/tour-provider";
 import { TourOverlay } from "@/components/layout/tour-overlay";
@@ -10,6 +12,21 @@ import { TourOverlay } from "@/components/layout/tour-overlay";
 function AppShellInner({ children }: { children: ReactNode }) {
   useKeyboardShortcuts();
   useRealtimeSync();
+
+  const queryClient = useQueryClient();
+  const { isOnline } = useOfflineStatus();
+  const prevOnlineRef = useRef(isOnline);
+
+  // When we transition from offline → online, refetch all stale queries
+  // so the UI shows fresh data as soon as connectivity is restored.
+  useEffect(() => {
+    const wasOffline = !prevOnlineRef.current;
+    prevOnlineRef.current = isOnline;
+
+    if (isOnline && wasOffline) {
+      void queryClient.refetchQueries({ type: "active", stale: true });
+    }
+  }, [isOnline, queryClient]);
 
   return (
     <>
@@ -27,3 +44,4 @@ export function AppShell({ children }: { children: ReactNode }) {
     </TourProvider>
   );
 }
+

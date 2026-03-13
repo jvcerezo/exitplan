@@ -33,7 +33,7 @@ export function HealthScoreCard() {
           <div className="h-5 w-40 bg-muted rounded animate-pulse" />
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-6 animate-pulse">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6 animate-pulse">
             <div className="h-24 w-24 rounded-full bg-muted" />
             <div className="flex-1 space-y-2">
               <div className="h-3 w-full bg-muted rounded" />
@@ -57,7 +57,7 @@ export function HealthScoreCard() {
         <CardTitle className="text-base">Financial Health</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
           {/* Circular score */}
           <div className="relative h-24 w-24 shrink-0">
             <svg className="h-24 w-24 -rotate-90" viewBox="0 0 96 96">
@@ -101,12 +101,12 @@ export function HealthScoreCard() {
           </div>
 
           {/* Sub-scores */}
-          <div className="flex-1 space-y-2.5">
+          <div className="w-full flex-1 space-y-2.5">
             {data.subScores.map((sub) => (
               <div key={sub.label} className="space-y-0.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium">{sub.label}</span>
-                  <span className="text-muted-foreground">{sub.detail}</span>
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-medium truncate">{sub.label}</span>
+                  <span className="text-muted-foreground shrink-0">{sub.detail}</span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div

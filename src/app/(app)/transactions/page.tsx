@@ -11,7 +11,7 @@ export default function TransactionsPage() {
   const [importOpen, setImportOpen] = useState(false);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -22,11 +22,11 @@ export default function TransactionsPage() {
         </div>
 
         {/* Actions (mobile + desktop) */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <Button
             variant="outline"
             onClick={() => setImportOpen(true)}
-            className="gap-1.5 h-9 sm:h-10"
+            className="h-9 w-full gap-1.5 sm:h-10 sm:w-auto"
           >
             <Upload className="h-4 w-4" />
             Import CSV
