@@ -39,8 +39,8 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
   const remaining = Math.round((effectiveBudget - spent) * 100) / 100;
 
   function getProgressColor(pct: number) {
-    if (pct > 100) return "bg-black dark:bg-white";
-    if (pct >= 75) return "bg-yellow-500";
+    if (pct > 100) return "bg-destructive";
+    if (pct >= 75) return "bg-amber-500";
     return "bg-primary";
   }
 
@@ -64,11 +64,11 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="rounded-xl border-border/60 bg-card/90 shadow-sm">
+      <CardHeader className="pb-2.5">
         <div className="flex items-start justify-between">
           <div className="space-y-0.5">
-            <CardTitle className="text-sm font-medium capitalize flex items-center gap-2">
+            <CardTitle className="text-base sm:text-sm font-semibold capitalize flex items-center gap-2">
               {budget.category}
               {budget.period && budget.period !== "monthly" && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
@@ -82,11 +82,12 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
               </p>
             )}
           </div>
-          <div className="flex gap-0.5">
+          <div className="flex gap-1">
             <Button
               variant="ghost"
               size="icon-xs"
               className={cn(
+                "h-8 w-8 rounded-md",
                 "transition-colors",
                 budget.rollover
                   ? "text-primary"
@@ -104,7 +105,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
             <Button
               variant="ghost"
               size="icon-xs"
-              className="text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/70 hover:text-foreground"
               aria-label={`Edit ${budget.category} budget`}
               onClick={() => {
                 setEditValue(String(budget.amount));
@@ -116,7 +117,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
             <Button
               variant="ghost"
               size="icon-xs"
-              className="text-muted-foreground hover:text-destructive"
+              className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/70 hover:text-destructive"
               aria-label={`Delete ${budget.category} budget`}
               onClick={() => undoDelete(budget.id, budget.category)}
             >
@@ -125,7 +126,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {/* Budget amount — editable */}
         {editing ? (
           <div className="flex items-center gap-1.5">
@@ -169,11 +170,11 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
             </Button>
           </div>
         ) : (
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="text-muted-foreground">
+          <div className="flex items-baseline justify-between gap-2 text-sm">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               {formatCurrency(spent)} spent
             </span>
-            <span className="font-medium">
+            <span className="text-xs sm:text-sm font-medium text-right">
               of {formatCurrency(effectiveBudget)}
               {rollover > 0 && (
                 <span className="text-xs text-muted-foreground ml-1">
@@ -185,7 +186,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
         )}
 
         {/* Progress bar */}
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/70">
           <div
             className={cn(
               "h-full rounded-full transition-all",
@@ -201,9 +202,9 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
             className={cn(
               "text-xs font-medium",
               percentage > 100
-                ? "text-black dark:text-white"
+                ? "text-destructive"
                 : percentage >= 75
-                  ? "text-yellow-500"
+                  ? "text-amber-500"
                   : "text-muted-foreground"
             )}
           >
@@ -212,7 +213,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
           <p
             className={cn(
               "text-xs font-medium",
-              remaining < 0 ? "text-black dark:text-white" : "text-muted-foreground"
+              remaining < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"
             )}
           >
             {remaining < 0

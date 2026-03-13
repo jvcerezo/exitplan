@@ -114,128 +114,117 @@ export function AddGoalDialog({
   }
 
   const dialogContent = (
-    <DialogContent className="sm:max-w-md overflow-x-hidden">
+    <DialogContent className="sm:max-w-md overflow-x-hidden p-4 sm:p-6">
       <DialogHeader>
-        <DialogTitle>Create a New Goal</DialogTitle>
+        <DialogTitle className="text-base sm:text-lg">Create a New Goal</DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Category pills */}
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">
-              Category
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {GOAL_CATEGORIES.map((cat) => {
-                const Icon = GOAL_ICONS[cat.toLowerCase()] ?? Ellipsis;
-                const isSelected = category === cat.toLowerCase();
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategory(cat.toLowerCase())}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                      isSelected
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
-            {category === "other" && (
-              <input
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                placeholder="Type your category..."
-                autoFocus
-                className="w-full bg-transparent text-sm font-medium outline-none border-b border-border pb-2 placeholder:text-muted-foreground/40 focus:border-primary transition-colors mt-1"
-              />
-            )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Category pills */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground mb-1">Category</p>
+          <div className="flex flex-wrap gap-2">
+            {GOAL_CATEGORIES.map((cat) => {
+              const Icon = GOAL_ICONS[cat.toLowerCase()] ?? Ellipsis;
+              const isSelected = category === cat.toLowerCase();
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat.toLowerCase())}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-colors border min-w-[90px] justify-center",
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-muted/60 text-muted-foreground border-transparent hover:bg-muted"
+                  )}
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  <Icon className="h-4 w-4" />
+                  {cat}
+                </button>
+              );
+            })}
           </div>
-
-          {/* Goal name */}
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">
-              Goal Name
-            </p>
+          {category === "other" && (
             <input
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Emergency Fund"
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder="Type your category..."
+              autoFocus
+              className="w-full bg-transparent text-sm font-medium outline-none border-b border-border pb-2 placeholder:text-muted-foreground/40 focus:border-primary transition-colors mt-1"
+            />
+          )}
+        </div>
+
+        {/* Goal name */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">Goal Name</p>
+          <input
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Emergency Fund"
+            required
+            className="w-full bg-transparent text-sm font-medium outline-none border-b border-border pb-2 placeholder:text-muted-foreground/40 focus:border-primary transition-colors"
+          />
+        </div>
+
+        {/* Target amount */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">Target Amount</p>
+          <div className="flex items-baseline gap-2 py-1">
+            <span className="text-2xl font-bold text-muted-foreground/50">₱</span>
+            <input
+              name="target_amount"
+              type="text"
+              inputMode="decimal"
+              placeholder="0.00"
+              value={formatAmount(targetAmount)}
+              onChange={(e) => setTargetAmount(parseAmountInput(e.target.value))}
               required
-              className="w-full bg-transparent text-sm font-medium outline-none border-b border-border pb-2 placeholder:text-muted-foreground/40 focus:border-primary transition-colors"
+              className="w-0 min-w-0 flex-1 bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/30"
             />
           </div>
+        </div>
 
-          {/* Target amount */}
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">
-              Target Amount
-            </p>
-            <div className="flex items-baseline gap-2 py-2">
-              <span className="text-3xl font-bold text-muted-foreground/50">
-                ₱
-              </span>
+        {/* Saved so far + Deadline row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Saved So Far</p>
+            <div className="flex items-center gap-1.5 rounded-lg border border-border px-2 py-1.5">
+              <span className="text-sm text-muted-foreground/50">₱</span>
               <input
-                name="target_amount"
+                name="current_amount"
                 type="text"
                 inputMode="decimal"
                 placeholder="0.00"
-                value={formatAmount(targetAmount)}
-                onChange={(e) => setTargetAmount(parseAmountInput(e.target.value))}
-                required
-                className="w-0 min-w-0 flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30"
+                value={formatAmount(currentAmount)}
+                onChange={(e) => setCurrentAmount(parseAmountInput(e.target.value))}
+                className="w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/40"
               />
             </div>
           </div>
-
-          {/* Saved so far + Deadline row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Saved So Far
-              </p>
-              <div className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2">
-                <span className="text-sm text-muted-foreground/50">₱</span>
-                <input
-                  name="current_amount"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={formatAmount(currentAmount)}
-                  onChange={(e) => setCurrentAmount(parseAmountInput(e.target.value))}
-                  className="w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/40"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Deadline
-              </p>
-              <input
-                name="deadline"
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium bg-transparent outline-none focus:border-primary transition-colors"
-              />
-            </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Deadline</p>
+            <input
+              name="deadline"
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              className="w-full rounded-lg border border-border px-2 py-1.5 text-sm font-medium bg-transparent outline-none focus:border-primary transition-colors"
+            />
           </div>
+        </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={addGoal.isPending || !category || !name || !targetAmount || (category === "other" && !customCategory.trim())}
-          >
-            {addGoal.isPending ? "Creating..." : "Create Goal"}
-          </Button>
-        </form>
-      </DialogContent>
+        <Button
+          type="submit"
+          className="w-full mt-2"
+          disabled={addGoal.isPending || !category || !name || !targetAmount || (category === "other" && !customCategory.trim())}
+        >
+          {addGoal.isPending ? "Creating..." : "Create Goal"}
+        </Button>
+      </form>
+    </DialogContent>
   );
 
   const onOpenChangeHandler = (v: boolean) => {

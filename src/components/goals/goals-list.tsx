@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useGoals } from "@/hooks/use-goals";
 import { GoalCard } from "./goal-card";
 import { AlertCircle, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 export function GoalsList() {
   const { data: goals, isLoading, error } = useGoals();
@@ -63,34 +65,68 @@ export function GoalsList() {
 
   const active = goals.filter((g) => !g.is_completed);
   const completed = goals.filter((g) => g.is_completed);
+  const [mobileTab, setMobileTab] = useState<"active" | "completed">(
+    active.length > 0 ? "active" : "completed"
+  );
+  const mobileGoals = useMemo(
+    () => (mobileTab === "active" ? active : completed),
+    [mobileTab, active, completed]
+  );
 
   return (
-    <div className="space-y-8">
-      {active.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Active Goals
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {active.map((goal) => (
-              <GoalCard key={goal.id} goal={goal} />
-            ))}
+    <div className="space-y-6 sm:space-y-8">
+      {(active.length > 0 || completed.length > 0) && (
+        <div className="md:hidden space-y-3">
+          <SegmentedControl
+            options={[
+              { value: "active", label: `Active (${active.length})` },
+              { value: "completed", label: `Completed (${completed.length})` },
+            ]}
+            value={mobileTab}
+            onChange={setMobileTab}
+          />
+
+          <div className="grid gap-3">
+            {mobileGoals.length === 0 ? (
+              <Card>
+                <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                  No {mobileTab} goals yet.
+                </CardContent>
+              </Card>
+            ) : (
+              mobileGoals.map((goal) => <GoalCard key={goal.id} goal={goal} />)
+            )}
           </div>
         </div>
       )}
 
-      {completed.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Completed
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {completed.map((goal) => (
-              <GoalCard key={goal.id} goal={goal} />
-            ))}
+      <div className="hidden md:block space-y-6 sm:space-y-8">
+        {active.length > 0 && (
+          <div className="space-y-3 sm:space-y-4">
+            <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-sm">
+              Active Goals
+            </h2>
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+              {active.map((goal) => (
+                <GoalCard key={goal.id} goal={goal} />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {completed.length > 0 && (
+          <div className="space-y-3 sm:space-y-4">
+            <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:text-sm">
+              Completed
+            </h2>
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+              {completed.map((goal) => (
+                <GoalCard key={goal.id} goal={goal} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

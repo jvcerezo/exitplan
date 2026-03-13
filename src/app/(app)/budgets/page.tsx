@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Wallet, TrendingDown, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AddBudgetDialog } from "@/components/budgets/add-budget-dialog";
 import { BudgetCard } from "@/components/budgets/budget-card";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useBudgetSummary, useCopyBudgetsFromMonth } from "@/hooks/use-budgets";
 import { formatCurrency, cn } from "@/lib/utils";
 import type { BudgetPeriod } from "@/lib/types/database";
@@ -89,14 +90,16 @@ export default function BudgetsPage() {
 
   const existingCategories = data?.budgets.map((b) => b.category) || [];
   const previousPeriodStart = getPrevPeriodStart(periodStart, period);
+  const remaining = (data?.totalBudget ?? 0) - (data?.totalSpent ?? 0);
+  const isOverBudget = remaining < 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Budgets</h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground sm:text-base">
             Set spending limits by period and track expenses against them
           </p>
         </div>
@@ -122,40 +125,32 @@ export default function BudgetsPage() {
       </div>
 
       {/* Period tabs */}
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1 w-fit">
-        {PERIOD_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            type="button"
-            onClick={() => handlePeriodChange(tab.value)}
-            className={cn(
-              "px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
-              period === tab.value
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={PERIOD_TABS}
+        value={period}
+        onChange={handlePeriodChange}
+        className="rounded-xl bg-muted/25"
+        buttonClassName="text-sm"
+      />
 
       {/* Period navigator */}
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-muted/20 p-2 sm:justify-center sm:gap-4">
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
+          className="h-9 w-9 shrink-0 rounded-lg border border-border/60 bg-background/70"
           aria-label="Previous period"
           onClick={() => setPeriodStart((s) => shiftPeriod(s, period, -1))}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="min-w-[220px] text-center text-lg font-semibold">
+        <span className="min-w-0 flex-1 text-center text-sm font-semibold leading-tight sm:min-w-[220px] sm:text-lg">
           {formatPeriodLabel(periodStart, period)}
         </span>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
+          className="h-9 w-9 shrink-0 rounded-lg border border-border/60 bg-background/70"
           aria-label="Next period"
           onClick={() => setPeriodStart((s) => shiftPeriod(s, period, 1))}
         >
@@ -165,35 +160,33 @@ export default function BudgetsPage() {
 
       {/* Summary bar */}
       {data && data.budgets.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
-          <div>
-            <span className="text-muted-foreground">Total Budget: </span>
-            <span className="font-semibold">
-              {formatCurrency(data.totalBudget)}
-            </span>
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-visible sm:gap-3 text-sm">
+          <div className="min-w-[160px] rounded-xl border border-border/60 bg-muted/25 px-3 py-2.5 sm:min-w-0">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <Wallet className="h-3.5 w-3.5" /> Total Budget
+            </p>
+            <p className="font-semibold tabular-nums">{formatCurrency(data.totalBudget)}</p>
           </div>
-          <Separator orientation="vertical" className="hidden sm:block h-4" />
-          <div>
-            <span className="text-muted-foreground">Total Spent: </span>
-            <span className="font-semibold">
-              {formatCurrency(data.totalSpent)}
-            </span>
+          <div className="min-w-[160px] rounded-xl border border-border/60 bg-muted/25 px-3 py-2.5 sm:min-w-0">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <TrendingDown className="h-3.5 w-3.5" /> Total Spent
+            </p>
+            <p className="font-semibold tabular-nums">{formatCurrency(data.totalSpent)}</p>
           </div>
-          <Separator orientation="vertical" className="hidden sm:block h-4" />
-          <div>
-            <span className="text-muted-foreground">Remaining: </span>
-            <span className="font-semibold">
-              {formatCurrency(data.totalBudget - data.totalSpent)}
-            </span>
+          <div className="min-w-[170px] rounded-xl border border-border/60 bg-muted/25 px-3 py-2.5 sm:min-w-0">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <Scale className="h-3.5 w-3.5" /> Remaining
+            </p>
+            <p className={cn("font-semibold tabular-nums", isOverBudget ? "text-destructive" : "text-emerald-600 dark:text-emerald-400")}>
+              {formatCurrency(remaining)}
+            </p>
           </div>
           {data.totalRollover > 0 && (
             <>
               <Separator orientation="vertical" className="hidden sm:block h-4" />
-              <div>
-                <span className="text-muted-foreground">Rolled Over: </span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  +{formatCurrency(data.totalRollover)}
-                </span>
+              <div className="min-w-[170px] rounded-xl border border-border/60 bg-muted/25 px-3 py-2.5 col-span-2 sm:col-span-1 sm:min-w-0">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Rolled Over</p>
+                <p className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">+{formatCurrency(data.totalRollover)}</p>
               </div>
             </>
           )}
@@ -204,7 +197,7 @@ export default function BudgetsPage() {
       {isLoading ? (
         <p className="text-center text-muted-foreground">Loading budgets...</p>
       ) : data && data.budgets.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-3">
           {data.budgets.map((budget) => (
             <BudgetCard
               key={budget.id}

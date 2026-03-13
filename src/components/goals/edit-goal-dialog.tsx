@@ -113,7 +113,12 @@ export function EditGoalDialog({ goal }: { goal: Goal }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon-xs" aria-label="Edit goal">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          aria-label="Edit goal"
+        >
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>

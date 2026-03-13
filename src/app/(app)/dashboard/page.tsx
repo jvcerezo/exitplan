@@ -1,11 +1,9 @@
 import { BalanceCard } from "@/components/dashboard/balance-card";
+import { MobileDashboardSections } from "@/components/dashboard/mobile-dashboard-sections";
 import { HealthScoreCard } from "@/components/dashboard/health-score-card";
 import { BudgetAlerts } from "@/components/dashboard/budget-alerts";
 import { GoalsSnapshot } from "@/components/dashboard/goals-snapshot";
-import { SpendingChart } from "@/components/dashboard/spending-chart";
-import { MonthlyTrendChart } from "@/components/dashboard/monthly-trend-chart";
-import { NetWorthChart } from "@/components/dashboard/net-worth-chart";
-import { SpendingComparison } from "@/components/dashboard/spending-comparison";
+import { TrendsSection } from "@/components/dashboard/trends-section";
 import { SpendingInsights } from "@/components/dashboard/spending-insights";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { SavingsRateIndicator } from "@/components/dashboard/savings-rate-indicator";
@@ -32,32 +30,29 @@ export default function DashboardPage() {
 
       <div className="flex flex-col gap-6">
         {/* Mobile-first: balance + charts first */}
-        <section className="order-1 md:order-1 space-y-2">
+        <section className="order-1 space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Overview
           </p>
           <BalanceCard />
         </section>
 
-        <section className="order-2 md:order-5 space-y-2">
+        <div className="order-2 md:hidden">
+          <MobileDashboardSections />
+        </div>
+
+        <section className="hidden md:block order-2 md:order-5 space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Trends
           </p>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <SpendingChart />
-            <MonthlyTrendChart />
-          </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <NetWorthChart />
-            <SpendingComparison />
-          </div>
+          <TrendsSection />
         </section>
 
-        <section className="order-3 md:order-2">
+        <section className="hidden md:block order-3 md:order-2">
           <HealthScoreCard />
         </section>
 
-        <section className="order-4 md:order-3 space-y-6">
+        <section className="hidden md:block order-4 md:order-3 space-y-6">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Planning
           </p>
@@ -67,7 +62,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="order-5 md:order-4 space-y-6">
+        <section className="hidden md:block order-5 md:order-4 space-y-6">
           <SafeToSpendCard />
           <div className="grid gap-6 lg:grid-cols-2">
             <SavingsRateIndicator />
@@ -75,11 +70,11 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="order-6 md:order-6">
+        <section className="hidden md:block order-6 md:order-6">
           <SpendingInsights />
         </section>
 
-        <section className="order-7 md:order-7">
+        <section className="hidden md:block order-7 md:order-7">
           <RecentTransactions />
         </section>
       </div>

@@ -97,7 +97,11 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 rounded-full border-primary/30 bg-primary/5 px-3 text-xs font-semibold text-primary hover:bg-primary/10"
+        >
           <Coins className="h-4 w-4 mr-1.5" />
           Add Funds
         </Button>

@@ -18,8 +18,8 @@ export function DeleteGoalDialog({
   return (
     <Button
       variant="ghost"
-      size="icon-xs"
-      className="text-muted-foreground hover:text-destructive"
+      size="icon-sm"
+      className="h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
       aria-label="Delete goal"
       onClick={() => undoDelete(id, name)}
     >

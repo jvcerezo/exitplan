@@ -4,12 +4,12 @@ import { GoalsList } from "@/components/goals/goals-list";
 
 export default function GoalsPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Goals</h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground sm:text-base">
             Set targets and track your progress to freedom
           </p>
         </div>
