@@ -135,7 +135,7 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center py-24 text-center sm:py-32 lg:py-40">
+        <div className="flex flex-col items-center pt-12 pb-16 text-center sm:py-24 lg:py-32">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
             <Zap className="h-3.5 w-3.5" />
             100% free · No credit card required

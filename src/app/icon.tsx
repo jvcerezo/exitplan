@@ -17,24 +17,19 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(180deg, #F7FBF8 0%, #EEF7F1 100%)",
+          background: "#0F1B2D",
+          borderRadius: "50%",
         }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="360" height="360" aria-label="ExitPlan Logo">
-          <defs>
-            <mask id="icon-arrow-gap">
-              <rect width="200" height="200" fill="white" />
-              <path
-                d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z"
-                fill="black"
-                stroke="black"
-                strokeWidth="12"
-                strokeLinejoin="round"
-              />
-            </mask>
-          </defs>
-          <path d="M 40 30 H 140 V 60 H 70 V 140 H 140 V 170 H 40 Z" fill="#14213D" mask="url(#icon-arrow-gap)" />
-          <path d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z" fill="#55C48A" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="512" height="512">
+          <circle cx="100" cy="100" r="100" fill="#0F1B2D" />
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#3ECFAD" strokeWidth="5" />
+          <rect x="62" y="58" width="18" height="84" rx="3" fill="#FFFFFF" />
+          <rect x="62" y="58" width="56" height="18" rx="3" fill="#FFFFFF" />
+          <rect x="62" y="91" width="44" height="16" rx="3" fill="#FFFFFF" />
+          <rect x="62" y="124" width="56" height="18" rx="3" fill="#FFFFFF" />
+          <line x1="96" y1="117" x2="132" y2="78" stroke="#3ECFAD" strokeWidth="11" strokeLinecap="round" />
+          <polyline points="110,72 138,72 138,100" fill="none" stroke="#3ECFAD" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
     ),
