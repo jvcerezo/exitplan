@@ -1,5 +1,22 @@
 apply plugin: 'com.android.application'
 
+def resolveBuildSecret = { String key ->
+    if (project.hasProperty(key)) {
+        return project.property(key)?.toString()?.trim()
+    }
+
+    def envValue = System.getenv(key)
+    return envValue?.toString()?.trim()
+}
+
+def releaseStoreFile = resolveBuildSecret('EXITPLAN_UPLOAD_STORE_FILE')
+def releaseStorePassword = resolveBuildSecret('EXITPLAN_UPLOAD_STORE_PASSWORD')
+def releaseKeyAlias = resolveBuildSecret('EXITPLAN_UPLOAD_KEY_ALIAS')
+def releaseKeyPassword = resolveBuildSecret('EXITPLAN_UPLOAD_KEY_PASSWORD')
+
+def hasReleaseSigningConfig =
+        releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
     namespace = "com.jvcerezo.exitplan"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,10 +33,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigningConfig) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.lifecycle("Release signing is not configured. Set EXITPLAN_UPLOAD_* properties before publishing to Google Play.")
+            }
         }
     }
 }

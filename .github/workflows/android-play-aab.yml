@@ -1,0 +1,76 @@
+name: Android Play AAB
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-android-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      CAP_SERVER_URL: ${{ secrets.CAP_SERVER_URL }}
+      EXITPLAN_UPLOAD_STORE_FILE: ${{ github.workspace }}/android/keystore/upload.jks
+      EXITPLAN_UPLOAD_STORE_PASSWORD: ${{ secrets.EXITPLAN_UPLOAD_STORE_PASSWORD }}
+      EXITPLAN_UPLOAD_KEY_ALIAS: ${{ secrets.EXITPLAN_UPLOAD_KEY_ALIAS }}
+      EXITPLAN_UPLOAD_KEY_PASSWORD: ${{ secrets.EXITPLAN_UPLOAD_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required secrets
+        run: |
+          test -n "$CAP_SERVER_URL" || (echo "Missing CAP_SERVER_URL secret" && exit 1)
+          test -n "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" || (echo "Missing ANDROID_UPLOAD_KEYSTORE_BASE64 secret" && exit 1)
+          test -n "$EXITPLAN_UPLOAD_STORE_PASSWORD" || (echo "Missing EXITPLAN_UPLOAD_STORE_PASSWORD secret" && exit 1)
+          test -n "$EXITPLAN_UPLOAD_KEY_ALIAS" || (echo "Missing EXITPLAN_UPLOAD_KEY_ALIAS secret" && exit 1)
+          test -n "$EXITPLAN_UPLOAD_KEY_PASSWORD" || (echo "Missing EXITPLAN_UPLOAD_KEY_PASSWORD secret" && exit 1)
+
+      - name: Decode upload keystore
+        run: |
+          mkdir -p android/keystore
+          echo "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" | base64 --decode > android/keystore/upload.jks
+
+      - name: Sync Android project (hosted mode)
+        run: npm run mobile:android:hosted
+
+      - name: Build release AAB
+        working-directory: android
+        run: ./gradlew bundleRelease
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Upload Play AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
