@@ -1,11 +1,64 @@
 // Bump this version whenever you deploy to force old caches to clear.
-const SHELL_CACHE = "exitplan-shell-v2";
-const ASSET_CACHE = "exitplan-assets-v2";
+const SHELL_CACHE = "exitplan-shell-v3";
+const ASSET_CACHE = "exitplan-assets-v3";
 
 const PRECACHE_ROUTES = [
   "/offline",
   "/manifest.json",
 ];
+
+const OFFLINE_ENABLED_ROUTES = [
+  "/dashboard",
+  "/accounts",
+  "/transactions",
+  "/goals",
+  "/budgets",
+  "/settings",
+  "/offline",
+];
+
+const NEVER_CACHE_NAVIGATION_ROUTES = [
+  "/login",
+  "/signup",
+  "/auth",
+  "/onboarding",
+  "/admin",
+];
+
+function getNavigationCacheKey(request) {
+  const requestUrl = new URL(request.url);
+  return `${requestUrl.origin}${requestUrl.pathname}`;
+}
+
+function isRouteMatch(pathname, routes) {
+  return routes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+function shouldCacheNavigation(request, response) {
+  const requestUrl = new URL(request.url);
+  const responseUrl = new URL(response.url);
+
+  if (!response.ok) return false;
+  if (response.redirected) return false;
+
+  const requestPath = requestUrl.pathname;
+  const responsePath = responseUrl.pathname;
+
+  if (requestPath !== responsePath) {
+    return false;
+  }
+
+  if (isRouteMatch(requestPath, NEVER_CACHE_NAVIGATION_ROUTES)) {
+    return false;
+  }
+
+  if (!isRouteMatch(requestPath, OFFLINE_ENABLED_ROUTES)) {
+    return false;
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  return contentType.includes("text/html");
+}
 
 // ─── Install: pre-cache offline fallback ───────────────────────────────────
 self.addEventListener("install", (event) => {
@@ -67,14 +120,16 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) {
+          if (shouldCacheNavigation(request, response)) {
             const copy = response.clone();
-            caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy));
+            const cacheKey = getNavigationCacheKey(request);
+            caches.open(SHELL_CACHE).then((cache) => cache.put(cacheKey, copy));
           }
           return response;
         })
         .catch(async () => {
-          const cached = await caches.match(request);
+          const cacheKey = getNavigationCacheKey(request);
+          const cached = await caches.match(cacheKey);
           if (cached) return cached;
           // Serve the offline fallback page
           return (await caches.match("/offline")) ?? Response.error();
