@@ -2,14 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Plus, Minus, Trash2, Archive, Building2, Smartphone, Banknote, CreditCard } from "lucide-react";
+import { Plus, Minus, Trash2, Building2, Smartphone, Banknote, CreditCard, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useUndoDelete } from "@/hooks/use-undo-delete";
-import { useArchiveAccount } from "@/hooks/use-accounts";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
+import { EditAccountDialog } from "@/components/accounts/edit-account-dialog";
 import { formatCurrency } from "@/lib/utils";
 import type { Account } from "@/lib/types/database";
 
@@ -45,7 +45,6 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function AccountCard({ account }: { account: Account }) {
-  const archiveAccount = useArchiveAccount();
   const undoDelete = useUndoDelete("accounts", ACCOUNT_QUERY_KEYS);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -69,13 +68,14 @@ export function AccountCard({ account }: { account: Account }) {
             className="min-w-0 hover:opacity-70 transition-opacity flex items-start gap-3"
           >
             {(() => {
-              const Icon = TYPE_ICONS[account.type];
+              const Icon = TYPE_ICONS[account.type] ?? Landmark;
               const colorClass = TYPE_COLORS[account.type] ?? "text-muted-foreground bg-muted";
-              return Icon ? (
+
+              return (
                 <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${colorClass}`}>
                   <Icon className="h-4.5 w-4.5" />
                 </div>
-              ) : null;
+              );
             })()}
             <div className="min-w-0">
               <CardTitle className="text-sm font-medium truncate">
@@ -87,16 +87,7 @@ export function AccountCard({ account }: { account: Account }) {
             </div>
           </Link>
           <div className="flex gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              className="text-muted-foreground hover:text-amber-600"
-              aria-label="Archive account"
-              onClick={() => archiveAccount.mutate({ id: account.id, archive: true })}
-              disabled={archiveAccount.isPending}
-            >
-              <Archive className="h-3.5 w-3.5" />
-            </Button>
+            <EditAccountDialog account={account} />
             <Button
               variant="ghost"
               size="icon-xs"

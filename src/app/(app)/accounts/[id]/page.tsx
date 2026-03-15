@@ -1,12 +1,14 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   ArrowDownRight,
   ArrowUpRight,
   ArrowRightLeft,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
   Wallet,
 } from "lucide-react";
@@ -24,6 +26,8 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+const TRANSACTIONS_PER_PAGE = 10;
+
 const TYPE_LABELS: Record<string, string> = {
   cash: "Cash",
   bank: "Bank",
@@ -37,6 +41,7 @@ export default function AccountDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const [currentPage, setCurrentPage] = useState(1);
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: transactions, isLoading: txLoading } = useTransactions({
     accountId: id,
@@ -80,9 +85,40 @@ export default function AccountDetailPage({
       ?.filter((t) => t.amount < 0 && t.category !== "transfer")
       .reduce((sum, t) => sum + Math.abs(t.amount), 0) ?? 0;
 
+  const sortedTransactions = useMemo(() => {
+    const list = [...(transactions ?? [])];
+    list.sort((left, right) => {
+      const rightDate = new Date(`${right.date}T00:00:00`).getTime();
+      const leftDate = new Date(`${left.date}T00:00:00`).getTime();
+      if (rightDate !== leftDate) return rightDate - leftDate;
+      return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
+    });
+    return list;
+  }, [transactions]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedTransactions.length / TRANSACTIONS_PER_PAGE)
+  );
+
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * TRANSACTIONS_PER_PAGE;
+    return sortedTransactions.slice(startIndex, startIndex + TRANSACTIONS_PER_PAGE);
+  }, [currentPage, sortedTransactions]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [id]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   // Group transactions by date
-  const grouped: Record<string, typeof transactions> = {};
-  for (const tx of transactions ?? []) {
+  const grouped: Record<string, typeof paginatedTransactions> = {};
+  for (const tx of paginatedTransactions) {
     if (!grouped[tx.date]) grouped[tx.date] = [];
     grouped[tx.date]!.push(tx);
   }
@@ -150,7 +186,7 @@ export default function AccountDetailPage({
           <CardTitle className="text-base">Transactions</CardTitle>
         </CardHeader>
         <CardContent>
-          {!transactions || transactions.length === 0 ? (
+          {!sortedTransactions.length ? (
             <div className="py-8 text-center">
               <p className="text-sm text-muted-foreground mb-3">
                 No transactions for this account yet.
@@ -237,6 +273,36 @@ export default function AccountDetailPage({
                   </div>
                 </div>
               ))}
+
+              {sortedTransactions.length > TRANSACTIONS_PER_PAGE && (
+                <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

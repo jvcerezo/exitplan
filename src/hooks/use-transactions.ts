@@ -32,6 +32,7 @@ export function useRecentTransactions() {
         .from("transactions")
         .select("*")
         .order("date", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(10);
 
       if (error) throw new Error(error.message);
@@ -47,7 +48,9 @@ export function useTransactions(filters?: {
   dateFrom?: string;
   dateTo?: string;
   accountId?: string;
+  tag?: string;
   limit?: number;
+  offset?: number;
 }) {
   return useQuery({
     queryKey: ["transactions", "all", filters],
@@ -56,7 +59,8 @@ export function useTransactions(filters?: {
       let query = supabase
         .from("transactions")
         .select("*")
-        .order("date", { ascending: false });
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false });
 
       if (filters?.category && filters.category !== "all") {
         query = query.eq("category", filters.category);
@@ -85,13 +89,75 @@ export function useTransactions(filters?: {
         query = query.eq("account_id", filters.accountId);
       }
 
-      if (filters?.limit) {
+      if (filters?.tag) {
+        query = query.contains("tags", [filters.tag]);
+      }
+
+      if (filters?.offset && filters.offset > 0) {
+        query = query.range(filters.offset, filters.offset + (filters.limit ?? 50) - 1);
+      } else if (filters?.limit) {
         query = query.limit(filters.limit);
       }
 
       const { data, error } = await query;
       if (error) throw new Error(error.message);
       return data;
+    },
+  });
+}
+
+export function useTransactionsCount(filters?: {
+  category?: string;
+  type?: "income" | "expense" | "all";
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  accountId?: string;
+  tag?: string;
+}) {
+  return useQuery({
+    queryKey: ["transactions", "count", filters],
+    queryFn: async (): Promise<number> => {
+      const supabase = createClient();
+      let query = supabase
+        .from("transactions")
+        .select("id", { count: "exact", head: true });
+
+      if (filters?.category && filters.category !== "all") {
+        query = query.eq("category", filters.category);
+      }
+
+      if (filters?.type === "income") {
+        query = query.gt("amount", 0);
+      } else if (filters?.type === "expense") {
+        query = query.lt("amount", 0);
+      }
+
+      if (filters?.search) {
+        const search = filters.search.slice(0, 200);
+        query = query.ilike("description", `%${search}%`);
+      }
+
+      if (filters?.dateFrom) {
+        query = query.gte("date", filters.dateFrom);
+      }
+
+      if (filters?.dateTo) {
+        query = query.lte("date", filters.dateTo);
+      }
+
+      if (filters?.accountId) {
+        query = query.eq("account_id", filters.accountId);
+      }
+
+      if (filters?.tag) {
+        query = query.contains("tags", [filters.tag]);
+      }
+
+      const { count, error } = await query;
+      if (error) throw new Error(error.message);
+
+      return count ?? 0;
     },
   });
 }

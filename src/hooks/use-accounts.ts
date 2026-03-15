@@ -220,14 +220,44 @@ export function useUpdateAccount() {
       ...updates
     }: Partial<AccountInsert> & { id: string }) => {
       const supabase = createClient();
+
+      const { data: existingAccount, error: existingAccountError } = await supabase
+        .from("accounts")
+        .select("id, name")
+        .eq("id", id)
+        .single();
+
+      if (existingAccountError) throw new Error(existingAccountError.message);
+
+      const normalizedName = updates.name?.trim();
+      const shouldPropagateRename =
+        Boolean(normalizedName) &&
+        normalizedName !== existingAccount.name;
+
       const { data, error } = await supabase
         .from("accounts")
-        .update(updates)
+        .update({
+          ...updates,
+          ...(normalizedName ? { name: normalizedName } : {}),
+        })
         .eq("id", id)
         .select()
         .single();
 
       if (error) throw new Error(error.message);
+
+      if (shouldPropagateRename && normalizedName) {
+        const { error: transactionRenameError } = await supabase
+          .from("transactions")
+          .update({ description: `Opening balance: ${normalizedName}` })
+          .eq("account_id", id)
+          .ilike("description", "Opening balance:%");
+
+        if (transactionRenameError) {
+          throw new Error(transactionRenameError.message);
+        }
+      }
+
       return data;
     },
     onSuccess: () => {

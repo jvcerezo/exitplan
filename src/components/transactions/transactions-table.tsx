@@ -6,6 +6,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Download,
+  ChevronLeft,
+  ChevronRight,
   Wallet,
   AlertCircle,
   SlidersHorizontal,
@@ -14,7 +16,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useTransactions } from "@/hooks/use-transactions";
+import { useTransactions, useTransactionsCount } from "@/hooks/use-transactions";
 import { CATEGORIES } from "@/lib/constants";
 import { formatSignedCurrency, cn, getTransactionLabel, getTransactionCategory } from "@/lib/utils";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
@@ -83,7 +85,7 @@ const DATE_LABELS: Record<string, string> = {
   "last-3-months": "Last 3 Months",
 };
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 
 export function TransactionsTable() {
   const [search, setSearch] = useState("");
@@ -92,7 +94,7 @@ export function TransactionsTable() {
   const [dateRange, setDateRange] = useState("all");
   const [tagFilter, setTagFilter] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [queryLimit, setQueryLimit] = useState(PAGE_SIZE);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const datePreset = getDatePreset(dateRange);
 
@@ -102,16 +104,23 @@ export function TransactionsTable() {
     type,
     dateFrom: datePreset?.from,
     dateTo: datePreset?.to,
-    limit: queryLimit,
+    tag: tagFilter || undefined,
+    limit: PAGE_SIZE + 1,
+    offset: (currentPage - 1) * PAGE_SIZE,
   });
 
-  // Client-side tag filter applied on top of server-side results
-  const filteredTransactions = tagFilter
-    ? transactions?.filter((tx) => tx.tags?.includes(tagFilter))
-    : transactions;
+  const { data: totalMatchingTransactions } = useTransactionsCount({
+    search: search || undefined,
+    category: category !== "all" ? category : undefined,
+    type,
+    dateFrom: datePreset?.from,
+    dateTo: datePreset?.to,
+    tag: tagFilter || undefined,
+  });
 
-  // True if the server returned exactly the limit — there may be more rows
-  const hasMore = (transactions?.length ?? 0) === queryLimit;
+  const visibleTransactions = (transactions ?? []).slice(0, PAGE_SIZE);
+  const hasPreviousPage = currentPage > 1;
+  const hasNextPage = (transactions?.length ?? 0) > PAGE_SIZE;
 
   const hasFilters = category !== "all" || dateRange !== "all" || tagFilter !== "";
   const activeFilterCount =
@@ -127,7 +136,10 @@ export function TransactionsTable() {
           <button
             key={t}
             type="button"
-            onClick={() => { setType(t); setQueryLimit(PAGE_SIZE); }}
+            onClick={() => {
+              setType(t);
+              setCurrentPage(1);
+            }}
             className={cn(
               "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
               type === t
@@ -148,17 +160,20 @@ export function TransactionsTable() {
             <input
               placeholder="Search transactions..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setQueryLimit(PAGE_SIZE); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
             />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {filteredTransactions && filteredTransactions.length > 0 && (
+            {visibleTransactions.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 text-xs text-muted-foreground"
-                onClick={() => exportCSV(filteredTransactions)}
+                onClick={() => exportCSV(visibleTransactions)}
               >
                 <Download className="h-3.5 w-3.5 mr-1" />
                 <span className="hidden sm:inline">CSV</span>
@@ -191,7 +206,10 @@ export function TransactionsTable() {
             {dateRange !== "all" && (
               <button
                 type="button"
-                onClick={() => setDateRange("all")}
+                onClick={() => {
+                  setDateRange("all");
+                  setCurrentPage(1);
+                }}
                 className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
               >
                 {DATE_LABELS[dateRange]}
@@ -201,7 +219,10 @@ export function TransactionsTable() {
             {category !== "all" && (
               <button
                 type="button"
-                onClick={() => setCategory("all")}
+                onClick={() => {
+                  setCategory("all");
+                  setCurrentPage(1);
+                }}
                 className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize transition-colors hover:bg-primary/15"
               >
                 {category}
@@ -211,7 +232,10 @@ export function TransactionsTable() {
             {tagFilter && (
               <button
                 type="button"
-                onClick={() => setTagFilter("")}
+                onClick={() => {
+                  setTagFilter("");
+                  setCurrentPage(1);
+                }}
                 className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
               >
                 #{tagFilter}
@@ -224,6 +248,7 @@ export function TransactionsTable() {
                 setDateRange("all");
                 setCategory("all");
                 setTagFilter("");
+                setCurrentPage(1);
               }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -250,7 +275,10 @@ export function TransactionsTable() {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setDateRange(opt.value)}
+                    onClick={() => {
+                      setDateRange(opt.value);
+                      setCurrentPage(1);
+                    }}
                     className={cn(
                       "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                       dateRange === opt.value
@@ -272,7 +300,10 @@ export function TransactionsTable() {
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setCategory("all")}
+                  onClick={() => {
+                    setCategory("all");
+                    setCurrentPage(1);
+                  }}
                   className={cn(
                     "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                     category === "all"
@@ -286,7 +317,10 @@ export function TransactionsTable() {
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => setCategory(cat.toLowerCase())}
+                    onClick={() => {
+                      setCategory(cat.toLowerCase());
+                      setCurrentPage(1);
+                    }}
                     className={cn(
                       "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                       category === cat.toLowerCase()
@@ -316,7 +350,10 @@ export function TransactionsTable() {
                       <button
                         key={tag}
                         type="button"
-                        onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
+                        onClick={() => {
+                          setTagFilter(tagFilter === tag ? "" : tag);
+                          setCurrentPage(1);
+                        }}
                         className={cn(
                           "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                           tagFilter === tag
@@ -341,6 +378,7 @@ export function TransactionsTable() {
                     setDateRange("all");
                     setCategory("all");
                     setTagFilter("");
+                    setCurrentPage(1);
                   }}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
@@ -363,8 +401,7 @@ export function TransactionsTable() {
         {/* Results count */}
         <div className="px-3 pt-3 pb-1 sm:px-4">
           <p className="text-xs text-muted-foreground tabular-nums">
-            {filteredTransactions?.length ?? 0}{" "}
-            {(filteredTransactions?.length ?? 0) === 1 ? "transaction" : "transactions"}
+            {(totalMatchingTransactions ?? 0).toLocaleString("en-PH")} total match{(totalMatchingTransactions ?? 0) === 1 ? "" : "es"} • {visibleTransactions.length} on this page
           </p>
         </div>
 
@@ -397,7 +434,7 @@ export function TransactionsTable() {
                 </p>
               </div>
             </div>
-          ) : filteredTransactions?.length === 0 ? (
+          ) : visibleTransactions.length === 0 ? (
             <EmptyState
               icon={search || hasFilters ? Search : Wallet}
               title={
@@ -413,7 +450,7 @@ export function TransactionsTable() {
             />
           ) : (
             <div className="space-y-1">
-              {filteredTransactions?.map((tx) => (
+              {visibleTransactions.map((tx) => (
                 <div
                   key={tx.id}
                   className="group flex items-start gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-muted/40 sm:items-center sm:px-3"
@@ -456,7 +493,10 @@ export function TransactionsTable() {
                         <button
                           key={tag}
                           type="button"
-                          onClick={() => setTagFilter(tag)}
+                          onClick={() => {
+                            setTagFilter(tag);
+                            setCurrentPage(1);
+                          }}
                           className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                           #{tag}
@@ -502,20 +542,34 @@ export function TransactionsTable() {
               ))}
             </div>
           )}
+
+          {!isLoading && !error && (hasPreviousPage || hasNextPage) && (
+            <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-4">
+              <p className="text-xs text-muted-foreground">Page {currentPage}</p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={!hasPreviousPage}
+                >
+                  <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  disabled={!hasNextPage}
+                >
+                  Next
+                  <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {hasMore && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setQueryLimit((prev) => prev + PAGE_SIZE)}
-          >
-            Load more transactions
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

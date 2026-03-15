@@ -10,9 +10,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCreateTransfer } from "@/hooks/use-transfers";
 import { useAccounts } from "@/hooks/use-accounts";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 export function TransferDialog() {
   const [open, setOpen] = useState(false);
@@ -65,28 +72,41 @@ export function TransferDialog() {
           {/* From account */}
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">From</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {activeAccounts
-                .filter((a) => a.id !== toId)
-                .map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => setFromId(a.id)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                      fromId === a.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
-                  >
-                    {a.name}
-                    <span className="ml-1 opacity-70">
-                      {formatCurrency(a.balance, a.currency)}
-                    </span>
-                  </button>
-                ))}
-            </div>
+            <Select value={fromId} onValueChange={setFromId}>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Choose source account" />
+              </SelectTrigger>
+              <SelectContent>
+                {activeAccounts
+                  .filter((a) => a.id !== toId)
+                  .map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <span className="truncate font-medium">{a.name}</span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">
+                          {a.currency}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            {fromAccount && (
+              <div className="rounded-xl border border-border/70 bg-muted/25 px-3 py-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {fromAccount.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{fromAccount.type}</p>
+                  </div>
+                  <p className="shrink-0 text-sm font-semibold text-primary">
+                    {formatCurrency(fromAccount.balance, fromAccount.currency)}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-center">
@@ -98,28 +118,46 @@ export function TransferDialog() {
           {/* To account */}
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">To</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {activeAccounts
-                .filter((a) => a.id !== fromId)
-                .map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => setToId(a.id)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                      toId === a.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
-                  >
-                    {a.name}
-                    <span className="ml-1 opacity-70">
-                      {formatCurrency(a.balance, a.currency)}
-                    </span>
-                  </button>
-                ))}
-            </div>
+            <Select value={toId} onValueChange={setToId}>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Choose destination account" />
+              </SelectTrigger>
+              <SelectContent>
+                {activeAccounts
+                  .filter((a) => a.id !== fromId)
+                  .map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <span className="truncate font-medium">{a.name}</span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">
+                          {a.currency}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            {activeAccounts.find((a) => a.id === toId) && (
+              <div className="rounded-xl border border-border/70 bg-muted/25 px-3 py-2.5">
+                {(() => {
+                  const toAccount = activeAccounts.find((a) => a.id === toId)!;
+                  return (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {toAccount.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{toAccount.type}</p>
+                      </div>
+                      <p className="shrink-0 text-sm font-semibold text-primary">
+                        {formatCurrency(toAccount.balance, toAccount.currency)}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
 
           {/* Amount */}
