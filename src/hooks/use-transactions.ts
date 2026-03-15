@@ -9,6 +9,20 @@ import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Transaction, TransactionInsert } from "@/lib/types/database";
 
+function isMissingRpcFunctionError(error: {
+  message?: string;
+  code?: string;
+  details?: string;
+} | null, functionName: string) {
+  if (!error) return false;
+  const message = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  return (
+    error.code === "PGRST202" ||
+    (message.includes("could not find the function") &&
+      message.includes(`public.${functionName}`.toLowerCase()))
+  );
+}
+
 export function useRecentTransactions() {
   return useQuery({
     queryKey: ["transactions", "recent"],
@@ -355,7 +369,57 @@ export function useDeleteTransaction() {
         p_transaction_id: id,
       });
 
-      if (error) throw new Error(error.message);
+      if (!error) return;
+
+      if (!isMissingRpcFunctionError(error, "delete_user_transaction")) {
+        throw new Error(error.message);
+      }
+
+      const { data: existingTransaction, error: existingTransactionError } = await supabase
+        .from("transactions")
+        .select("id, amount, account_id")
+        .eq("id", id)
+        .single();
+
+      if (existingTransactionError) {
+        throw new Error(existingTransactionError.message);
+      }
+
+      if (existingTransaction.account_id) {
+        const { data: existingAccount, error: existingAccountError } = await supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", existingTransaction.account_id)
+          .single();
+
+        if (existingAccountError) {
+          throw new Error(existingAccountError.message);
+        }
+
+        const adjustedBalance =
+          Math.round(
+            (Number(existingAccount.balance) - Number(existingTransaction.amount)) *
+              100
+          ) / 100;
+
+        const { error: updateAccountError } = await supabase
+          .from("accounts")
+          .update({ balance: adjustedBalance })
+          .eq("id", existingTransaction.account_id);
+
+        if (updateAccountError) {
+          throw new Error(updateAccountError.message);
+        }
+      }
+
+      const { error: deleteTransactionError } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", id);
+
+      if (deleteTransactionError) {
+        throw new Error(deleteTransactionError.message);
+      }
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["transactions"] });

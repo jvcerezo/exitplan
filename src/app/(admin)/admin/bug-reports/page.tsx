@@ -27,13 +27,12 @@ function severityClass(severity: string) {
   }
 }
 
-async function getOpenBugReports() {
+async function getBugReports() {
   const admin = createAdminClient();
 
   const { data: reports, error } = await admin
     .from("bug_reports")
     .select("id, created_at, user_id, title, description, severity, status, page_path, user_agent")
-    .in("status", ["open", "in_progress"])
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -108,24 +107,24 @@ async function updateBugStatus(formData: FormData) {
 
 export default async function AdminBugReportsPage() {
   await assertAdmin();
-  const reports = await getOpenBugReports();
+  const reports = await getBugReports();
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Bug Reports</h1>
         <p className="text-muted-foreground">
-          Open and in-progress issues reported by users.
+          All bug reports, including resolved issues.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Open Reports ({reports.length})</CardTitle>
+          <CardTitle className="text-base">All Reports ({reports.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {reports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No open bug reports.</p>
+            <p className="text-sm text-muted-foreground">No bug reports yet.</p>
           ) : (
             <div className="space-y-4">
               {reports.map((report) => (

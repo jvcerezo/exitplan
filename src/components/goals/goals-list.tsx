@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useGoals } from "@/hooks/use-goals";
 import { GoalCard } from "./goal-card";
 import { AlertCircle, Target } from "lucide-react";
@@ -10,6 +10,31 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 
 export function GoalsList() {
   const { data: goals, isLoading, error } = useGoals();
+  const goalList = goals ?? [];
+  const active = useMemo(
+    () => goalList.filter((goal) => !goal.is_completed),
+    [goalList]
+  );
+  const completed = useMemo(
+    () => goalList.filter((goal) => goal.is_completed),
+    [goalList]
+  );
+  const [mobileTab, setMobileTab] = useState<"active" | "completed">("active");
+  const mobileGoals = useMemo(
+    () => (mobileTab === "active" ? active : completed),
+    [mobileTab, active, completed]
+  );
+
+  useEffect(() => {
+    if (mobileTab === "active" && active.length === 0 && completed.length > 0) {
+      setMobileTab("completed");
+      return;
+    }
+
+    if (mobileTab === "completed" && completed.length === 0 && active.length > 0) {
+      setMobileTab("active");
+    }
+  }, [active.length, completed.length, mobileTab]);
 
   if (isLoading) {
     return (
@@ -53,7 +78,7 @@ export function GoalsList() {
     );
   }
 
-  if (!goals || goals.length === 0) {
+  if (goalList.length === 0) {
     return (
       <EmptyState
         icon={Target}
@@ -62,16 +87,6 @@ export function GoalsList() {
       />
     );
   }
-
-  const active = goals.filter((g) => !g.is_completed);
-  const completed = goals.filter((g) => g.is_completed);
-  const [mobileTab, setMobileTab] = useState<"active" | "completed">(
-    active.length > 0 ? "active" : "completed"
-  );
-  const mobileGoals = useMemo(
-    () => (mobileTab === "active" ? active : completed),
-    [mobileTab, active, completed]
-  );
 
   return (
     <div className="space-y-6 sm:space-y-8">

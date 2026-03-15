@@ -4,7 +4,16 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUndoDelete } from "@/hooks/use-undo-delete";
 
-const QUERY_KEYS = [["goals"]];
+const QUERY_KEYS = [
+  ["goals"],
+  ["goals", "summary"],
+  ["accounts"],
+  ["transactions"],
+  ["safe-to-spend"],
+  ["emergency-fund"],
+  ["health-score"],
+  ["transactions", "summary"],
+];
 
 export function DeleteGoalDialog({
   id,

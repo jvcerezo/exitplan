@@ -16,6 +16,7 @@ import {
   Ellipsis,
   Split,
   Trash2,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { AddAccountDialog } from "@/components/accounts/add-account-dialog";
 import { TagInput } from "@/components/ui/tag-input";
 import { useAddTransaction } from "@/hooks/use-transactions";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -90,6 +92,8 @@ export function AddTransactionDialog({
   onOpenChange: controlledOnOpenChange,
 }: AddTransactionDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+  const [resumeAfterAccountOpen, setResumeAfterAccountOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
@@ -157,6 +161,27 @@ export function AddTransactionDialog({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  useEffect(() => {
+    if (open && hasNoAccounts && type === "income" && !accountDialogOpen) {
+      setResumeAfterAccountOpen(true);
+      setOpen(false);
+      setAccountDialogOpen(true);
+    }
+  }, [accountDialogOpen, hasNoAccounts, open, setOpen, type]);
+
+  useEffect(() => {
+    if (!accountDialogOpen && resumeAfterAccountOpen && activeAccounts.length > 0) {
+      setResumeAfterAccountOpen(false);
+      setOpen(true);
+    }
+  }, [accountDialogOpen, activeAccounts.length, resumeAfterAccountOpen, setOpen]);
+
+  function openAccountFlow(options?: { reopenTransaction?: boolean }) {
+    setResumeAfterAccountOpen(Boolean(options?.reopenTransaction));
+    setOpen(false);
+    setAccountDialogOpen(true);
+  }
 
   function updatePart(index: number, field: keyof SplitPart, value: string) {
     setSplitParts((prev) => prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)));
@@ -373,13 +398,39 @@ export function AddTransactionDialog({
             )}
 
             {hasNoAccounts && (
-              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
-                <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                  Add an account first
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Income and expenses must be linked to an account.
-                </p>
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                    <Wallet className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                      Open an account first
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      {type === "income"
+                        ? "Income needs an account so ExitPlan knows where to deposit it."
+                        : "Expenses need an account so ExitPlan knows where the money came from."}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => openAccountFlow({ reopenTransaction: type === "income" })}
+                      >
+                        Open Account
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setOpen(false)}
+                      >
+                        Maybe later
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -394,19 +445,22 @@ export function AddTransactionDialog({
                 value={formatAmount(amount)}
                 onChange={(e) => setAmount(parseAmountInput(e.target.value))}
                 required
+                disabled={hasNoAccounts}
                 className="w-0 min-w-0 flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30"
               />
             </div>
 
-            {sharedFields}
+            {!hasNoAccounts && sharedFields}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={addTransaction.isPending || !category || hasNoAccounts || !accountId}
-            >
-              {addTransaction.isPending ? "Adding..." : `Add ${label}`}
-            </Button>
+            {!hasNoAccounts && (
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={addTransaction.isPending || !category || !accountId}
+              >
+                {addTransaction.isPending ? "Adding..." : `Add ${label}`}
+              </Button>
+            )}
           </>
         )}
 
@@ -552,22 +606,23 @@ export function AddTransactionDialog({
               </div>
             </div>
 
-            {sharedFields}
+            {!hasNoAccounts && sharedFields}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={
-                addTransaction.isPending ||
-                hasNoAccounts ||
-                !isBalanced ||
-                !category ||
-                !allSplitAccountsSelected ||
-                hasDuplicateSplitAccounts
-              }
-            >
-              {addTransaction.isPending ? "Adding..." : `Add Split ${label}`}
-            </Button>
+            {!hasNoAccounts && (
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={
+                  addTransaction.isPending ||
+                  !isBalanced ||
+                  !category ||
+                  !allSplitAccountsSelected ||
+                  hasDuplicateSplitAccounts
+                }
+              >
+                {addTransaction.isPending ? "Adding..." : `Add Split ${label}`}
+              </Button>
+            )}
           </>
         )}
       </form>
@@ -576,9 +631,20 @@ export function AddTransactionDialog({
 
   if (isControlled) {
     return (
-      <Dialog open={open} onOpenChange={setOpen}>
-        {dialogContent}
-      </Dialog>
+      <>
+        <Dialog open={open} onOpenChange={setOpen}>
+          {dialogContent}
+        </Dialog>
+        <AddAccountDialog
+          open={accountDialogOpen}
+          onOpenChange={(nextOpen) => {
+            setAccountDialogOpen(nextOpen);
+            if (!nextOpen && hasNoAccounts) {
+              setResumeAfterAccountOpen(false);
+            }
+          }}
+        />
+      </>
     );
   }
 
@@ -588,8 +654,21 @@ export function AddTransactionDialog({
         {trigger || (
           <Button
             variant={type === "expense" ? "outline" : "default"}
-            disabled={hasNoAccounts}
-            title={hasNoAccounts ? "Create an account first" : undefined}
+            title={
+              hasNoAccounts
+                ? type === "income"
+                  ? "Open an account first, then add income"
+                  : "Open an account first to track expenses"
+                : undefined
+            }
+            onClick={
+              hasNoAccounts && type === "income"
+                ? (event) => {
+                    event.preventDefault();
+                    openAccountFlow({ reopenTransaction: true });
+                  }
+                : undefined
+            }
           >
             {type === "expense" ? (
               <Minus className="h-4 w-4 mr-2" />
@@ -601,6 +680,15 @@ export function AddTransactionDialog({
         )}
       </DialogTrigger>
       {dialogContent}
+      <AddAccountDialog
+        open={accountDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setAccountDialogOpen(nextOpen);
+          if (!nextOpen && hasNoAccounts) {
+            setResumeAfterAccountOpen(false);
+          }
+        }}
+      />
     </Dialog>
   );
 }

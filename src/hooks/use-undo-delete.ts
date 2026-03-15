@@ -5,10 +5,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
+const DEFAULT_UNDO_WINDOW_MS = 1200;
+
 export function useUndoDelete(
   table: string,
   queryKeys: string[][],
-  deleteFn?: (id: string) => Promise<void>
+  deleteFn?: (id: string) => Promise<void>,
+  undoWindowMs = DEFAULT_UNDO_WINDOW_MS
 ) {
   const queryClient = useQueryClient();
   const pendingRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
@@ -40,7 +43,7 @@ export function useUndoDelete(
         }
       }
 
-      // Schedule real delete after 5 seconds
+      // Schedule real delete after short undo window
       const timeout = setTimeout(async () => {
         pendingRef.current.delete(id);
         try {
@@ -60,7 +63,7 @@ export function useUndoDelete(
         for (const key of queryKeys) {
           queryClient.invalidateQueries({ queryKey: key });
         }
-      }, 5000);
+      }, undoWindowMs);
 
       pendingRef.current.set(id, timeout);
 
@@ -75,10 +78,10 @@ export function useUndoDelete(
             }
           },
         },
-        duration: 5000,
+        duration: undoWindowMs,
       });
     },
-    [deleteFn, queryClient, table, queryKeys]
+    [deleteFn, queryClient, table, queryKeys, undoWindowMs]
   );
 
   return execute;

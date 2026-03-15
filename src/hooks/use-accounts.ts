@@ -138,6 +138,7 @@ export function useAddAccount() {
             p_currency: account.currency,
             p_account_id: existing.id,
             p_transfer_id: null,
+            p_split_group_id: null,
             p_tags: ["opening-balance"],
             p_attachment_path: null,
           });
@@ -172,6 +173,7 @@ export function useAddAccount() {
           p_currency: account.currency,
           p_account_id: data.id,
           p_transfer_id: null,
+          p_split_group_id: null,
           p_tags: ["opening-balance"],
           p_attachment_path: null,
         });
