@@ -52,6 +52,7 @@ function CustomTooltip({
 
 export function SpendingChart() {
   const { data, isLoading, error } = useSpendingByCategory();
+  const totalSpending = data?.reduce((sum, item) => sum + item.amount, 0) ?? 0;
 
   return (
     <Card>
@@ -107,18 +108,37 @@ export function SpendingChart() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-3">
-              {data.map((item, index) => (
-                <div key={item.category} className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5">
+            <div className="space-y-2 pt-1">
+              {data.map((item, index) => {
+                const percentage = totalSpending > 0
+                  ? (item.amount / totalSpending) * 100
+                  : 0;
+
+                return (
                   <div
-                    className="w-3 h-3 rounded-full shrink-0"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-xs text-muted-foreground capitalize truncate">
-                    {item.category}
-                  </span>
-                </div>
-              ))}
+                    key={item.category}
+                    className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div
+                        className="h-3 w-3 rounded-full shrink-0"
+                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      />
+                      <span className="text-sm text-foreground capitalize truncate">
+                        {item.category}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium leading-tight">
+                        {formatCurrency(item.amount)}
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-tight">
+                        {percentage.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
