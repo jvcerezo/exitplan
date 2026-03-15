@@ -113,7 +113,7 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(landingStructuredData) }}
       />
       {/* Navigation */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg pt-[env(safe-area-inset-top)]">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">
             <BrandMark className="h-11 w-11" />

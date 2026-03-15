@@ -1,4 +1,4 @@
-import { useId, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 
 type LogoIconProps = {
   className?: string;
@@ -6,8 +6,6 @@ type LogoIconProps = {
 };
 
 export function LogoIcon({ className = "w-12 h-12", style }: LogoIconProps) {
-  const maskId = useId().replace(/:/g, "");
-
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -18,7 +16,7 @@ export function LogoIcon({ className = "w-12 h-12", style }: LogoIconProps) {
       role="img"
     >
       <defs>
-        <mask id={maskId}>
+        <mask id="exitplan-arrow-gap">
           <rect width="200" height="200" fill="white" />
           <path
             d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z"
@@ -34,7 +32,7 @@ export function LogoIcon({ className = "w-12 h-12", style }: LogoIconProps) {
         <path
           d="M 40 30 H 140 V 60 H 70 V 140 H 140 V 170 H 40 Z"
           fill="#14213D"
-          mask={`url(#${maskId})`}
+          mask="url(#exitplan-arrow-gap)"
         />
         <path
           d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z"

@@ -37,7 +37,7 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-background">
       <AdminSidebar />
       <main className="md:pl-64">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+7rem)] md:pb-6">
+        <div className="mx-auto max-w-6xl px-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pt-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+7rem)] md:pt-6 md:pb-6">
           {children}
         </div>
       </main>
