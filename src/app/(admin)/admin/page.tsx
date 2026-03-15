@@ -1,25 +1,19 @@
 import {
   Activity,
-  ChartColumn,
-  Users,
-  UserRoundCheck,
-  Target,
-  TrendingUp,
-  UserPlus,
-  CheckCircle2,
-  Calculator,
-  ArrowRightLeft,
-  CreditCard,
-  Paperclip,
-  TriangleAlert,
-  Mail,
-  Database,
+  AlertTriangle,
   Bug,
+  CheckCircle2,
+  Clock3,
+  Database,
+  Mail,
+  ShieldCheck,
+  TriangleAlert,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { OfflineSyncHealth } from "@/components/admin/offline-sync-health";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AdminOverviewCharts } from "@/components/admin/admin-overview-charts";
+import { Badge } from "@/components/ui/badge";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -158,6 +152,9 @@ async function getMetrics() {
   ).length;
   const openBugReports = allBugReports.filter(
     (report) => report.status !== "resolved"
+  ).length;
+  const criticalOpenBugReports = allBugReports.filter(
+    (report) => report.status !== "resolved" && report.severity === "critical"
   ).length;
   const bugReportsLast30d = allBugReports.filter((report) =>
     isOnOrAfter(report.created_at, thirtyDaysAgo)
@@ -308,6 +305,7 @@ async function getMetrics() {
     accountsLast30d,
     accountTypes,
     openBugReports,
+    criticalOpenBugReports,
     bugReportsLast30d,
     recentBugReports,
     trafficData,
@@ -318,200 +316,186 @@ async function getMetrics() {
 
 export default async function AdminDashboardPage() {
   const metrics = await getMetrics();
+  const recentActiveRate = formatPercent(metrics.activityRate30d);
+  const recentOnboardingRate = formatPercent(metrics.onboardingRate);
+  const dataIntegrity = formatPercent(metrics.dataIntegrityRate);
+
+  const alertItems = [
+    {
+      label: "Open bug reports",
+      value: metrics.openBugReports,
+      tone:
+        metrics.openBugReports === 0
+          ? "ok"
+          : metrics.openBugReports <= 5
+            ? "warn"
+            : "critical",
+    },
+    {
+      label: "Critical open bugs",
+      value: metrics.criticalOpenBugReports,
+      tone: metrics.criticalOpenBugReports === 0 ? "ok" : "critical",
+    },
+    {
+      label: "Tx rows missing account",
+      value: metrics.transactionsMissingAccount,
+      tone: metrics.transactionsMissingAccount === 0 ? "ok" : "critical",
+    },
+    {
+      label: "Profiles missing email",
+      value: metrics.profilesMissingEmail,
+      tone:
+        metrics.profilesMissingEmail === 0
+          ? "ok"
+          : metrics.profilesMissingEmail <= 3
+            ? "warn"
+            : "critical",
+    },
+  ] as const;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Overview</h1>
-        <p className="text-muted-foreground">
-          Track growth, adoption, and operational health at a glance.
-        </p>
-      </div>
-
-      {/* SLI Metrics */}
-      <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-          Service Level Indicators
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Onboarding SLI"
-            value={formatPercent(metrics.onboardingRate)}
-            icon={UserRoundCheck}
-            accent={metrics.onboardingRate >= 70 ? "green" : "red"}
-            detail={`${metrics.onboardedUsers} of ${metrics.totalUsers} users`}
-          />
-          <MetricCard
-            title="Activity SLI"
-            value={formatPercent(metrics.activityRate30d)}
-            icon={Activity}
-            accent="green"
-            detail={`${metrics.activeUsers30d} active in 30d`}
-          />
-          <MetricCard
-            title="Data Integrity"
-            value={formatPercent(metrics.dataIntegrityRate)}
-            icon={Database}
-            accent="green"
-            detail={`${metrics.transactionsMissingAccount} tx missing account`}
-          />
-          <MetricCard
-            title="Profile Completeness"
-            value={formatPercent(metrics.profileCompletenessRate)}
-            icon={Mail}
-            accent={metrics.profileCompletenessRate >= 95 ? "green" : "amber"}
-            detail={`${metrics.profilesMissingEmail} missing email`}
-          />
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Admin Overview</h1>
+          <p className="text-sm text-muted-foreground">
+            Essential platform health and risk indicators.
+          </p>
         </div>
-      </div>
-
-      {/* Traffic Metrics */}
-      <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-          Traffic
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Total Users"
-            value={metrics.totalUsers.toString()}
-            icon={Users}
-          />
-          <MetricCard
-            title="New Users · 7d"
-            value={metrics.newUsersThisWeek.toString()}
-            icon={UserPlus}
-            accent="green"
-            detail={metrics.signupTrend}
-          />
-          <MetricCard
-            title="Transactions · 7d"
-            value={metrics.transactionsLast7d.toString()}
-            icon={ArrowRightLeft}
-            accent="green"
-            detail={`${metrics.transactionsLast30d} in 30d`}
-          />
-          <MetricCard
-            title="Tx / Active User"
-            value={metrics.avgTransactionsPerActiveUser30d.toFixed(1)}
-            icon={ChartColumn}
-            detail="Based on trailing 30 days"
-          />
-        </div>
-      </div>
-
-      <AdminOverviewCharts
-        trafficData={metrics.trafficData}
-        provisioningData={metrics.provisioningData}
-        healthData={metrics.healthData}
-      />
-
-      {/* Adoption Metrics */}
-      <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-          Provisioning & Coverage
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Users with Accounts"
-            value={formatPercent(metrics.accountCoverageRate)}
-            icon={CreditCard}
-            accent="green"
-            detail={`${metrics.usersWithAccounts} users`}
-          />
-          <MetricCard
-            title="Users with Budgets"
-            value={formatPercent(metrics.budgetCoverageRate)}
-            icon={Calculator}
-            detail={`${metrics.usersWithBudgets} users`}
-          />
-          <MetricCard
-            title="Users with Goals"
-            value={formatPercent(metrics.goalCoverageRate)}
-            icon={Target}
-            detail={`${metrics.usersWithGoals} users`}
-          />
-          <MetricCard
-            title="Goals Completed"
-            value={metrics.completedGoals.toString()}
-            icon={CheckCircle2}
-            accent="green"
-            detail={`${metrics.totalGoals} total goals`}
-          />
-        </div>
-      </div>
-
-      {/* Operational Health */}
-      <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-          Reliability Signals
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Attachment Coverage"
-            value={formatPercent(metrics.attachmentRate)}
-            icon={Paperclip}
-            detail={`${metrics.withAttachments} transactions with files`}
-          />
-          <MetricCard
-            title="Transfer Share"
-            value={formatPercent(metrics.transferShare)}
-            icon={ArrowRightLeft}
-            detail="Share of transaction rows"
-          />
-          <MetricCard
-            title="Tx Missing Account"
-            value={metrics.transactionsMissingAccount.toString()}
-            icon={TriangleAlert}
-            accent={metrics.transactionsMissingAccount === 0 ? "green" : "red"}
-            detail="Should stay at zero"
-          />
-          <MetricCard
-            title="Profiles Missing Email"
-            value={metrics.profilesMissingEmail.toString()}
-            icon={Mail}
-            accent={metrics.profilesMissingEmail === 0 ? "green" : "red"}
-          />
-          <MetricCard
-            title="Open Bug Reports"
-            value={metrics.openBugReports.toString()}
-            icon={Bug}
-            accent={metrics.openBugReports === 0 ? "green" : "amber"}
-            detail={`${metrics.bugReportsLast30d} submitted in 30d`}
-          />
-        </div>
-        <div className="mt-3">
-          <Link href="/admin/bug-reports" className="text-sm text-primary hover:underline">
-            View and manage all open bug reports
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/bug-reports"
+            className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            Manage Bugs
+          </Link>
+          <Link
+            href="/admin/users"
+            className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            View Users
           </Link>
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <CompactMetric
+          title="Users"
+          value={metrics.totalUsers.toLocaleString("en-PH")}
+          detail={`${metrics.newUsersThisWeek} new in 7d`}
+          icon={Users}
+        />
+        <CompactMetric
+          title="Active 30d"
+          value={recentActiveRate}
+          detail={`${metrics.activeUsers30d} users`}
+          icon={Activity}
+          tone="ok"
+        />
+        <CompactMetric
+          title="Onboarding"
+          value={recentOnboardingRate}
+          detail={`${metrics.onboardedUsers}/${metrics.totalUsers} completed`}
+          icon={CheckCircle2}
+          tone={metrics.onboardingRate >= 70 ? "ok" : "warn"}
+        />
+        <CompactMetric
+          title="Data Integrity"
+          value={dataIntegrity}
+          detail={`${metrics.transactionsMissingAccount} orphan tx`}
+          icon={Database}
+          tone={metrics.transactionsMissingAccount === 0 ? "ok" : "critical"}
+        />
+        <CompactMetric
+          title="Open Bugs"
+          value={metrics.openBugReports.toString()}
+          detail={`${metrics.criticalOpenBugReports} critical`}
+          icon={Bug}
+          tone={metrics.openBugReports === 0 ? "ok" : "warn"}
+        />
+        <CompactMetric
+          title="Tx / Active"
+          value={metrics.avgTransactionsPerActiveUser30d.toFixed(1)}
+          detail="30d avg"
+          icon={ShieldCheck}
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Platform Snapshot</CardTitle>
+            <CardTitle className="text-base">Essential Monitoring</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-muted-foreground">Accounts provisioned in 30 days</span>
-              <span className="font-medium">{metrics.accountsLast30d}</span>
+          <CardContent className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {alertItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                >
+                  <span className="text-muted-foreground">{item.label}</span>
+                  <Badge
+                    variant="secondary"
+                    className={
+                      item.tone === "ok"
+                        ? "text-emerald-700"
+                        : item.tone === "warn"
+                          ? "text-amber-700"
+                          : "text-red-600"
+                    }
+                  >
+                    {item.value}
+                  </Badge>
+                </div>
+              ))}
             </div>
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-muted-foreground">Average accounts per user</span>
-              <span className="font-medium">{metrics.avgAccountsPerUser.toFixed(1)}</span>
+
+            <div className="grid gap-1.5 rounded-md border p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Users with accounts</span>
+                <span className="font-medium">{formatPercent(metrics.accountCoverageRate)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Users with goals</span>
+                <span className="font-medium">{formatPercent(metrics.goalCoverageRate)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Users with budgets</span>
+                <span className="font-medium">{formatPercent(metrics.budgetCoverageRate)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Profiles missing email</span>
+                <span className="font-medium">{metrics.profilesMissingEmail}</span>
+              </div>
             </div>
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-muted-foreground">Current account type mix</span>
-              <span className="font-medium text-right">
+
+            <div className="grid gap-1.5 rounded-md border p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Transactions (7d)</span>
+                <span className="font-medium">{metrics.transactionsLast7d}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Transactions (30d)</span>
+                <span className="font-medium">{metrics.transactionsLast30d}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Bugs filed (30d)</span>
+                <span className="font-medium">{metrics.bugReportsLast30d}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Account provisioning (30d)</span>
+                <span className="font-medium">{metrics.accountsLast30d}</span>
+              </div>
+            </div>
+
+            <div className="grid gap-1.5 rounded-md border p-3 text-sm">
+              <p className="font-medium">Account Type Mix</p>
+              <p className="text-muted-foreground">
                 {Object.entries(metrics.accountTypes)
+                  .sort((a, b) => b[1] - a[1])
                   .map(([type, count]) => `${count} ${type}`)
-                  .join(", ") || "None"}
-              </span>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-muted-foreground">Total budgets configured</span>
-              <span className="font-medium">{metrics.totalBudgets}</span>
+                  .join(" · ") || "None"}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -522,15 +506,15 @@ export default async function AdminDashboardPage() {
             <CardHeader>
               <CardTitle className="text-base">Recent Signups</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               {metrics.recentUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No users yet.</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {metrics.recentUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between gap-4 text-sm"
+                      className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
                     >
                       <div className="min-w-0">
                         <p className="font-medium truncate">
@@ -558,15 +542,15 @@ export default async function AdminDashboardPage() {
             <CardHeader>
               <CardTitle className="text-base">Recent Bug Reports</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               {metrics.recentBugReports.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No bug reports yet.</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {metrics.recentBugReports.map((report) => (
                     <div
                       key={report.id}
-                      className="flex items-start justify-between gap-3 text-sm"
+                      className="flex items-start justify-between gap-3 rounded-md border px-3 py-2 text-sm"
                     >
                       <div className="min-w-0">
                         <p className="font-medium truncate">{report.title}</p>
@@ -588,6 +572,12 @@ export default async function AdminDashboardPage() {
                   ))}
                 </div>
               )}
+              <Link
+                href="/admin/bug-reports"
+                className="inline-flex text-xs text-primary hover:underline"
+              >
+                View all bug reports
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -596,46 +586,44 @@ export default async function AdminDashboardPage() {
   );
 }
 
-function MetricCard({
+function CompactMetric({
   title,
   value,
   icon: Icon,
-  accent,
-  small,
+  tone,
   detail,
 }: {
   title: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
-  accent?: "green" | "red" | "amber";
-  small?: boolean;
+  tone?: "ok" | "warn" | "critical";
   detail?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1 min-w-0">
-            <p className="text-sm text-muted-foreground">{title}</p>
+    <Card className="border-border/60">
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{title}</p>
             <p
-              className={`${small ? "text-sm" : "text-xl sm:text-2xl"} font-bold truncate ${
-                accent === "green"
+              className={`mt-0.5 text-lg font-bold leading-none ${
+                tone === "ok"
                   ? "text-emerald-600"
-                  : accent === "red"
-                    ? "text-red-500"
-                    : accent === "amber"
-                      ? "text-amber-500"
-                    : ""
+                  : tone === "warn"
+                    ? "text-amber-600"
+                    : tone === "critical"
+                      ? "text-red-600"
+                      : ""
               }`}
             >
               {value}
             </p>
             {detail ? (
-              <p className="text-xs text-muted-foreground truncate">{detail}</p>
+              <p className="mt-1 text-xs text-muted-foreground truncate">{detail}</p>
             ) : null}
           </div>
-          <div className="rounded-lg bg-muted p-2.5">
-            <Icon className="h-5 w-5 text-muted-foreground" />
+          <div className="rounded-md bg-muted p-2">
+            <Icon className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
       </CardContent>

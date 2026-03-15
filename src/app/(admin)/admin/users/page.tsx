@@ -15,6 +15,17 @@ interface UserWithStats {
   totalIncome: number;
   totalExpenses: number;
   goalCount: number;
+  lastTransactionAt: string | null;
+}
+
+function getInitials(name: string | null) {
+  const value = (name ?? "").trim();
+  if (!value) return "U";
+  return value
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "U";
 }
 
 async function getUsers(): Promise<UserWithStats[]> {
@@ -26,7 +37,7 @@ async function getUsers(): Promise<UserWithStats[]> {
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false }),
-      supabase.from("transactions").select("user_id, amount"),
+      supabase.from("transactions").select("user_id, amount, created_at"),
       supabase.from("goals").select("user_id"),
       supabase.from("admin_users").select("user_id"),
     ]);
@@ -38,18 +49,24 @@ async function getUsers(): Promise<UserWithStats[]> {
   // Group transactions by user
   const txByUser = new Map<
     string,
-    { count: number; income: number; expenses: number }
+    { count: number; income: number; expenses: number; lastTransactionAt: string | null }
   >();
   for (const tx of transactions ?? []) {
     const existing = txByUser.get(tx.user_id) ?? {
       count: 0,
       income: 0,
       expenses: 0,
+      lastTransactionAt: null,
     };
     existing.count++;
     const amount = Number(tx.amount);
     if (amount > 0) existing.income += amount;
     else existing.expenses += Math.abs(amount);
+
+    if (!existing.lastTransactionAt || new Date(tx.created_at) > new Date(existing.lastTransactionAt)) {
+      existing.lastTransactionAt = tx.created_at;
+    }
+
     txByUser.set(tx.user_id, existing);
   }
 
@@ -64,6 +81,7 @@ async function getUsers(): Promise<UserWithStats[]> {
       count: 0,
       income: 0,
       expenses: 0,
+      lastTransactionAt: null,
     };
     return {
       id: p.id,
@@ -75,24 +93,34 @@ async function getUsers(): Promise<UserWithStats[]> {
       totalIncome: txStats.income,
       totalExpenses: txStats.expenses,
       goalCount: goalsByUser.get(p.id) ?? 0,
+      lastTransactionAt: txStats.lastTransactionAt,
     };
   });
 }
 
 export default async function AdminUsersPage() {
   const users = await getUsers();
+  const adminCount = users.filter((user) => user.role === "admin").length;
+  const activeUsers = users.filter((user) => user.transactionCount > 0).length;
+  const usersWithGoals = users.filter((user) => user.goalCount > 0).length;
+  const usersMissingEmail = users.filter((user) => !user.email).length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {users.length} registered {users.length === 1 ? "user" : "users"}
         </p>
       </div>
 
-      {/* Users Table */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard title="Total Users" value={users.length} />
+        <SummaryCard title="Admins" value={adminCount} tone="warn" />
+        <SummaryCard title="Active Users" value={activeUsers} subtitle="with transactions" />
+        <SummaryCard title="Missing Email" value={usersMissingEmail} tone={usersMissingEmail > 0 ? "critical" : "ok"} />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">All Users</CardTitle>
@@ -102,30 +130,42 @@ export default async function AdminUsersPage() {
             <p className="text-sm text-muted-foreground">No users yet.</p>
           ) : (
             <>
-              {/* Mobile card view */}
               <div className="space-y-3 md:hidden">
                 {users.map((user) => (
                   <div
                     key={user.id}
-                    className="rounded-lg border border-border/40 p-4 space-y-3"
+                    className="rounded-lg border border-border/50 p-3 space-y-3"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">
-                          {user.full_name || "No name"}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {user.email}
-                        </p>
+                      <div className="min-w-0 flex items-start gap-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                          {getInitials(user.full_name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
+                            {user.full_name || "No name"}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email || "No email"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/80 truncate">
+                            ID: {user.id}
+                          </p>
+                        </div>
                       </div>
-                      <Badge
-                        variant={
-                          user.role === "admin" ? "destructive" : "secondary"
-                        }
-                        className="text-xs shrink-0"
-                      >
-                        {user.role}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge
+                          variant={
+                            user.role === "admin" ? "destructive" : "secondary"
+                          }
+                          className="text-xs shrink-0"
+                        >
+                          {user.role}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px]">
+                          {user.transactionCount > 0 ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
@@ -149,19 +189,28 @@ export default async function AdminUsersPage() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Joined{" "}
-                      {new Date(user.created_at).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <p>
+                        Joined{" "}
+                        {new Date(user.created_at).toLocaleDateString("en-PH", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                      <p className="text-right">
+                        {user.lastTransactionAt
+                          ? `Last tx ${new Date(user.lastTransactionAt).toLocaleDateString("en-PH", {
+                              month: "short",
+                              day: "numeric",
+                            })}`
+                          : "No tx yet"}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              {/* Desktop table view */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -171,6 +220,9 @@ export default async function AdminUsersPage() {
                       </th>
                       <th className="pb-3 pr-4 font-medium text-muted-foreground">
                         Role
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground">
+                        Activity
                       </th>
                       <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
                         Transactions
@@ -184,6 +236,12 @@ export default async function AdminUsersPage() {
                       <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
                         Goals
                       </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
+                        Net
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
+                        Last Tx
+                      </th>
                       <th className="pb-3 font-medium text-muted-foreground text-right">
                         Joined
                       </th>
@@ -196,13 +254,21 @@ export default async function AdminUsersPage() {
                         className="border-b last:border-0 hover:bg-muted/50 transition-colors"
                       >
                         <td className="py-3 pr-4">
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">
-                              {user.full_name || "No name"}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                              {user.email}
-                            </p>
+                          <div className="flex items-start gap-2 min-w-0">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                              {getInitials(user.full_name)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate max-w-[220px]">
+                                {user.full_name || "No name"}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate max-w-[240px]">
+                                {user.email || "No email"}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground/80 truncate max-w-[240px]">
+                                {user.id}
+                              </p>
+                            </div>
                           </div>
                         </td>
                         <td className="py-3 pr-4">
@@ -213,6 +279,11 @@ export default async function AdminUsersPage() {
                             className="text-xs"
                           >
                             {user.role}
+                          </Badge>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <Badge variant="outline" className="text-[11px]">
+                            {user.transactionCount > 0 ? "Active" : "Inactive"}
                           </Badge>
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
@@ -226,6 +297,18 @@ export default async function AdminUsersPage() {
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
                           {user.goalCount}
+                        </td>
+                        <td className="py-3 pr-4 text-right tabular-nums">
+                          {formatCurrency(user.totalIncome - user.totalExpenses)}
+                        </td>
+                        <td className="py-3 pr-4 text-right text-muted-foreground whitespace-nowrap">
+                          {user.lastTransactionAt
+                            ? new Date(user.lastTransactionAt).toLocaleDateString("en-PH", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                            : "—"}
                         </td>
                         <td className="py-3 text-right text-muted-foreground whitespace-nowrap">
                           {new Date(user.created_at).toLocaleDateString("en-PH", {
@@ -243,6 +326,50 @@ export default async function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Quick Notes</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+          <p>Users with goals: <span className="font-medium text-foreground">{usersWithGoals}</span></p>
+          <p>Users with no transactions: <span className="font-medium text-foreground">{users.length - activeUsers}</span></p>
+        </CardContent>
+      </Card>
     </div>
+  );
+}
+
+function SummaryCard({
+  title,
+  value,
+  subtitle,
+  tone,
+}: {
+  title: string;
+  value: number;
+  subtitle?: string;
+  tone?: "ok" | "warn" | "critical";
+}) {
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{title}</p>
+        <p
+          className={`mt-1 text-xl font-bold ${
+            tone === "critical"
+              ? "text-red-600"
+              : tone === "warn"
+                ? "text-amber-600"
+                : tone === "ok"
+                  ? "text-emerald-600"
+                  : ""
+          }`}
+        >
+          {value}
+        </p>
+        {subtitle ? <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p> : null}
+      </CardContent>
+    </Card>
   );
 }
