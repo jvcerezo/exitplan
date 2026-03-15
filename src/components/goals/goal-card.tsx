@@ -108,12 +108,12 @@ export function GoalCard({ goal }: { goal: Goal }) {
           </div>
         </div>
 
-        {/* Add funds button */}
-        {!goal.is_completed && (
-          <div className="flex justify-start">
-            <UpdateAmountDialog goal={goal} />
-          </div>
-        )}
+        <div className="flex justify-start">
+          <UpdateAmountDialog
+            goal={goal}
+            triggerLabel={goal.is_completed ? "Open Goal" : "Add Funds"}
+          />
+        </div>
       </CardContent>
     </Card>
   );

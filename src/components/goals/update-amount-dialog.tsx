@@ -46,7 +46,13 @@ function parseAmountInput(value: string): string {
   return normalizedInt;
 }
 
-export function UpdateAmountDialog({ goal }: { goal: Goal }) {
+export function UpdateAmountDialog({
+  goal,
+  triggerLabel = "Add Funds",
+}: {
+  goal: Goal;
+  triggerLabel?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [accountId, setAccountId] = useState("");
@@ -112,7 +118,7 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
           className="h-8 rounded-full border-primary/30 bg-primary/5 px-3 text-xs font-semibold text-primary hover:bg-primary/10"
         >
           <Coins className="h-4 w-4 mr-1.5" />
-          Add Funds
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm overflow-x-hidden">

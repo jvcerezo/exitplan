@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useGoals } from "@/hooks/use-goals";
 import { GoalCard } from "./goal-card";
 import { AlertCircle, Target } from "lucide-react";
@@ -24,17 +24,6 @@ export function GoalsList() {
     () => (mobileTab === "active" ? active : completed),
     [mobileTab, active, completed]
   );
-
-  useEffect(() => {
-    if (mobileTab === "active" && active.length === 0 && completed.length > 0) {
-      setMobileTab("completed");
-      return;
-    }
-
-    if (mobileTab === "completed" && completed.length === 0 && active.length > 0) {
-      setMobileTab("active");
-    }
-  }, [active.length, completed.length, mobileTab]);
 
   if (isLoading) {
     return (
