@@ -53,6 +53,10 @@ jobs:
       - name: Sync Android project (hosted mode)
         run: npm run mobile:android:hosted
 
+      - name: Make gradlew executable
+        working-directory: android
+        run: chmod +x gradlew
+
       - name: Build release AAB
         working-directory: android
         run: ./gradlew bundleRelease
