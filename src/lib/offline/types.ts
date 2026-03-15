@@ -12,7 +12,7 @@ export type OfflineMutationStatus = "pending" | "syncing" | "failed" | "conflict
 export interface AddAccountOfflinePayload {
   localId: string;
   name: string;
-  type: "cash" | "bank" | "e-wallet" | "credit-card";
+  type: string;
   currency: string;
   balance: number;
 }

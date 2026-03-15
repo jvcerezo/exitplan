@@ -10,11 +10,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAddFundsToGoal } from "@/hooks/use-goals";
 import { useAccounts } from "@/hooks/use-accounts";
 import type { Goal } from "@/lib/types/database";
+import { CURRENCIES } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 function formatAmount(raw: string): string {
@@ -50,6 +57,8 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
   const selectedAccount = activeAccounts.find((a) => a.id === accountId);
   const remaining = Math.round((goal.target_amount - goal.current_amount) * 100) / 100;
   const isPending = addFundsToGoal.isPending;
+  const accountCurrencySymbol =
+    CURRENCIES.find((currency) => currency.code === selectedAccount?.currency)?.symbol ?? "₱";
 
   // Default to first account on open
   useEffect(() => {
@@ -117,27 +126,41 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
 
           {/* Account picker */}
           {activeAccounts.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                From
-              </p>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {activeAccounts.map((account) => (
-                  <button
-                    key={account.id}
-                    type="button"
-                    onClick={() => setAccountId(account.id)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                      accountId === account.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
-                  >
-                    {account.name} {formatCurrency(account.balance, account.currency)}
-                  </button>
-                ))}
-              </div>
+            <div className="space-y-1.5 min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">From</p>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Choose an account" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <span className="truncate font-medium">{account.name}</span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">
+                          {account.currency}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {selectedAccount && (
+                <div className="rounded-xl border border-border/70 bg-muted/25 px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {selectedAccount.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{selectedAccount.type}</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold text-primary">
+                      {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -148,7 +171,7 @@ export function UpdateAmountDialog({ goal }: { goal: Goal }) {
             </p>
             <div className="flex items-baseline gap-2 py-2">
               <span className="text-3xl font-bold text-muted-foreground/50">
-                ₱
+                {accountCurrencySymbol}
               </span>
               <input
                 name="amount"

@@ -12,11 +12,14 @@ CREATE TABLE IF NOT EXISTS public.accounts (
   created_at  timestamptz DEFAULT now() NOT NULL,
   user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   name        text NOT NULL,
-  type        text NOT NULL CHECK (type IN ('cash', 'bank', 'e-wallet', 'credit-card')),
+  type        text NOT NULL,
   currency    text DEFAULT 'PHP' NOT NULL,
   balance     numeric(12, 2) DEFAULT 0 NOT NULL,
   is_archived boolean DEFAULT false NOT NULL
 );
+
+ALTER TABLE public.accounts
+  DROP CONSTRAINT IF EXISTS accounts_type_check;
 
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts USING btree (user_id);
 
@@ -59,6 +62,15 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   transfer_id     uuid,
   tags            text[] DEFAULT '{}'
 );
+
+ALTER TABLE public.transactions
+  DROP CONSTRAINT IF EXISTS transactions_account_id_fkey;
+
+ALTER TABLE public.transactions
+  ADD CONSTRAINT transactions_account_id_fkey
+  FOREIGN KEY (account_id)
+  REFERENCES public.accounts(id)
+  ON DELETE CASCADE;
 
 DO $$
 BEGIN
@@ -568,8 +580,10 @@ AS $$
 DECLARE
   current_user_id uuid := auth.uid();
   account_balance numeric(12, 2);
+  account_currency text;
   goal_current_amount numeric(12, 2);
   goal_target_amount numeric(12, 2);
+  goal_name text;
   normalized_amount numeric(12, 2) := ROUND(ABS(p_amount)::numeric, 2);
   new_goal_amount numeric(12, 2);
   funding_id uuid := gen_random_uuid();
@@ -586,8 +600,8 @@ BEGIN
     RAISE EXCEPTION 'Amount must be greater than zero';
   END IF;
 
-  SELECT balance
-    INTO account_balance
+  SELECT balance, currency
+    INTO account_balance, account_currency
   FROM public.accounts
   WHERE id = p_account_id
     AND user_id = current_user_id
@@ -601,8 +615,8 @@ BEGIN
     RAISE EXCEPTION 'Insufficient account balance';
   END IF;
 
-  SELECT current_amount, target_amount
-    INTO goal_current_amount, goal_target_amount
+  SELECT current_amount, target_amount, name
+    INTO goal_current_amount, goal_target_amount, goal_name
   FROM public.goals
   WHERE id = p_goal_id
     AND user_id = current_user_id
@@ -642,11 +656,87 @@ BEGIN
     COALESCE(p_funding_date, CURRENT_DATE)
   );
 
+  INSERT INTO public.transactions (
+    user_id,
+    amount,
+    category,
+    description,
+    date,
+    currency,
+    account_id,
+    tags
+  ) VALUES (
+    current_user_id,
+    -normalized_amount,
+    'goal_funding',
+    COALESCE(NULLIF(BTRIM(p_note), ''), CONCAT('Goal funding: ', goal_name)),
+    COALESCE(p_funding_date, CURRENT_DATE),
+    COALESCE(NULLIF(BTRIM(account_currency), ''), 'PHP'),
+    p_account_id,
+    ARRAY['goal-funding', p_goal_id::text]
+  );
+
   RETURN funding_id;
 END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.add_funds_to_goal(uuid, uuid, numeric, text, date) TO authenticated;
+
+
+-- ============================================
+-- Keep goal totals in sync with funding ledger
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.recalculate_goal_totals_from_fundings()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  affected_goal_id uuid;
+  target_goal_id uuid;
+  total_funded numeric(12, 2);
+  goal_target_amount numeric(12, 2);
+BEGIN
+  affected_goal_id := COALESCE(NEW.goal_id, OLD.goal_id);
+
+  IF affected_goal_id IS NULL THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  FOR target_goal_id IN
+    SELECT DISTINCT goal_id
+    FROM (VALUES (NEW.goal_id), (OLD.goal_id)) AS candidate(goal_id)
+    WHERE goal_id IS NOT NULL
+  LOOP
+    SELECT COALESCE(SUM(amount), 0)
+      INTO total_funded
+    FROM public.goal_fundings
+    WHERE goal_id = target_goal_id;
+
+    SELECT g.target_amount
+      INTO goal_target_amount
+    FROM public.goals g
+    WHERE g.id = target_goal_id;
+
+    IF goal_target_amount IS NOT NULL THEN
+      UPDATE public.goals
+      SET
+        current_amount = ROUND(total_funded::numeric, 2),
+        is_completed = ROUND(total_funded::numeric, 2) >= goal_target_amount
+      WHERE id = target_goal_id;
+    END IF;
+  END LOOP;
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+DROP TRIGGER IF EXISTS recalculate_goal_totals_after_funding_write ON public.goal_fundings;
+
+CREATE TRIGGER recalculate_goal_totals_after_funding_write
+  AFTER INSERT OR UPDATE OR DELETE ON public.goal_fundings
+  FOR EACH ROW EXECUTE FUNCTION public.recalculate_goal_totals_from_fundings();
 
 
 -- ============================================

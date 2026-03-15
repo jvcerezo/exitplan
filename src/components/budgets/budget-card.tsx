@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Pencil, Trash2, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { Input } from "@/components/ui/input";
 import { useUpdateBudget, useToggleBudgetRollover } from "@/hooks/use-budgets";
 import { useUndoDelete } from "@/hooks/use-undo-delete";
@@ -31,6 +32,18 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
   const toggleRollover = useToggleBudgetRollover();
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(budget.amount));
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleConfirmDelete() {
+    setIsDeleting(true);
+    try {
+      await undoDelete(budget.id, budget.category);
+      setConfirmOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   // Effective budget = base amount + carried-over unspent from last month
   const effectiveBudget = budget.amount + rollover;
@@ -119,7 +132,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
               size="icon-xs"
               className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/70 hover:text-destructive"
               aria-label={`Delete ${budget.category} budget`}
-              onClick={() => undoDelete(budget.id, budget.category)}
+              onClick={() => setConfirmOpen(true)}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -222,6 +235,14 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
           </p>
         </div>
       </CardContent>
+      <ConfirmDeleteDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete budget?"
+        description={`This permanently deletes the ${budget.category} budget.`}
+        onConfirm={handleConfirmDelete}
+        isPending={isDeleting}
+      />
     </Card>
   );
 }

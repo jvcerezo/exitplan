@@ -26,6 +26,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AddAccountDialog } from "@/components/accounts/add-account-dialog";
 import { TagInput } from "@/components/ui/tag-input";
 import { useAddTransaction } from "@/hooks/use-transactions";
@@ -120,8 +127,13 @@ export function AddTransactionDialog({
   const addTransaction = useAddTransaction();
 
   const activeAccounts = accounts ?? [];
+  const isScopedAccountEntry = Boolean(defaultAccountId);
+  const scopedAccount = activeAccounts.find((a) => a.id === defaultAccountId);
+  const effectiveAccountId = isScopedAccountEntry
+    ? (defaultAccountId ?? "")
+    : accountId;
   const hasNoAccounts = accounts !== undefined && activeAccounts.length === 0;
-  const selectedAccount = activeAccounts.find((a) => a.id === accountId);
+  const selectedAccount = activeAccounts.find((a) => a.id === effectiveAccountId);
   const currencySymbol =
     CURRENCIES.find((c) => c.code === (selectedAccount?.currency ?? "PHP"))?.symbol ?? "₱";
 
@@ -240,7 +252,7 @@ export function AddTransactionDialog({
       }
     }
 
-    if (splitMode) {
+    if (splitMode && !isScopedAccountEntry) {
       if (!allSplitAccountsSelected || hasDuplicateSplitAccounts) {
         toast.error("Select different accounts for each split part");
         return;
@@ -267,7 +279,7 @@ export function AddTransactionDialog({
         })
       );
     } else {
-      if (!accountId) {
+      if (!effectiveAccountId) {
         toast.error("Select an account before adding this transaction");
         return;
       }
@@ -280,7 +292,7 @@ export function AddTransactionDialog({
         currency: selectedAccount?.currency ?? "PHP",
         description: description || finalCategory,
         date,
-        account_id: accountId || null,
+        account_id: effectiveAccountId,
         tags: tags.length > 0 ? tags : null,
       });
     }
@@ -351,7 +363,7 @@ export function AddTransactionDialog({
       <DialogHeader>
         <div className="flex items-center justify-between pr-6">
           <DialogTitle>Add {label}</DialogTitle>
-          {type === "expense" && (
+          {type === "expense" && !isScopedAccountEntry && (
             <button
               type="button"
               onClick={() => setSplitMode((v) => !v)}
@@ -374,26 +386,53 @@ export function AddTransactionDialog({
         {/* NORMAL MODE */}
         {!splitMode && (
           <>
-            {activeAccounts.length > 0 && (
-              <div className="space-y-1.5">
+            {activeAccounts.length > 0 && isScopedAccountEntry && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Add {label} to
+                </p>
+                <p className="mt-1 truncate text-sm font-semibold text-foreground">
+                  {scopedAccount?.name ?? "Selected account"}
+                </p>
+              </div>
+            )}
+
+            {activeAccounts.length > 0 && !isScopedAccountEntry && (
+              <div className="space-y-1.5 min-w-0">
                 <p className="text-xs font-medium text-muted-foreground">Account</p>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                  {activeAccounts.map((acc) => (
-                    <button
-                      key={acc.id}
-                      type="button"
-                      onClick={() => setAccountId(acc.id)}
-                      className={cn(
-                        "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                        accountId === acc.id
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                      )}
-                    >
-                      {acc.name}
-                    </button>
-                  ))}
-                </div>
+                <Select value={accountId} onValueChange={setAccountId}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Choose an account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeAccounts.map((acc) => (
+                      <SelectItem key={acc.id} value={acc.id}>
+                        <div className="flex min-w-0 items-center justify-between gap-3">
+                          <span className="truncate font-medium">{acc.name}</span>
+                          <span className="shrink-0 text-[10px] text-muted-foreground">
+                            {acc.currency}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {selectedAccount && (
+                  <div className="rounded-xl border border-border/70 bg-muted/25 px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {selectedAccount.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{selectedAccount.type}</p>
+                      </div>
+                      <p className="shrink-0 text-sm font-semibold text-primary">
+                        {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -456,7 +495,7 @@ export function AddTransactionDialog({
               <Button
                 type="submit"
                 className="w-full"
-                disabled={addTransaction.isPending || !category || !accountId}
+                disabled={addTransaction.isPending || !category || !effectiveAccountId}
               >
                 {addTransaction.isPending ? "Adding..." : `Add ${label}`}
               </Button>

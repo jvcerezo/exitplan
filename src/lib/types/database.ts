@@ -111,7 +111,7 @@ export interface Account {
   created_at: string;
   user_id: string;
   name: string;
-  type: "cash" | "bank" | "e-wallet" | "credit-card";
+  type: string;
   currency: string;
   balance: number;
   is_archived: boolean;

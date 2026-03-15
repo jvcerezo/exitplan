@@ -276,12 +276,25 @@ interface NewAccountFormProps {
 
 function NewAccountForm({ currency, onCreated, onCancel }: NewAccountFormProps) {
   const [name, setName] = useState("");
-  const [type, setType] = useState<"cash" | "bank" | "e-wallet" | "credit-card">("bank");
+  const [type, setType] = useState("bank");
+  const [customType, setCustomType] = useState("");
+  const [isCustomType, setIsCustomType] = useState(false);
   const addAccount = useAddAccount();
+
+  const normalizedCustomType = customType
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+  const effectiveType = isCustomType ? normalizedCustomType : type;
 
   async function handleCreate() {
     if (!name.trim()) return;
-    const result = await addAccount.mutateAsync({ name: name.trim(), type, currency });
+    if (!effectiveType) return;
+    const result = await addAccount.mutateAsync({
+      name: name.trim(),
+      type: effectiveType,
+      currency,
+    });
     onCreated(result.id);
   }
 
@@ -303,10 +316,14 @@ function NewAccountForm({ currency, onCreated, onCancel }: NewAccountFormProps) 
           <button
             key={t.value}
             type="button"
-            onClick={() => setType(t.value)}
+            onClick={() => {
+              setType(t.value);
+              setIsCustomType(false);
+              setCustomType("");
+            }}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
-              type === t.value
+              !isCustomType && type === t.value
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-background text-muted-foreground border-border hover:bg-muted"
             )}
@@ -314,7 +331,31 @@ function NewAccountForm({ currency, onCreated, onCancel }: NewAccountFormProps) 
             {t.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => {
+            setIsCustomType(true);
+            setType("");
+          }}
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
+            isCustomType
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-background text-muted-foreground border-border hover:bg-muted"
+          )}
+        >
+          Custom
+        </button>
       </div>
+
+      {isCustomType && (
+        <input
+          value={customType}
+          onChange={(e) => setCustomType(e.target.value)}
+          placeholder="e.g. Cooperative, Crypto Wallet"
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+        />
+      )}
 
       <div className="flex gap-2">
         {onCancel && (
@@ -326,7 +367,7 @@ function NewAccountForm({ currency, onCreated, onCancel }: NewAccountFormProps) 
           type="button"
           size="sm"
           className="flex-1 gap-1.5"
-          disabled={!name.trim() || addAccount.isPending}
+          disabled={!name.trim() || !effectiveType || addAccount.isPending}
           onClick={handleCreate}
         >
           <Check className="h-3.5 w-3.5" />

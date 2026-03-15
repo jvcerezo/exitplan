@@ -1,18 +1,27 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Plus, Minus, Trash2, Archive, Building2, Smartphone, Banknote, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useUndoDelete } from "@/hooks/use-undo-delete";
 import { useArchiveAccount } from "@/hooks/use-accounts";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 import { formatCurrency } from "@/lib/utils";
 import type { Account } from "@/lib/types/database";
 
-const ACCOUNT_QUERY_KEYS = [["accounts"]];
+const ACCOUNT_QUERY_KEYS = [
+  ["accounts"],
+  ["transactions"],
+  ["transactions", "summary"],
+  ["safe-to-spend"],
+  ["emergency-fund"],
+  ["savings-rate"],
+  ["health-score"],
+];
 
 const TYPE_LABELS: Record<string, string> = {
   cash: "Cash",
@@ -38,6 +47,18 @@ const TYPE_COLORS: Record<string, string> = {
 export function AccountCard({ account }: { account: Account }) {
   const archiveAccount = useArchiveAccount();
   const undoDelete = useUndoDelete("accounts", ACCOUNT_QUERY_KEYS);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleConfirmDelete() {
+    setIsDeleting(true);
+    try {
+      await undoDelete(account.id, account.name);
+      setConfirmOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <Card className="group relative">
@@ -81,7 +102,7 @@ export function AccountCard({ account }: { account: Account }) {
               size="icon-xs"
               className="text-muted-foreground hover:text-destructive"
               aria-label="Delete account"
-              onClick={() => undoDelete(account.id, account.name)}
+              onClick={() => setConfirmOpen(true)}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -135,6 +156,14 @@ export function AccountCard({ account }: { account: Account }) {
           />
         </div>
       </CardContent>
+      <ConfirmDeleteDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete account?"
+        description={`This deletes ${account.name}, its transactions, and related records.`}
+        onConfirm={handleConfirmDelete}
+        isPending={isDeleting}
+      />
     </Card>
   );
 }

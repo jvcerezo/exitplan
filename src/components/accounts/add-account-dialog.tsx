@@ -60,16 +60,24 @@ export function AddAccountDialog({
   const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
   const [name, setName] = useState("");
   const [type, setType] = useState("");
+  const [customType, setCustomType] = useState("");
+  const [isCustomType, setIsCustomType] = useState(false);
   const [currency, setCurrency] = useState("PHP");
   const [balance, setBalance] = useState("");
   const addAccount = useAddAccount();
+
+  const normalizedCustomType = customType
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+  const effectiveType = isCustomType ? normalizedCustomType : type;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     await addAccount.mutateAsync({
       name,
-      type: type as "cash" | "bank" | "e-wallet" | "credit-card",
+      type: effectiveType,
       currency,
       balance: parseFloat(balance) || 0,
     });
@@ -77,6 +85,8 @@ export function AddAccountDialog({
     setOpen(false);
     setName("");
     setType("");
+    setCustomType("");
+    setIsCustomType(false);
     setCurrency("PHP");
     setBalance("");
   }
@@ -84,6 +94,8 @@ export function AddAccountDialog({
   function handlePreset(preset: (typeof COMMON_ACCOUNTS)[number]) {
     setName(preset.name);
     setType(preset.type);
+    setIsCustomType(false);
+    setCustomType("");
   }
 
   const dialogContent = (
@@ -137,10 +149,14 @@ export function AddAccountDialog({
                 <button
                   key={t.value}
                   type="button"
-                  onClick={() => setType(t.value)}
+                  onClick={() => {
+                    setType(t.value);
+                    setIsCustomType(false);
+                    setCustomType("");
+                  }}
                   className={cn(
                     "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                    type === t.value
+                    !isCustomType && type === t.value
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                   )}
@@ -148,7 +164,30 @@ export function AddAccountDialog({
                   {t.label}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCustomType(true);
+                  setType("");
+                }}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
+                  isCustomType
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                )}
+              >
+                Custom
+              </button>
             </div>
+            {isCustomType && (
+              <input
+                value={customType}
+                onChange={(e) => setCustomType(e.target.value)}
+                placeholder="e.g. Cooperative, Crypto Wallet"
+                className="mt-2 w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
+              />
+            )}
           </div>
 
           {/* Currency + Balance row */}
@@ -188,7 +227,7 @@ export function AddAccountDialog({
           <Button
             type="submit"
             className="w-full"
-            disabled={addAccount.isPending || !name || !type}
+            disabled={addAccount.isPending || !name || !effectiveType}
           >
             {addAccount.isPending ? "Adding..." : "Add Account"}
           </Button>

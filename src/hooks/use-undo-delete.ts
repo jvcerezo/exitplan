@@ -5,21 +5,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-const DEFAULT_UNDO_WINDOW_MS = 1200;
-
 export function useUndoDelete(
   table: string,
   queryKeys: string[][],
-  deleteFn?: (id: string) => Promise<void>,
-  undoWindowMs = DEFAULT_UNDO_WINDOW_MS
+  deleteFn?: (id: string) => Promise<void>
 ) {
   const queryClient = useQueryClient();
-  const pendingRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
-    new Map()
-  );
+  const pendingRef = useRef<Set<string>>(new Set());
 
   const execute = useCallback(
-    (id: string, label: string) => {
+    async (id: string, label: string) => {
+      if (pendingRef.current.has(id)) {
+        return;
+      }
+
+      pendingRef.current.add(id);
+
       // Snapshot all relevant query caches
       const snapshots: { key: readonly unknown[]; data: unknown }[] = [];
       for (const key of queryKeys) {
@@ -43,45 +44,33 @@ export function useUndoDelete(
         }
       }
 
-      // Schedule real delete after short undo window
-      const timeout = setTimeout(async () => {
-        pendingRef.current.delete(id);
-        try {
-          if (deleteFn) {
-            await deleteFn(id);
-          } else {
-            const supabase = createClient();
-            const { error } = await supabase.from(table).delete().eq("id", id);
-            if (error) throw error;
-          }
-        } catch {
-          for (const snap of snapshots) {
-            queryClient.setQueryData(snap.key, snap.data);
-          }
-          toast.error(`Failed to delete ${label}`);
+      const toastId = toast.loading(`Deleting ${label}...`);
+
+      try {
+        if (deleteFn) {
+          await deleteFn(id);
+        } else {
+          const supabase = createClient();
+          const { error } = await supabase.from(table).delete().eq("id", id);
+          if (error) throw error;
         }
+
         for (const key of queryKeys) {
-          queryClient.invalidateQueries({ queryKey: key });
+          await queryClient.invalidateQueries({ queryKey: key });
         }
-      }, undoWindowMs);
 
-      pendingRef.current.set(id, timeout);
-
-      toast(`${label} deleted`, {
-        action: {
-          label: "Undo",
-          onClick: () => {
-            clearTimeout(timeout);
-            pendingRef.current.delete(id);
-            for (const snap of snapshots) {
-              queryClient.setQueryData(snap.key, snap.data);
-            }
-          },
-        },
-        duration: undoWindowMs,
-      });
+        toast.success(`${label} deleted`, { id: toastId });
+      } catch {
+        for (const snap of snapshots) {
+          queryClient.setQueryData(snap.key, snap.data);
+        }
+        toast.error(`Failed to delete ${label}`, { id: toastId });
+        throw new Error(`Failed to delete ${label}`);
+      } finally {
+        pendingRef.current.delete(id);
+      }
     },
-    [deleteFn, queryClient, table, queryKeys, undoWindowMs]
+    [deleteFn, queryClient, table, queryKeys]
   );
 
   return execute;
