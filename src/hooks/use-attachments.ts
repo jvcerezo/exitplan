@@ -1,6 +1,31 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { enqueueOfflineMutation } from "@/lib/offline/store";
+import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("Failed to read file"));
+        return;
+      }
+
+      const [, base64] = result.split(",");
+      if (!base64) {
+        reject(new Error("Failed to encode file"));
+        return;
+      }
+
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
 
 export function useUploadAttachment() {
   const queryClient = useQueryClient();
@@ -13,6 +38,23 @@ export function useUploadAttachment() {
       transactionId: string;
       file: File;
     }) => {
+      if (isBrowserOffline()) {
+        const fileBase64 = await fileToBase64(file);
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "uploadAttachment",
+          payload: {
+            transactionId,
+            fileName: file.name,
+            contentType: file.type,
+            fileBase64,
+          },
+        });
+
+        return "queued-offline";
+      }
+
       const supabase = createClient();
       const {
         data: { user },
@@ -38,7 +80,7 @@ export function useUploadAttachment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Receipt uploaded");
+      toast.success(isBrowserOffline() ? "Receipt upload saved offline" : "Receipt uploaded");
     },
     onError: (error) => {
       toast.error("Failed to upload receipt", { description: error.message });
@@ -64,6 +106,18 @@ export function useDeleteAttachment() {
       transactionId: string;
       path: string;
     }) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "updateTransaction",
+          payload: {
+            id: transactionId,
+            attachment_path: null,
+          },
+        });
+        return;
+      }
+
       const supabase = createClient();
 
       const { error: storageError } = await supabase.storage
@@ -81,7 +135,7 @@ export function useDeleteAttachment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Receipt removed");
+      toast.success(isBrowserOffline() ? "Receipt remove saved offline" : "Receipt removed");
     },
     onError: (error) => {
       toast.error("Failed to remove receipt", { description: error.message });

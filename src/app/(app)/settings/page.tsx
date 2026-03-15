@@ -30,6 +30,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CURRENCIES, DEFAULT_RATES_TO_PHP } from "@/lib/constants";
 import { useTourContext } from "@/providers/tour-provider";
+import { OfflineSyncCenter } from "@/components/offline/offline-sync-center";
 import type { BugReportSeverity } from "@/lib/types/database";
 
 export const dynamic = "force-dynamic";
@@ -545,6 +546,8 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <OfflineSyncCenter />
 
       {/* Account Section */}
       <Card>

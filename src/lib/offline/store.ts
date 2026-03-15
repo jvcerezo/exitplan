@@ -50,6 +50,10 @@ export async function listQueuedMutations() {
   return offlineDb.queuedMutations.orderBy("createdAt").toArray();
 }
 
+export async function getQueuedMutation(id: string) {
+  return offlineDb.queuedMutations.get(id);
+}
+
 export async function updateOfflineMutationStatus(
   id: string,
   status: OfflineMutationStatus,
@@ -70,8 +74,32 @@ export async function removeOfflineMutation(id: string) {
   emitOfflineSyncUpdate();
 }
 
+export async function retryOfflineMutation(id: string) {
+  await updateOfflineMutationStatus(id, "pending", undefined);
+}
+
+export async function clearOfflineQueue() {
+  await offlineDb.queuedMutations.clear();
+  await refreshOfflineSyncMeta();
+  emitOfflineSyncUpdate();
+}
+
 export async function addOfflineConflict(conflict: OfflineConflictRecord) {
   await offlineDb.conflicts.put(conflict);
+  emitOfflineSyncUpdate();
+}
+
+export async function listOfflineConflicts() {
+  return offlineDb.conflicts.orderBy("createdAt").reverse().toArray();
+}
+
+export async function removeOfflineConflict(id: string) {
+  await offlineDb.conflicts.delete(id);
+  emitOfflineSyncUpdate();
+}
+
+export async function clearOfflineConflicts() {
+  await offlineDb.conflicts.clear();
   emitOfflineSyncUpdate();
 }
 
@@ -94,10 +122,10 @@ export async function patchOfflineSyncMeta(patch: Partial<OfflineSyncMeta>) {
 export async function refreshOfflineSyncMeta() {
   await ensureOfflineSyncMeta();
   const queuedCount = await offlineDb.queuedMutations.count();
-  const failedCount = await offlineDb.queuedMutations
-    .where("status")
-    .equals("failed")
-    .count();
+  const queued = await offlineDb.queuedMutations.toArray();
+  const failedCount = queued.filter(
+    (entry) => entry.status === "failed" || entry.status === "conflict"
+  ).length;
   const current = await getOfflineSyncMeta();
 
   await setOfflineSyncMeta({

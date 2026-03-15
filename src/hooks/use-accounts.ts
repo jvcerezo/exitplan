@@ -1,7 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { enqueueOfflineMutation } from "@/lib/offline/store";
-import { addOfflineAccountToCache } from "@/lib/offline/query-cache";
+import {
+  addOfflineAccountToCache,
+  removeOfflineAccountFromCache,
+  updateOfflineAccountInCache,
+} from "@/lib/offline/query-cache";
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Account, AccountInsert } from "@/lib/types/database";
@@ -219,6 +223,23 @@ export function useUpdateAccount() {
       id,
       ...updates
     }: Partial<AccountInsert> & { id: string }) => {
+      if (isBrowserOffline()) {
+        const normalizedName = updates.name?.trim();
+        const offlineUpdates = {
+          ...updates,
+          ...(normalizedName ? { name: normalizedName } : {}),
+        };
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "updateAccount",
+          payload: { id, ...offlineUpdates },
+        });
+
+        updateOfflineAccountInCache(queryClient, id, offlineUpdates as Partial<Account>);
+        return { id, ...offlineUpdates };
+      }
+
       const supabase = createClient();
 
       const { data: existingAccount, error: existingAccountError } = await supabase
@@ -261,14 +282,16 @@ export function useUpdateAccount() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Account updated");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(isBrowserOffline() ? "Account update saved offline" : "Account updated");
     },
     onError: (error) => {
       toast.error("Failed to update account", { description: error.message });
@@ -281,19 +304,32 @@ export function useDeleteAccount() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "deleteAccount",
+          payload: { id },
+        });
+
+        removeOfflineAccountFromCache(queryClient, id);
+        return;
+      }
+
       const supabase = createClient();
       const { error } = await supabase.from("accounts").delete().eq("id", id);
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Account deleted");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(isBrowserOffline() ? "Account delete saved offline" : "Account deleted");
     },
     onError: (error) => {
       toast.error("Failed to delete account", { description: error.message });

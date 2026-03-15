@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/client";
 import { enqueueOfflineMutation } from "@/lib/offline/store";
 import {
   addOfflineTransactionToCache,
+  removeOfflineTransactionFromCache,
+  updateOfflineTransactionInCache,
   updateOfflineAccountBalance,
 } from "@/lib/offline/query-cache";
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
@@ -21,6 +23,26 @@ function isMissingRpcFunctionError(error: {
     (message.includes("could not find the function") &&
       message.includes(`public.${functionName}`.toLowerCase()))
   );
+}
+
+function findCachedTransaction(queryClient: ReturnType<typeof useQueryClient>, id: string) {
+  const recent = queryClient.getQueryData<Transaction[]>(["transactions", "recent"]) ?? [];
+  const fromRecent = recent.find((transaction) => transaction.id === id);
+  if (fromRecent) {
+    return fromRecent;
+  }
+
+  const queryCache = queryClient.getQueryCache();
+  const allQueries = queryCache.findAll({ queryKey: ["transactions", "all"] });
+  for (const query of allQueries) {
+    const entries = (query.state.data as Transaction[] | undefined) ?? [];
+    const existing = entries.find((transaction) => transaction.id === id);
+    if (existing) {
+      return existing;
+    }
+  }
+
+  return null;
 }
 
 export function useRecentTransactions() {
@@ -337,6 +359,33 @@ export function useUpdateTransaction() {
       id,
       ...updates
     }: Partial<TransactionInsert> & { id: string }) => {
+      if (isBrowserOffline()) {
+        const existing = findCachedTransaction(queryClient, id);
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "updateTransaction",
+          payload: { id, ...updates },
+        });
+
+        updateOfflineTransactionInCache(queryClient, id, updates as Partial<Transaction>);
+
+        if (existing) {
+          const nextAmount = updates.amount ?? existing.amount;
+          const nextAccountId =
+            updates.account_id !== undefined ? updates.account_id : existing.account_id;
+
+          if (existing.account_id) {
+            updateOfflineAccountBalance(queryClient, existing.account_id, -existing.amount);
+          }
+          if (nextAccountId) {
+            updateOfflineAccountBalance(queryClient, nextAccountId, nextAmount);
+          }
+        }
+
+        return { id, ...updates };
+      }
+
       const supabase = createClient();
 
       // Fetch existing values so partial updates can fill in any missing fields
@@ -366,14 +415,18 @@ export function useUpdateTransaction() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Transaction updated");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(
+        isBrowserOffline() ? "Transaction update saved offline" : "Transaction updated"
+      );
     },
     onError: (error) => {
       toast.error("Failed to update transaction", { description: error.message });
@@ -386,6 +439,52 @@ export function useImportTransactions() {
 
   return useMutation({
     mutationFn: async (transactions: TransactionInsert[]) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "importTransactions",
+          payload: {
+            transactions: transactions.map((transaction) => ({
+              amount: transaction.amount,
+              category: transaction.category,
+              description: transaction.description,
+              date: transaction.date,
+              currency: transaction.currency,
+              account_id: transaction.account_id ?? null,
+              transfer_id: transaction.transfer_id ?? null,
+              tags: transaction.tags ?? null,
+              attachment_path: transaction.attachment_path ?? null,
+              split_group_id: transaction.split_group_id ?? null,
+            })),
+          },
+        });
+
+        for (const transaction of transactions) {
+          const offlineTransaction: Transaction = {
+            id: createOfflineId("transaction"),
+            created_at: new Date().toISOString(),
+            user_id: "offline",
+            amount: transaction.amount,
+            category: transaction.category,
+            description: transaction.description,
+            date: transaction.date,
+            currency: transaction.currency,
+            attachment_path: transaction.attachment_path ?? null,
+            account_id: transaction.account_id ?? null,
+            transfer_id: transaction.transfer_id ?? null,
+            split_group_id: transaction.split_group_id ?? null,
+            tags: transaction.tags ?? null,
+          };
+
+          addOfflineTransactionToCache(queryClient, offlineTransaction);
+          if (transaction.account_id) {
+            updateOfflineAccountBalance(queryClient, transaction.account_id, transaction.amount);
+          }
+        }
+
+        return transactions.length;
+      }
+
       const supabase = createClient();
       const payload = transactions.map((transaction) => ({
         amount: transaction.amount,
@@ -408,14 +507,20 @@ export function useImportTransactions() {
       return Number(data ?? 0);
     },
     onSuccess: (count) => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success(`Imported ${count} transactions`);
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(
+        isBrowserOffline()
+          ? `${count} transaction${count === 1 ? "" : "s"} queued offline`
+          : `Imported ${count} transactions`
+      );
     },
     onError: (error) => {
       toast.error("Import failed", { description: error.message });
@@ -428,6 +533,22 @@ export function useDeleteTransaction() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (isBrowserOffline()) {
+        const existing = findCachedTransaction(queryClient, id);
+
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "deleteTransaction",
+          payload: { id },
+        });
+
+        if (existing?.account_id) {
+          updateOfflineAccountBalance(queryClient, existing.account_id, -existing.amount);
+        }
+
+        return;
+      }
+
       const supabase = createClient();
 
       // Use the atomic RPC — balance reversal + delete happen in one DB transaction
@@ -491,18 +612,7 @@ export function useDeleteTransaction() {
       await queryClient.cancelQueries({ queryKey: ["transactions"] });
       const previousRecent = queryClient.getQueryData<Transaction[]>(["transactions", "recent"]);
       const previousAll = queryClient.getQueryData<Transaction[]>(["transactions", "all", undefined]);
-      if (previousRecent) {
-        queryClient.setQueryData<Transaction[]>(
-          ["transactions", "recent"],
-          previousRecent.filter((t) => t.id !== id)
-        );
-      }
-      if (previousAll) {
-        queryClient.setQueryData<Transaction[]>(
-          ["transactions", "all", undefined],
-          previousAll.filter((t) => t.id !== id)
-        );
-      }
+      removeOfflineTransactionFromCache(queryClient, id);
       return { previousRecent, previousAll };
     },
     onError: (error, _id, context) => {
@@ -515,16 +625,20 @@ export function useDeleteTransaction() {
       toast.error("Failed to delete transaction", { description: error.message });
     },
     onSuccess: () => {
-      toast.success("Transaction deleted");
+      toast.success(
+        isBrowserOffline() ? "Transaction delete saved offline" : "Transaction deleted"
+      );
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
     },
   });
 }

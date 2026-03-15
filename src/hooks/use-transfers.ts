@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { enqueueOfflineMutation } from "@/lib/offline/store";
+import { updateOfflineAccountBalance } from "@/lib/offline/query-cache";
+import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 
 interface CreateTransferInput {
@@ -21,6 +24,25 @@ export function useCreateTransfer() {
       date,
       description,
     }: CreateTransferInput) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "createTransfer",
+          payload: {
+            fromAccountId,
+            toAccountId,
+            amount,
+            date,
+            description,
+          },
+        });
+
+        const normalizedAmount = Math.abs(amount);
+        updateOfflineAccountBalance(queryClient, fromAccountId, -normalizedAmount);
+        updateOfflineAccountBalance(queryClient, toAccountId, normalizedAmount);
+        return null;
+      }
+
       const supabase = createClient();
       const { data, error } = await supabase.rpc("create_account_transfer", {
         from_account_id: fromAccountId,
@@ -35,14 +57,16 @@ export function useCreateTransfer() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Transfer completed");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(isBrowserOffline() ? "Transfer saved offline" : "Transfer completed");
     },
     onError: (error) => {
       toast.error("Failed to transfer", { description: error.message });

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { OfflineSyncHealth } from "@/components/admin/offline-sync-health";
+import { OfflineObservability } from "@/components/admin/offline-observability";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -502,6 +503,7 @@ export default async function AdminDashboardPage() {
 
         <div className="space-y-4">
           <OfflineSyncHealth />
+          <OfflineObservability />
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Recent Signups</CardTitle>

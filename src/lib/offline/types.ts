@@ -1,10 +1,20 @@
 export type OfflineMutationType =
   | "addAccount"
+  | "updateAccount"
+  | "deleteAccount"
   | "addTransaction"
-  | "addGoal"
-  | "addBudget"
-  | "uploadAttachment"
+  | "updateTransaction"
+  | "deleteTransaction"
   | "importTransactions"
+  | "addGoal"
+  | "updateGoal"
+  | "deleteGoal"
+  | "addFundsToGoal"
+  | "addBudget"
+  | "updateBudget"
+  | "deleteBudget"
+  | "createTransfer"
+  | "uploadAttachment"
   | "runReceiptOcr";
 
 export type OfflineMutationStatus = "pending" | "syncing" | "failed" | "conflict";
@@ -15,6 +25,18 @@ export interface AddAccountOfflinePayload {
   type: string;
   currency: string;
   balance: number;
+}
+
+export interface UpdateAccountOfflinePayload {
+  id: string;
+  name?: string;
+  type?: string;
+  currency?: string;
+  is_archived?: boolean;
+}
+
+export interface DeleteAccountOfflinePayload {
+  id: string;
 }
 
 export interface AddTransactionOfflinePayload {
@@ -31,6 +53,22 @@ export interface AddTransactionOfflinePayload {
   attachment_path?: string | null;
 }
 
+export interface UpdateTransactionOfflinePayload {
+  id: string;
+  amount?: number;
+  category?: string;
+  description?: string;
+  date?: string;
+  currency?: string;
+  account_id?: string | null;
+  tags?: string[] | null;
+  attachment_path?: string | null;
+}
+
+export interface DeleteTransactionOfflinePayload {
+  id: string;
+}
+
 export interface AddGoalOfflinePayload {
   localId: string;
   name: string;
@@ -38,6 +76,28 @@ export interface AddGoalOfflinePayload {
   current_amount: number;
   deadline: string | null;
   category: string;
+}
+
+export interface UpdateGoalOfflinePayload {
+  id: string;
+  name?: string;
+  target_amount?: number;
+  current_amount?: number;
+  deadline?: string | null;
+  category?: string;
+  is_completed?: boolean;
+}
+
+export interface DeleteGoalOfflinePayload {
+  id: string;
+}
+
+export interface AddFundsToGoalOfflinePayload {
+  goalId: string;
+  accountId: string;
+  amount: number;
+  note?: string | null;
+  fundingDate: string;
 }
 
 export interface AddBudgetOfflinePayload {
@@ -49,26 +109,73 @@ export interface AddBudgetOfflinePayload {
   rollover?: boolean;
 }
 
+export interface UpdateBudgetOfflinePayload {
+  id: string;
+  category?: string;
+  amount?: number;
+  month?: string;
+  period?: string;
+  rollover?: boolean;
+}
+
+export interface DeleteBudgetOfflinePayload {
+  id: string;
+}
+
+export interface CreateTransferOfflinePayload {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  description?: string;
+}
+
 export interface UploadAttachmentOfflinePayload {
   transactionId: string;
+  fileName?: string;
+  contentType?: string;
+  fileBase64?: string;
   pathHint?: string;
 }
 
 export interface ImportTransactionsOfflinePayload {
-  count: number;
+  transactions: Array<{
+    amount: number;
+    category: string;
+    description: string;
+    date: string;
+    currency: string;
+    account_id?: string | null;
+    transfer_id?: string | null;
+    tags?: string[] | null;
+    attachment_path?: string | null;
+    split_group_id?: string | null;
+  }>;
 }
 
 export interface ReceiptOcrOfflinePayload {
   fileName: string;
+  contentType?: string;
+  fileBase64?: string;
 }
 
 export type OfflineMutationPayload =
   | AddAccountOfflinePayload
+  | UpdateAccountOfflinePayload
+  | DeleteAccountOfflinePayload
   | AddTransactionOfflinePayload
-  | AddGoalOfflinePayload
-  | AddBudgetOfflinePayload
-  | UploadAttachmentOfflinePayload
+  | UpdateTransactionOfflinePayload
+  | DeleteTransactionOfflinePayload
   | ImportTransactionsOfflinePayload
+  | AddGoalOfflinePayload
+  | UpdateGoalOfflinePayload
+  | DeleteGoalOfflinePayload
+  | AddFundsToGoalOfflinePayload
+  | AddBudgetOfflinePayload
+  | UpdateBudgetOfflinePayload
+  | DeleteBudgetOfflinePayload
+  | CreateTransferOfflinePayload
+  | UploadAttachmentOfflinePayload
   | ReceiptOcrOfflinePayload;
 
 export interface OfflineMutationRecord {
@@ -95,6 +202,13 @@ export interface OfflineSyncMeta {
   failedCount: number;
   lastSyncedAt: string | null;
   lastError: string | null;
+  totalSyncRuns: number;
+  totalSyncedMutations: number;
+  totalFailedMutations: number;
+  totalConflictMutations: number;
+  totalReplayDurationMs: number;
+  lastReplayDurationMs: number | null;
+  lastRunAt: string | null;
 }
 
 export function createDefaultOfflineSyncMeta(): OfflineSyncMeta {
@@ -104,5 +218,12 @@ export function createDefaultOfflineSyncMeta(): OfflineSyncMeta {
     failedCount: 0,
     lastSyncedAt: null,
     lastError: null,
+    totalSyncRuns: 0,
+    totalSyncedMutations: 0,
+    totalFailedMutations: 0,
+    totalConflictMutations: 0,
+    totalReplayDurationMs: 0,
+    lastReplayDurationMs: null,
+    lastRunAt: null,
   };
 }

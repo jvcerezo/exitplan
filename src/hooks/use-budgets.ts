@@ -1,7 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { enqueueOfflineMutation } from "@/lib/offline/store";
-import { addOfflineBudgetToCache } from "@/lib/offline/query-cache";
+import {
+  addOfflineBudgetToCache,
+  removeOfflineBudgetFromCache,
+  updateOfflineBudgetInCache,
+} from "@/lib/offline/query-cache";
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Budget, BudgetInsert, BudgetPeriod } from "@/lib/types/database";
@@ -223,6 +227,17 @@ export function useUpdateBudget() {
       id,
       ...updates
     }: Partial<BudgetInsert> & { id: string }) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "updateBudget",
+          payload: { id, ...updates },
+        });
+
+        updateOfflineBudgetInCache(queryClient, id, updates as Partial<Budget>);
+        return { id, ...updates };
+      }
+
       const supabase = createClient();
       const { data, error } = await supabase
         .from("budgets")
@@ -235,11 +250,13 @@ export function useUpdateBudget() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Budget updated");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["budgets"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(isBrowserOffline() ? "Budget update saved offline" : "Budget updated");
     },
     onError: (error) => {
       toast.error("Failed to update budget", { description: error.message });
@@ -252,6 +269,17 @@ export function useToggleBudgetRollover() {
 
   return useMutation({
     mutationFn: async ({ id, rollover }: { id: string; rollover: boolean }) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "updateBudget",
+          payload: { id, rollover },
+        });
+
+        updateOfflineBudgetInCache(queryClient, id, { rollover });
+        return { id, rollover };
+      }
+
       const supabase = createClient();
       const { data, error } = await supabase
         .from("budgets")
@@ -264,11 +292,21 @@ export function useToggleBudgetRollover() {
       return data;
     },
     onSuccess: (_, { rollover }) => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success(rollover ? "Rollover enabled" : "Rollover disabled");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["budgets"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(
+        isBrowserOffline()
+          ? rollover
+            ? "Rollover enable saved offline"
+            : "Rollover disable saved offline"
+          : rollover
+            ? "Rollover enabled"
+            : "Rollover disabled"
+      );
     },
     onError: (error) => {
       toast.error("Failed to update rollover", { description: error.message });
@@ -407,6 +445,16 @@ export function useDeleteBudget() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "deleteBudget",
+          payload: { id },
+        });
+        removeOfflineBudgetFromCache(queryClient, id);
+        return;
+      }
+
       const supabase = createClient();
       const { error } = await supabase
         .from("budgets")
@@ -416,11 +464,13 @@ export function useDeleteBudget() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Budget deleted");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["budgets"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(isBrowserOffline() ? "Budget delete saved offline" : "Budget deleted");
     },
     onError: (error) => {
       toast.error("Failed to delete budget", { description: error.message });

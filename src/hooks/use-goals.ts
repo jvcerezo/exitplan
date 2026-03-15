@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { enqueueOfflineMutation } from "@/lib/offline/store";
-import { addOfflineGoalToCache } from "@/lib/offline/query-cache";
+import {
+  addOfflineGoalToCache,
+  removeOfflineGoalFromCache,
+  updateOfflineAccountBalance,
+  updateOfflineGoalAmount,
+  updateOfflineGoalInCache,
+} from "@/lib/offline/query-cache";
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Goal, GoalInsert } from "@/lib/types/database";
@@ -130,6 +136,17 @@ export function useUpdateGoal() {
       id,
       ...updates
     }: Partial<GoalInsert> & { id: string; is_completed?: boolean }) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "updateGoal",
+          payload: { id, ...updates },
+        });
+
+        updateOfflineGoalInCache(queryClient, id, updates as Partial<Goal>);
+        return { id, ...updates };
+      }
+
       const supabase = createClient();
       const { data, error } = await supabase
         .from("goals")
@@ -142,13 +159,15 @@ export function useUpdateGoal() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["goals"] });
-      queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Goal updated");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["goals"] });
+        queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(isBrowserOffline() ? "Goal update saved offline" : "Goal updated");
     },
     onError: (error) => {
       toast.error("Failed to update goal", { description: error.message });
@@ -169,6 +188,25 @@ export function useAddFundsToGoal() {
       accountId: string;
       amount: number;
     }) => {
+      if (isBrowserOffline()) {
+        const normalizedAmount = Math.abs(amount);
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "addFundsToGoal",
+          payload: {
+            goalId,
+            accountId,
+            amount: normalizedAmount,
+            note: null,
+            fundingDate: new Date().toISOString().split("T")[0],
+          },
+        });
+
+        updateOfflineGoalAmount(queryClient, goalId, normalizedAmount);
+        updateOfflineAccountBalance(queryClient, accountId, -normalizedAmount);
+        return;
+      }
+
       const supabase = createClient();
       const { error } = await supabase.rpc("add_funds_to_goal", {
         p_goal_id: goalId,
@@ -181,15 +219,17 @@ export function useAddFundsToGoal() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["goals"] });
-      queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-      toast.success("Funds added to goal");
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["goals"] });
+        queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(isBrowserOffline() ? "Goal funding saved offline" : "Funds added to goal");
     },
     onError: (error) => {
       toast.error("Failed to add funds", { description: error.message });
@@ -202,6 +242,15 @@ export function useDeleteGoal() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (isBrowserOffline()) {
+        await enqueueOfflineMutation({
+          id: createOfflineId("mutation"),
+          type: "deleteGoal",
+          payload: { id },
+        });
+        return;
+      }
+
       const supabase = createClient();
       const { error } = await supabase.from("goals").delete().eq("id", id);
 
@@ -211,10 +260,7 @@ export function useDeleteGoal() {
       await queryClient.cancelQueries({ queryKey: ["goals"] });
       const previousList = queryClient.getQueryData<Goal[]>(["goals"]);
       if (previousList) {
-        queryClient.setQueryData<Goal[]>(
-          ["goals"],
-          previousList.filter((g) => g.id !== id)
-        );
+        removeOfflineGoalFromCache(queryClient, id);
       }
       return { previousList };
     },
@@ -225,15 +271,17 @@ export function useDeleteGoal() {
       toast.error("Failed to delete goal", { description: error.message });
     },
     onSuccess: () => {
-      toast.success("Goal deleted");
+      toast.success(isBrowserOffline() ? "Goal delete saved offline" : "Goal deleted");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["goals"] });
-      queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      if (!isBrowserOffline()) {
+        queryClient.invalidateQueries({ queryKey: ["goals"] });
+        queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
     },
   });
 }

@@ -47,19 +47,30 @@
 
 - Phase 2: IndexedDB mutation queue for accounts, transactions, goals, budgets. ✅
 - Phase 3: Sync status UX and admin sync metrics. ✅
-- Phase 4: Attachments, OCR, imports, and conflict resolution scaffolding. ✅
+- Phase 4: Attachments, imports, transfers, and conflict resolution replay. ✅
+- Phase 5: Update/delete parity for core entities + goal funding replay. ✅
 
 ## Implemented Queue Scope
 
 - `addAccount`
+- `updateAccount`
+- `deleteAccount`
 - `addTransaction`
+- `updateTransaction`
+- `deleteTransaction`
+- `importTransactions`
 - `addGoal`
+- `updateGoal`
+- `deleteGoal`
+- `addFundsToGoal`
 - `addBudget`
+- `updateBudget`
+- `deleteBudget`
+- `createTransfer`
+- `uploadAttachment`
 
 ## Scaffolded Advanced Queue Types
 
-- `uploadAttachment`
-- `importTransactions`
 - `runReceiptOcr`
 
-Advanced queued items are currently marked for review during sync rather than auto-applied.
+`runReceiptOcr` remains review-required during sync; all other queued types are replayed automatically.
