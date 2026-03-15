@@ -4,24 +4,51 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+function normalizeOrigin(value: string) {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
 async function getBaseUrl() {
+  const configuredSiteUrl = normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL ?? "");
+  const additionalAllowedOrigins = (process.env.ALLOWED_AUTH_REDIRECT_ORIGINS ?? "")
+    .split(",")
+    .map((entry) => normalizeOrigin(entry.trim()))
+    .filter((entry): entry is string => Boolean(entry));
+
+  const allowlistedOrigins = new Set<string>([
+    ...(configuredSiteUrl ? [configuredSiteUrl] : []),
+    ...additionalAllowedOrigins,
+  ]);
+
+  if (configuredSiteUrl) {
+    return configuredSiteUrl;
+  }
+
   const headerStore = await headers();
-  const origin = headerStore.get("origin");
-  if (origin) return origin;
+  const originHeader = normalizeOrigin(headerStore.get("origin") ?? "");
+  if (originHeader && allowlistedOrigins.has(originHeader)) {
+    return originHeader;
+  }
 
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
 
   if (host) {
-    return `${proto}://${host}`;
-  }
-
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL;
+    const candidate = normalizeOrigin(`${proto}://${host}`);
+    if (candidate && allowlistedOrigins.has(candidate)) {
+      return candidate;
+    }
   }
 
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+    const vercelOrigin = normalizeOrigin(`https://${process.env.VERCEL_URL}`);
+    if (vercelOrigin) {
+      return vercelOrigin;
+    }
   }
 
   return "http://localhost:3000";

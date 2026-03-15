@@ -3,6 +3,13 @@
 -- Run this in the Supabase SQL Editor
 -- ============================================
 
+-- Harden function execution defaults.
+-- Explicit grants to `authenticated` are defined per approved RPC below.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
+
 -- ============================================
 -- Accounts table
 -- ============================================
@@ -759,15 +766,24 @@ STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+  effective_user_id uuid;
 BEGIN
-  IF p_user_id IS NULL THEN
+  IF current_user_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  effective_user_id := COALESCE(p_user_id, current_user_id);
+
+  IF effective_user_id IS DISTINCT FROM current_user_id THEN
     RETURN false;
   END IF;
 
   RETURN EXISTS (
     SELECT 1
     FROM public.admin_users
-    WHERE user_id = p_user_id
+    WHERE user_id = current_user_id
   );
 END;
 $$;
@@ -1322,10 +1338,19 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('avatars', 'avatars', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- Create the private "receipts" bucket (idempotent, enforce private)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('receipts', 'receipts', false)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
+
 DROP POLICY IF EXISTS "Authenticated users can upload own avatar" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated users can update own avatar" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated users can delete own avatar" ON storage.objects;
 DROP POLICY IF EXISTS "Public can view avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload own receipt" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update own receipt" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete own receipt" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can view own receipts" ON storage.objects;
 
 -- Allow authenticated users to upload only to their own folder
 CREATE POLICY "Authenticated users can upload own avatar"
@@ -1338,6 +1363,10 @@ CREATE POLICY "Authenticated users can upload own avatar"
 CREATE POLICY "Authenticated users can update own avatar"
   ON storage.objects FOR UPDATE TO authenticated
   USING (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  )
+  WITH CHECK (
     bucket_id = 'avatars'
     AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
   );
@@ -1353,3 +1382,35 @@ CREATE POLICY "Authenticated users can delete own avatar"
 CREATE POLICY "Public can view avatars"
   ON storage.objects FOR SELECT TO public
   USING (bucket_id = 'avatars');
+
+CREATE POLICY "Authenticated users can upload own receipt"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'receipts'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  );
+
+CREATE POLICY "Authenticated users can update own receipt"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'receipts'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  )
+  WITH CHECK (
+    bucket_id = 'receipts'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  );
+
+CREATE POLICY "Authenticated users can delete own receipt"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'receipts'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  );
+
+CREATE POLICY "Authenticated users can view own receipts"
+  ON storage.objects FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'receipts'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid()::text)
+  );

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { enqueueOfflineMutation } from "@/lib/offline/store";
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
@@ -89,10 +89,29 @@ export function useUploadAttachment() {
 }
 
 export function useAttachmentUrl(path: string | null) {
-  if (!path) return null;
-  const supabase = createClient();
-  const { data } = supabase.storage.from("receipts").getPublicUrl(path);
-  return data?.publicUrl ?? null;
+  const { data } = useQuery({
+    queryKey: ["receipt-url", path],
+    enabled: Boolean(path),
+    staleTime: 1000 * 60 * 5,
+    queryFn: async () => {
+      if (!path) {
+        return null;
+      }
+
+      const supabase = createClient();
+      const { data, error } = await supabase.storage
+        .from("receipts")
+        .createSignedUrl(path, 60 * 10);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data.signedUrl;
+    },
+  });
+
+  return data ?? null;
 }
 
 export function useDeleteAttachment() {
