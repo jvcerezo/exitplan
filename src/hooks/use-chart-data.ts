@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { EXPENSE_CATEGORIES } from "@/lib/constants";
 
 interface SpendingByCategory {
   category: string;
@@ -222,7 +223,12 @@ export function useSpendingComparison() {
         prevMap[tx.category] = (prevMap[tx.category] || 0) + Math.abs(tx.amount);
       }
 
-      const allCategories = new Set([...Object.keys(currentMap), ...Object.keys(prevMap)]);
+      const defaultExpenseCategories = EXPENSE_CATEGORIES.map((c) => c.toLowerCase());
+      const allCategories = new Set([
+        ...defaultExpenseCategories,
+        ...Object.keys(currentMap),
+        ...Object.keys(prevMap),
+      ]);
 
       return Array.from(allCategories)
         .map((category) => {

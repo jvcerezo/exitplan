@@ -13,6 +13,7 @@ import {
   Search,
   Map,
 } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/(auth)/actions";
 import { ThemeToggle } from "./theme-toggle";
@@ -44,9 +45,12 @@ export function Sidebar() {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-sidebar-border bg-sidebar">
       {/* Brand */}
       <div className="flex items-center h-16 px-6 border-b border-sidebar-border">
-        <h1 className="text-xl font-bold tracking-tight text-sidebar-foreground">
-          Exit<span className="text-primary">Plan</span>
-        </h1>
+        <Link href="/dashboard" className="inline-flex items-center gap-3">
+          <BrandMark className="h-10 w-10" />
+          <h1 className="text-xl font-bold tracking-tight text-sidebar-foreground">
+            Exit<span className="text-primary">Plan</span>
+          </h1>
+        </Link>
       </div>
 
       {/* Search */}

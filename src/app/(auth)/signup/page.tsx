@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,8 +99,11 @@ export default function SignupPage() {
     <div className="min-h-screen lg:grid lg:grid-cols-2">
       {/* ── Left brand panel (desktop only) ── */}
       <div className="hidden lg:flex flex-col justify-between bg-primary p-12 text-primary-foreground">
-        <Link href="/" className="text-xl font-bold tracking-tight">
-          Exit<span className="opacity-60">Plan</span>
+        <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">
+          <BrandMark className="h-11 w-11" />
+          <span>
+            Exit<span className="opacity-60">Plan</span>
+          </span>
         </Link>
 
         <div className="space-y-8">
@@ -126,8 +130,11 @@ export default function SignupPage() {
       {/* ── Right form panel ── */}
       <div className="flex flex-col items-center justify-center px-6 py-16 sm:px-10">
         {/* Mobile logo */}
-        <Link href="/" className="mb-10 text-2xl font-bold tracking-tight lg:hidden">
-          Exit<span className="text-primary">Plan</span>
+        <Link href="/" className="mb-10 inline-flex items-center gap-3 text-2xl font-bold tracking-tight lg:hidden">
+          <BrandMark className="h-11 w-11" />
+          <span className="text-[#14213D] dark:text-white">
+            Exit<span className="text-primary">Plan</span>
+          </span>
         </Link>
 
         <div className="w-full max-w-sm">

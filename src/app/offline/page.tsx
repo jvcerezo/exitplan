@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { WifiOff, RefreshCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Offline",
+  description: "Offline fallback page for ExitPlan cached routes and availability information.",
+  path: "/offline",
+  index: false,
+});
 
 const supportedRoutes = [
   "/dashboard",

@@ -23,6 +23,7 @@ import {
   BarChart3,
   CircleDollarSign,
 } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -359,9 +360,7 @@ export default function OnboardingPage() {
         <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
           <div className="w-full max-w-sm sm:max-w-md text-center space-y-6">
             <div className="flex justify-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                <Wallet className="h-10 w-10 text-primary" />
-              </div>
+              <BrandMark className="h-24 w-24 rounded-[28px]" />
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">

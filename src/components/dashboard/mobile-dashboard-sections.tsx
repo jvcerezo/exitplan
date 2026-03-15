@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CornerDownRight } from "lucide-react";
 import { TrendsSection } from "@/components/dashboard/trends-section";
 import { HealthScoreCard } from "@/components/dashboard/health-score-card";
 import { BudgetAlerts } from "@/components/dashboard/budget-alerts";
@@ -42,9 +43,13 @@ export function MobileDashboardSections() {
       />
 
       {activeSection === "trends" && (
-        <p className="-mt-2 px-1 text-[11px] text-muted-foreground">
-          Trends selected — choose a trend view below
-        </p>
+        <div className="-mt-1 px-1">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <CornerDownRight className="h-3.5 w-3.5 text-primary/70" />
+            <span>Trends selected — choose a trend view below</span>
+          </div>
+          <div className="ml-1.5 mt-1 h-2 w-px bg-border/80" />
+        </div>
       )}
 
       <div className="space-y-4">

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import Script from "next/script";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -14,8 +16,18 @@ import {
   Clock,
   Zap,
 } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "ExitPlan",
+  description:
+    "ExitPlan helps you track expenses, manage budgets, grow savings goals, and build a clear path to financial freedom.",
+  path: "/",
+  index: true,
+});
 
 const features = [
   {
@@ -77,13 +89,37 @@ const mockGoals = [
 ];
 
 export default function LandingPage() {
+  const landingStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "ExitPlan — Financial Freedom Tracker for Filipinos",
+    url: siteConfig.url,
+    description: siteConfig.description,
+    isPartOf: {
+      "@id": `${siteConfig.url}#website`,
+    },
+    about: {
+      "@type": "Thing",
+      name: "Personal finance tracking, budgeting, and savings goals",
+    },
+    primaryImageOfPage: absoluteUrl("/app-icon.svg"),
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <Script
+        id="landing-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(landingStructuredData) }}
+      />
       {/* Navigation */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="text-xl font-bold tracking-tight">
-            Exit<span className="text-primary">Plan</span>
+          <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">
+            <BrandMark className="h-11 w-11" />
+            <span className="text-[#14213D] dark:text-white">
+              Exit<span className="text-primary">Plan</span>
+            </span>
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
