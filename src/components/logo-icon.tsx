@@ -1,4 +1,4 @@
-import { type CSSProperties } from "react";
+import { useId, type CSSProperties } from "react";
 
 type LogoIconProps = {
   className?: string;
@@ -6,6 +6,8 @@ type LogoIconProps = {
 };
 
 export function LogoIcon({ className = "w-12 h-12", style }: LogoIconProps) {
+  const maskId = useId().replace(/:/g, "");
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -15,21 +17,30 @@ export function LogoIcon({ className = "w-12 h-12", style }: LogoIconProps) {
       aria-label="ExitPlan Logo"
       role="img"
     >
-      {/* Dark navy filled circle background */}
-      <circle cx="100" cy="100" r="100" fill="#0F1B2D" />
+      <defs>
+        <mask id={maskId}>
+          <rect width="200" height="200" fill="white" />
+          <path
+            d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z"
+            fill="black"
+            stroke="black"
+            strokeWidth="12"
+            strokeLinejoin="round"
+          />
+        </mask>
+      </defs>
 
-      {/* Teal ring */}
-      <circle cx="100" cy="100" r="88" fill="none" stroke="#3ECFAD" strokeWidth="5" />
-
-      {/* E-letter body */}
-      <rect x="62" y="58" width="18" height="84" rx="3" fill="#FFFFFF" />
-      <rect x="62" y="58" width="56" height="18" rx="3" fill="#FFFFFF" />
-      <rect x="62" y="91" width="44" height="16" rx="3" fill="#FFFFFF" />
-      <rect x="62" y="124" width="56" height="18" rx="3" fill="#FFFFFF" />
-
-      {/* Arrow: shaft + head pointing upper-right, teal, replacing middle-right of E */}
-      <line x1="96" y1="117" x2="132" y2="78" stroke="#3ECFAD" strokeWidth="11" strokeLinecap="round" />
-      <polyline points="110,72 138,72 138,100" fill="none" stroke="#3ECFAD" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+      <g transform="translate(8 0)">
+        <path
+          d="M 40 30 H 140 V 60 H 70 V 140 H 140 V 170 H 40 Z"
+          fill="#14213D"
+          mask={`url(#${maskId})`}
+        />
+        <path
+          d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z"
+          fill="#55C48A"
+        />
+      </g>
     </svg>
   );
 }
