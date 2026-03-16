@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BackButtonHandler } from "@/components/native/back-button-handler";
 import { OfflineStatusBanner } from "@/components/layout/offline-status-banner";
 import { OfflineSyncRuntime } from "@/components/layout/offline-sync-runtime";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
@@ -19,6 +20,12 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -135,7 +142,7 @@ export default function RootLayout({
   return (
     <html lang={siteConfig.language} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]`}
       >
         <Script
           id="exitplan-structured-data"
@@ -143,6 +150,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
         <ThemeProvider>
+          <BackButtonHandler />
           <ServiceWorkerRegister />
           <QueryProvider>
             <OfflineSyncRuntime />
