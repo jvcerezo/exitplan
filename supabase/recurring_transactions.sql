@@ -106,18 +106,16 @@ BEGIN
   FOR rec IN
     SELECT *
     FROM public.recurring_transactions
-    WHERE user_id        = current_user_id
-      AND is_active      = true
-      AND next_run_date  <= CURRENT_DATE
+    WHERE user_id       = current_user_id
+      AND is_active     = true
+      AND next_run_date <= CURRENT_DATE
       AND (end_date IS NULL OR next_run_date <= end_date)
-      -- Only process if no run_time set, or the caller's local time has reached it
-      AND (
-        rec.run_time IS NULL
-        OR p_current_time IS NULL
-        OR p_current_time >= rec.run_time
-      )
     FOR UPDATE
   LOOP
+    -- Skip if run_time is set and the caller's local time hasn't reached it yet
+    IF rec.run_time IS NOT NULL AND p_current_time IS NOT NULL AND p_current_time < rec.run_time THEN
+      CONTINUE;
+    END IF;
     -- Insert the new transaction
     INSERT INTO public.transactions (
       user_id, amount, category, description,
