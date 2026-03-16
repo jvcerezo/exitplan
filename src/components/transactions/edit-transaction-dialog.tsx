@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pencil,
   Utensils,
@@ -22,12 +22,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useUpdateTransaction } from "@/hooks/use-transactions";
 import { useAccounts } from "@/hooks/use-accounts";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CURRENCIES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Transaction } from "@/lib/types/database";
 import { TagInput } from "@/components/ui/tag-input";
+import { toast } from "sonner";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   food: Utensils,
@@ -84,9 +92,20 @@ export function EditTransactionDialog({
   const categories =
     type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
+  useEffect(() => {
+    if (!accountId && activeAccounts.length > 0) {
+      setAccountId(activeAccounts[0].id);
+    }
+  }, [accountId, activeAccounts]);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
+    if (!accountId) {
+      toast.error("Select an account before saving this transaction");
+      return;
+    }
 
     const rawAmount = parseFloat(formData.get("amount") as string);
     const amount =
@@ -104,7 +123,7 @@ export function EditTransactionDialog({
       currency: selectedAccount?.currency ?? transaction.currency ?? "PHP",
       description: (formData.get("description") as string) || category,
       date: formData.get("date") as string,
-      account_id: accountId || null,
+      account_id: accountId,
       tags: tags.length > 0 ? tags : null,
     });
 
@@ -118,47 +137,51 @@ export function EditTransactionDialog({
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Edit Transaction</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Account selector pills */}
+        <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
+          {/* Account selector */}
           {activeAccounts.length > 0 && (
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <p className="text-xs font-medium text-muted-foreground">
                 Account
               </p>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => setAccountId("")}
-                  className={cn(
-                    "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                    !accountId
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                  )}
-                >
-                  None
-                </button>
-                {activeAccounts.map((account) => (
-                  <button
-                    key={account.id}
-                    type="button"
-                    onClick={() => setAccountId(account.id)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                      accountId === account.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
-                  >
-                    {account.name}
-                  </button>
-                ))}
-              </div>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Choose an account" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <span className="truncate font-medium">{account.name}</span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">
+                          {account.currency}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {selectedAccount && (
+                <div className="rounded-xl border border-border/70 bg-muted/25 px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {selectedAccount.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{selectedAccount.type}</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold text-primary">
+                      {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -212,7 +235,7 @@ export function EditTransactionDialog({
               max="9999999999.99"
               defaultValue={Math.abs(transaction.amount)}
               required
-              className="flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-0 min-w-0 flex-1 bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
 
@@ -259,19 +282,19 @@ export function EditTransactionDialog({
           </div>
 
           {/* Description + Date */}
-          <div className="grid grid-cols-[1fr_auto] gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto] min-w-0">
             <input
               name="description"
               defaultValue={transaction.description}
               placeholder="Add a note..."
-              className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
+              className="w-full min-w-0 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
             />
             <input
               name="date"
               type="date"
               defaultValue={transaction.date}
               required
-              className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+              className="w-full min-w-0 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
 
@@ -282,7 +305,7 @@ export function EditTransactionDialog({
           <Button
             type="submit"
             className="w-full"
-            disabled={updateTransaction.isPending || !category}
+            disabled={updateTransaction.isPending || !category || !accountId}
           >
             {updateTransaction.isPending ? "Saving..." : "Save Changes"}
           </Button>

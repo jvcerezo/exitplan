@@ -542,57 +542,61 @@ export function AddTransactionDialog({
                   const canAutoFill = isLast && !isBalanced && totalVal > 0 && remaining > 0;
 
                   return (
-                    <div key={i} className="flex items-center gap-2 px-3 py-2.5 bg-background">
-                      {/* Account pills */}
-                      <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
-                        {activeAccounts.length > 0 ? (
-                          activeAccounts.map((acc) => {
-                            const selectedInOtherPart = splitParts.some(
-                              (otherPart, idx) =>
-                                idx !== i && otherPart.accountId === acc.id
-                            );
+                    <div key={i} className="px-3 py-2.5 bg-background space-y-2.5">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-center min-w-0">
+                        <div className="min-w-0">
+                          {activeAccounts.length > 0 ? (
+                            <Select
+                              value={part.accountId}
+                              onValueChange={(value) => updatePart(i, "accountId", value)}
+                            >
+                              <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Choose an account" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {activeAccounts.map((acc) => {
+                                  const selectedInOtherPart = splitParts.some(
+                                    (otherPart, idx) =>
+                                      idx !== i && otherPart.accountId === acc.id
+                                  );
 
-                            return (
-                              <button
-                                key={acc.id}
-                                type="button"
-                                onClick={() => updatePart(i, "accountId", acc.id)}
-                                disabled={selectedInOtherPart}
-                                className={cn(
-                                  "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors border",
-                                  part.accountId === acc.id
-                                    ? "bg-primary/10 text-primary border-primary/40"
-                                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted",
-                                  selectedInOtherPart &&
-                                    "opacity-40 cursor-not-allowed hover:bg-muted/50"
-                                )}
-                              >
-                                {acc.name}
-                              </button>
-                            );
-                          })
-                        ) : (
-                          <span className="text-xs text-muted-foreground">No accounts</span>
-                        )}
-                      </div>
+                                  return (
+                                    <SelectItem
+                                      key={acc.id}
+                                      value={acc.id}
+                                      disabled={selectedInOtherPart}
+                                    >
+                                      <div className="flex min-w-0 items-center justify-between gap-3">
+                                        <span className="truncate font-medium">{acc.name}</span>
+                                        <span className="shrink-0 text-[10px] text-muted-foreground">
+                                          {acc.currency}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No accounts</span>
+                          )}
+                        </div>
 
-                      {/* Amount */}
-                      <div className="flex items-baseline gap-0.5 shrink-0">
-                        <span className="text-sm text-muted-foreground/60">{partSym}</span>
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          step="0.01"
-                          min="0.01"
-                          value={part.amount}
-                          onChange={(e) => updatePart(i, "amount", e.target.value)}
-                          placeholder="0.00"
-                          className="w-24 bg-transparent text-right text-sm font-semibold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                      </div>
+                        <div className="flex items-baseline gap-0.5 sm:shrink-0">
+                          <span className="text-sm text-muted-foreground/60">{partSym}</span>
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            min="0.01"
+                            value={part.amount}
+                            onChange={(e) => updatePart(i, "amount", e.target.value)}
+                            placeholder="0.00"
+                            className="w-24 bg-transparent text-right text-sm font-semibold outline-none placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
 
-                      {/* Auto-fill or remove */}
-                      <div className="w-14 shrink-0 text-right">
+                        <div className="w-14 sm:shrink-0 text-right">
                         {canAutoFill ? (
                           <button
                             type="button"
@@ -612,6 +616,19 @@ export function AddTransactionDialog({
                           </button>
                         ) : null}
                       </div>
+
+                      </div>
+
+                      {partAcc && (
+                        <div className="rounded-lg border border-border/70 bg-muted/25 px-2.5 py-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate text-xs font-medium text-foreground">{partAcc.name}</p>
+                            <p className="shrink-0 text-xs font-semibold text-primary">
+                              {formatCurrency(partAcc.balance, partAcc.currency)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

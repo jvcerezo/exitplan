@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Split } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,11 +10,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAddTransaction, useDeleteTransaction } from "@/hooks/use-transactions";
 import { useAccounts } from "@/hooks/use-accounts";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CURRENCIES } from "@/lib/constants";
 import { formatCurrency, cn } from "@/lib/utils";
 import type { Transaction } from "@/lib/types/database";
+import { toast } from "sonner";
 
 interface SplitPart {
   amount: string;
@@ -33,6 +41,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
   const deleteTransaction = useDeleteTransaction();
   const { data: accounts } = useAccounts();
   const activeAccounts = accounts ?? [];
+  const defaultAccountId = transaction.account_id ?? activeAccounts[0]?.id ?? "";
 
   const isExpense = transaction.amount < 0;
   const totalAbs = Math.abs(transaction.amount);
@@ -43,19 +52,35 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
       amount: (totalAbs / 2).toFixed(2),
       category: transaction.category,
       description: transaction.description,
-      accountId: transaction.account_id ?? "",
+      accountId: defaultAccountId,
     },
     {
       amount: (totalAbs / 2).toFixed(2),
       category: "",
       description: "",
-      accountId: transaction.account_id ?? "",
+      accountId: defaultAccountId,
     },
   ]);
 
   const allocatedTotal = parts.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
   const remaining = Math.round((totalAbs - allocatedTotal) * 100) / 100;
   const isBalanced = Math.abs(remaining) < 0.01;
+  const hasMissingPartAccount = parts.some((part) => !part.accountId);
+
+  useEffect(() => {
+    if (!defaultAccountId) return;
+
+    setParts((prev) =>
+      prev.map((part) =>
+        part.accountId
+          ? part
+          : {
+              ...part,
+              accountId: defaultAccountId,
+            }
+      )
+    );
+  }, [defaultAccountId]);
 
   function updatePart(index: number, field: keyof SplitPart, value: string) {
     setParts((prev) => prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)));
@@ -64,7 +89,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
   function addPart() {
     setParts((prev) => [
       ...prev,
-      { amount: "0.00", category: "", description: "", accountId: transaction.account_id ?? "" },
+      { amount: "0.00", category: "", description: "", accountId: defaultAccountId },
     ]);
   }
 
@@ -86,6 +111,10 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isBalanced) return;
+    if (hasMissingPartAccount) {
+      toast.error("Select an account for each split part");
+      return;
+    }
 
     const splitGroupId = crypto.randomUUID();
 
@@ -98,7 +127,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
           description: part.description || transaction.description,
           date: transaction.date,
           currency: transaction.currency,
-          account_id: part.accountId || null,
+          account_id: part.accountId,
           tags: transaction.tags,
           split_group_id: splitGroupId,
         });
@@ -121,7 +150,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
           <Split className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90svh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Split Transaction</DialogTitle>
         </DialogHeader>
@@ -197,7 +226,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
                   </div>
 
                   {/* Description + Account */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 min-w-0">
                     <input
                       value={part.description}
                       onChange={(e) => updatePart(i, "description", e.target.value)}
@@ -205,16 +234,26 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
                       className="rounded-lg border bg-transparent px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
                     />
                     {activeAccounts.length > 0 && (
-                      <select
+                      <Select
                         value={part.accountId}
-                        onChange={(e) => updatePart(i, "accountId", e.target.value)}
-                        className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
+                        onValueChange={(value) => updatePart(i, "accountId", value)}
                       >
-                        <option value="">No account</option>
-                        {activeAccounts.map((a) => (
-                          <option key={a.id} value={a.id}>{a.name}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Choose an account" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeAccounts.map((a) => (
+                            <SelectItem key={a.id} value={a.id}>
+                              <div className="flex min-w-0 items-center justify-between gap-3">
+                                <span className="truncate font-medium">{a.name}</span>
+                                <span className="shrink-0 text-[10px] text-muted-foreground">
+                                  {a.currency}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </div>
                 </div>
@@ -243,7 +282,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
             <Button
               type="submit"
               className="flex-1"
-              disabled={!isBalanced || addTransaction.isPending || parts.some((p) => !p.category)}
+              disabled={!isBalanced || addTransaction.isPending || parts.some((p) => !p.category) || hasMissingPartAccount}
             >
               {addTransaction.isPending ? "Splitting..." : "Create Split"}
             </Button>
