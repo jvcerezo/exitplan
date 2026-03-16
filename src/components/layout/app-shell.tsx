@@ -8,6 +8,7 @@ import { useOfflineStatus } from "@/hooks/use-offline-status";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { TourProvider } from "@/providers/tour-provider";
 import { TourOverlay } from "@/components/layout/tour-overlay";
+import { RecurringProcessor } from "@/components/transactions/recurring-processor";
 
 function AppShellInner({ children }: { children: ReactNode }) {
   useKeyboardShortcuts();
@@ -33,6 +34,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {children}
       <CommandPalette />
       <TourOverlay />
+      <RecurringProcessor />
     </>
   );
 }

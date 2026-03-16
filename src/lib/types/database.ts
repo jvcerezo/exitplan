@@ -130,3 +130,32 @@ export interface MarketRate {
   rate_to_php: number;
   updated_at: string;
 }
+
+export type RecurringFrequency = "daily" | "weekly" | "monthly";
+
+export interface RecurringTransaction {
+  id: string;
+  created_at: string;
+  user_id: string;
+  amount: number;
+  category: string;
+  description: string | null;
+  currency: string;
+  account_id: string | null;
+  frequency: RecurringFrequency;
+  interval_count: number;
+  start_date: string;
+  end_date: string | null;
+  next_run_date: string;
+  last_run_date: string | null;
+  run_time: string | null;
+  is_active: boolean;
+  tags: string[] | null;
+}
+
+export type RecurringTransactionInsert = Omit<
+  RecurringTransaction,
+  "id" | "created_at" | "user_id" | "last_run_date"
+> & {
+  last_run_date?: string | null;
+};

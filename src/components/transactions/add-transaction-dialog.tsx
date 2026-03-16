@@ -17,6 +17,7 @@ import {
   Split,
   Trash2,
   Wallet,
+  Repeat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,9 +38,14 @@ import { AddAccountDialog } from "@/components/accounts/add-account-dialog";
 import { TagInput } from "@/components/ui/tag-input";
 import { useAddTransaction } from "@/hooks/use-transactions";
 import { useAccounts } from "@/hooks/use-accounts";
+import {
+  useAddRecurringTransaction,
+  useProcessDueRecurringTransactions,
+} from "@/hooks/use-recurring-transactions";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CURRENCIES } from "@/lib/constants";
 import { formatCurrency, cn } from "@/lib/utils";
 import { toast } from "sonner";
+import type { RecurringFrequency } from "@/lib/types/database";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   food: Utensils,
@@ -123,8 +129,17 @@ export function AddTransactionDialog({
     { accountId: "", amount: "" },
   ]);
 
+  // Recurring mode
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState<RecurringFrequency>("monthly");
+  const [recurringInterval, setRecurringInterval] = useState("1");
+  const [recurringEndDate, setRecurringEndDate] = useState("");
+  const [recurringRunTime, setRecurringRunTime] = useState("");
+
   const { data: accounts } = useAccounts();
   const addTransaction = useAddTransaction();
+  const addRecurring = useAddRecurringTransaction();
+  const processRecurring = useProcessDueRecurringTransactions();
 
   const activeAccounts = accounts ?? [];
   const isScopedAccountEntry = Boolean(defaultAccountId);
@@ -169,6 +184,11 @@ export function AddTransactionDialog({
         { accountId: firstId, amount: "" },
         { accountId: "", amount: "" },
       ]);
+      setIsRecurring(false);
+      setRecurringFrequency("monthly");
+      setRecurringInterval("1");
+      setRecurringEndDate("");
+      setRecurringRunTime("");
       setTimeout(() => amountRef.current?.focus(), 100);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,7 +272,37 @@ export function AddTransactionDialog({
       }
     }
 
-    if (splitMode && !isScopedAccountEntry) {
+    if (isRecurring && !splitMode) {
+      if (!effectiveAccountId) {
+        toast.error("Select an account before adding this transaction");
+        return;
+      }
+
+      const rawAmount = parseFloat(amount);
+      const signedAmount = type === "expense" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
+      const today = new Date().toISOString().split("T")[0];
+
+      await addRecurring.mutateAsync({
+        amount: signedAmount,
+        category: finalCategory,
+        description: description || null,
+        currency: selectedAccount?.currency ?? "PHP",
+        account_id: effectiveAccountId,
+        frequency: recurringFrequency,
+        interval_count: Math.max(1, parseInt(recurringInterval, 10) || 1),
+        start_date: date,
+        end_date: recurringEndDate || null,
+        run_time: recurringRunTime || null,
+        next_run_date: date,
+        is_active: true,
+        tags: tags.length > 0 ? tags : null,
+      });
+
+      // If start date is today or past, process immediately so the first entry appears now
+      if (date <= today) {
+        processRecurring.mutate();
+      }
+    } else if (splitMode && !isScopedAccountEntry) {
       if (!allSplitAccountsSelected || hasDuplicateSplitAccounts) {
         toast.error("Select different accounts for each split part");
         return;
@@ -363,21 +413,38 @@ export function AddTransactionDialog({
       <DialogHeader>
         <div className="flex items-center justify-between pr-6">
           <DialogTitle>Add {label}</DialogTitle>
-          {type === "expense" && !isScopedAccountEntry && (
-            <button
-              type="button"
-              onClick={() => setSplitMode((v) => !v)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-colors",
-                splitMode
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-              )}
-            >
-              <Split className="h-3 w-3" />
-              Split
-            </button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {!isRecurring && type === "expense" && !isScopedAccountEntry && (
+              <button
+                type="button"
+                onClick={() => setSplitMode((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-colors",
+                  splitMode
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                )}
+              >
+                <Split className="h-3 w-3" />
+                Split
+              </button>
+            )}
+            {!splitMode && (
+              <button
+                type="button"
+                onClick={() => setIsRecurring((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-colors",
+                  isRecurring
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                )}
+              >
+                <Repeat className="h-3 w-3" />
+                Repeat
+              </button>
+            )}
+          </div>
         </div>
       </DialogHeader>
 
@@ -491,13 +558,79 @@ export function AddTransactionDialog({
 
             {!hasNoAccounts && sharedFields}
 
+            {!hasNoAccounts && isRecurring && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
+                <p className="text-xs font-medium text-primary flex items-center gap-1.5">
+                  <Repeat className="h-3.5 w-3.5" />
+                  Repeat settings
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={recurringInterval}
+                    onChange={(e) => setRecurringInterval(e.target.value)}
+                    className="w-16 px-2 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  />
+                  <Select
+                    value={recurringFrequency}
+                    onValueChange={(v) => setRecurringFrequency(v as RecurringFrequency)}
+                  >
+                    <SelectTrigger className="flex-1 h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Day(s)</SelectItem>
+                      <SelectItem value="weekly">Week(s)</SelectItem>
+                      <SelectItem value="monthly">Month(s)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Time <span className="opacity-60">(optional)</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={recurringRunTime}
+                      onChange={(e) => setRecurringRunTime(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      End date <span className="opacity-60">(optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={recurringEndDate}
+                      onChange={(e) => setRecurringEndDate(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {!hasNoAccounts && (
               <Button
                 type="submit"
                 className="w-full"
-                disabled={addTransaction.isPending || !category || !effectiveAccountId}
+                disabled={
+                  (isRecurring ? addRecurring.isPending : addTransaction.isPending) ||
+                  !category ||
+                  !effectiveAccountId
+                }
               >
-                {addTransaction.isPending ? "Adding..." : `Add ${label}`}
+                {isRecurring
+                  ? addRecurring.isPending
+                    ? "Saving..."
+                    : `Set Recurring ${label}`
+                  : addTransaction.isPending
+                    ? "Adding..."
+                    : `Add ${label}`}
               </Button>
             )}
           </>
