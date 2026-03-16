@@ -114,7 +114,7 @@ export function AddGoalDialog({
   }
 
   const dialogContent = (
-    <DialogContent className="sm:max-w-md overflow-x-hidden p-4 sm:p-6">
+    <DialogContent className="sm:max-w-md overflow-x-hidden px-4 pt-4 sm:px-6 sm:pt-6">
       <DialogHeader>
         <DialogTitle className="text-base sm:text-lg">Create a New Goal</DialogTitle>
       </DialogHeader>
