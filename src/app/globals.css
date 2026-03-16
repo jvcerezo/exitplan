@@ -157,11 +157,18 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-touch-callout: none;
+    user-select: none;
   }
   body {
     @apply bg-background text-foreground;
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
     overflow-x: hidden;
+  }
+  input,
+  textarea {
+    user-select: auto;
   }
   input[type="password"] {
     font-family: Verdana, sans-serif;

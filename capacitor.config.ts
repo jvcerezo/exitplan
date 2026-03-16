@@ -18,6 +18,12 @@ const config: CapacitorConfig = {
         },
       }
     : {}),
+  plugins: {
+    Keyboard: {
+      resize: "none",
+      style: "dark",
+    },
+  },
 };
 
 export default config;
