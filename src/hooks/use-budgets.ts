@@ -37,6 +37,10 @@ function normalizeBudgetMonthByPeriod(month: string, period: BudgetPeriod): stri
   return formatDateLocal(date);
 }
 
+function normalizeBudgetCategory(category: string): string {
+  return category.trim().toLowerCase();
+}
+
 export function useBudgets(month: string, period: BudgetPeriod = "monthly") {
   return useQuery({
     queryKey: ["budgets", month, period],
@@ -109,7 +113,7 @@ export function useBudgetSummary(month: string, period: BudgetPeriod = "monthly"
         supabase.from("budgets").select("*").eq("month", month).eq("period", period),
         supabase
           .from("transactions")
-          .select("amount, category")
+          .select("amount, category, description")
           .gte("date", startDate)
           .lte("date", endDate)
           .lt("amount", 0),
@@ -181,6 +185,7 @@ export function useBudgetSummary(month: string, period: BudgetPeriod = "monthly"
         totalBudget,
         totalRollover,
         totalSpent,
+        transactions, // add raw transactions for UI use
       };
     },
   });
@@ -193,14 +198,30 @@ export function useAddBudget() {
     mutationFn: async (budget: BudgetInsert) => {
       const period = budget.period ?? "monthly";
       const normalizedMonth = normalizeBudgetMonthByPeriod(budget.month, period);
+      const normalizedCategory = normalizeBudgetCategory(budget.category);
 
       if (isBrowserOffline()) {
+        const cachedBudgets = queryClient
+          .getQueriesData<Budget[]>({ queryKey: ["budgets"] })
+          .flatMap(([, value]) => value ?? []);
+
+        const alreadyExistsOffline = cachedBudgets.some(
+          (entry) =>
+            normalizeBudgetCategory(entry.category) === normalizedCategory &&
+            entry.month === normalizedMonth &&
+            entry.period === period
+        );
+
+        if (alreadyExistsOffline) {
+          throw new Error("A budget already exists for this category and period");
+        }
+
         const localId = createOfflineId("budget");
         const offlineBudget: Budget = {
           id: localId,
           created_at: new Date().toISOString(),
           user_id: "offline",
-          category: budget.category,
+          category: normalizedCategory,
           amount: budget.amount,
           month: normalizedMonth,
           period,
@@ -212,7 +233,7 @@ export function useAddBudget() {
           type: "addBudget",
           payload: {
             localId,
-            category: budget.category,
+            category: normalizedCategory,
             amount: budget.amount,
             month: normalizedMonth,
             period,
@@ -230,10 +251,25 @@ export function useAddBudget() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const { data: existingBudget, error: existingBudgetError } = await supabase
+        .from("budgets")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("month", normalizedMonth)
+        .eq("period", period)
+        .eq("category", normalizedCategory)
+        .maybeSingle();
+
+      if (existingBudgetError) throw new Error(existingBudgetError.message);
+      if (existingBudget) {
+        throw new Error("A budget already exists for this category and period");
+      }
+
       const { data, error } = await supabase
         .from("budgets")
         .insert({
           ...budget,
+          category: normalizedCategory,
           month: normalizedMonth,
           period,
           user_id: user.id,
@@ -246,6 +282,7 @@ export function useAddBudget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
       queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
       queryClient.invalidateQueries({ queryKey: ["health-score"] });
       queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
@@ -266,20 +303,106 @@ export function useUpdateBudget() {
       ...updates
     }: Partial<BudgetInsert> & { id: string }) => {
       if (isBrowserOffline()) {
+        const cachedBudgets = queryClient
+          .getQueriesData<Budget[]>({ queryKey: ["budgets"] })
+          .flatMap(([, value]) => value ?? []);
+
+        const currentBudget = cachedBudgets.find((entry) => entry.id === id);
+
+        const nextPeriod = updates.period ?? currentBudget?.period ?? "monthly";
+        const nextMonth = normalizeBudgetMonthByPeriod(
+          updates.month ?? currentBudget?.month ?? formatDateLocal(new Date()),
+          nextPeriod
+        );
+        const nextCategory = normalizeBudgetCategory(
+          updates.category ?? currentBudget?.category ?? ""
+        );
+
+        const duplicateOffline = cachedBudgets.some(
+          (entry) =>
+            entry.id !== id &&
+            normalizeBudgetCategory(entry.category) === nextCategory &&
+            entry.month === nextMonth &&
+            entry.period === nextPeriod
+        );
+
+        if (duplicateOffline) {
+          throw new Error("A budget already exists for this category and period");
+        }
+
         await enqueueOfflineMutation({
           id: createOfflineId("mutation"),
           type: "updateBudget",
-          payload: { id, ...updates },
+          payload: {
+            id,
+            ...updates,
+            ...(updates.category !== undefined
+              ? { category: normalizeBudgetCategory(updates.category) }
+              : {}),
+            ...(updates.month !== undefined || updates.period !== undefined
+              ? { month: nextMonth, period: nextPeriod }
+              : {}),
+          },
         });
 
-        updateOfflineBudgetInCache(queryClient, id, updates as Partial<Budget>);
-        return { id, ...updates };
+        const normalizedUpdates: Partial<Budget> = {
+          ...updates,
+          ...(updates.category !== undefined
+            ? { category: normalizeBudgetCategory(updates.category) }
+            : {}),
+          ...(updates.month !== undefined || updates.period !== undefined
+            ? { month: nextMonth, period: nextPeriod }
+            : {}),
+        };
+
+        updateOfflineBudgetInCache(queryClient, id, normalizedUpdates);
+        return { id, ...normalizedUpdates };
       }
 
       const supabase = createClient();
+      const { data: currentBudget, error: currentBudgetError } = await supabase
+        .from("budgets")
+        .select("id, user_id, category, month, period")
+        .eq("id", id)
+        .single();
+
+      if (currentBudgetError) throw new Error(currentBudgetError.message);
+
+      const nextPeriod = updates.period ?? currentBudget.period;
+      const nextMonth = normalizeBudgetMonthByPeriod(
+        updates.month ?? currentBudget.month,
+        nextPeriod
+      );
+      const nextCategory = normalizeBudgetCategory(
+        updates.category ?? currentBudget.category
+      );
+
+      const { data: duplicateBudget, error: duplicateBudgetError } = await supabase
+        .from("budgets")
+        .select("id")
+        .eq("user_id", currentBudget.user_id)
+        .eq("month", nextMonth)
+        .eq("period", nextPeriod)
+        .eq("category", nextCategory)
+        .neq("id", id)
+        .maybeSingle();
+
+      if (duplicateBudgetError) throw new Error(duplicateBudgetError.message);
+      if (duplicateBudget) {
+        throw new Error("A budget already exists for this category and period");
+      }
+
+      const normalizedUpdates = {
+        ...updates,
+        ...(updates.category !== undefined ? { category: nextCategory } : {}),
+        ...(updates.month !== undefined || updates.period !== undefined
+          ? { month: nextMonth, period: nextPeriod }
+          : {}),
+      };
+
       const { data, error } = await supabase
         .from("budgets")
-        .update(updates)
+        .update(normalizedUpdates)
         .eq("id", id)
         .select()
         .single();
@@ -290,6 +413,7 @@ export function useUpdateBudget() {
     onSuccess: () => {
       if (!isBrowserOffline()) {
         queryClient.invalidateQueries({ queryKey: ["budgets"] });
+        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
         queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
         queryClient.invalidateQueries({ queryKey: ["health-score"] });
         queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
@@ -332,6 +456,7 @@ export function useToggleBudgetRollover() {
     onSuccess: (_, { rollover }) => {
       if (!isBrowserOffline()) {
         queryClient.invalidateQueries({ queryKey: ["budgets"] });
+        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
         queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
         queryClient.invalidateQueries({ queryKey: ["health-score"] });
         queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
@@ -420,6 +545,7 @@ export function useCopyBudgetsFromMonth() {
     },
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
       queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
       queryClient.invalidateQueries({ queryKey: ["health-score"] });
       queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
@@ -504,6 +630,7 @@ export function useDeleteBudget() {
     onSuccess: () => {
       if (!isBrowserOffline()) {
         queryClient.invalidateQueries({ queryKey: ["budgets"] });
+        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
         queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
         queryClient.invalidateQueries({ queryKey: ["health-score"] });
         queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });

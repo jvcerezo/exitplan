@@ -11,6 +11,7 @@ export function useRealtimeSync() {
   function invalidateTransactionDerivedQueries() {
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+    queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
     queryClient.invalidateQueries({ queryKey: ["transactions", "spending-by-category"] });
     queryClient.invalidateQueries({ queryKey: ["transactions", "net-worth"] });
     queryClient.invalidateQueries({ queryKey: ["transactions", "spending-comparison"] });
@@ -30,6 +31,7 @@ export function useRealtimeSync() {
 
   function invalidateBudgetDerivedQueries() {
     queryClient.invalidateQueries({ queryKey: ["budgets"] });
+    queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
     queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
     queryClient.invalidateQueries({ queryKey: ["health-score"] });
     queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });

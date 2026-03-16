@@ -22,6 +22,7 @@ import {
 import { useAddBudget, useBudgetRecommendations } from "@/hooks/use-budgets";
 import { EXPENSE_CATEGORIES } from "@/lib/constants";
 import { formatCurrency, cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { BudgetPeriod } from "@/lib/types/database";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -123,15 +124,25 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
         })
     : [];
 
+  const normalizedExistingCategories = existingCategories.map((item) => item.toLowerCase());
+
+  // Only allow categories not already budgeted for this period
   const availableCategories = EXPENSE_CATEGORIES.filter(
-    (cat) => !existingCategories.includes(cat.toLowerCase())
+    (cat) => !normalizedExistingCategories.includes(cat.toLowerCase()) || cat.toLowerCase() === category
   );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const normalizedCategory = category.toLowerCase();
+
+    // Prevent duplicate budget for same category/period
+    if (normalizedExistingCategories.includes(normalizedCategory)) {
+      toast.error("A budget for this category already exists in this period");
+      return;
+    }
 
     await addBudget.mutateAsync({
-      category,
+      category: normalizedCategory,
       amount: parseFloat(amount),
       month,
       period,
@@ -305,7 +316,12 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
           <Button
             type="submit"
             className="w-full"
-            disabled={addBudget.isPending || !category || !amount}
+            disabled={
+              addBudget.isPending ||
+              !category ||
+              !amount ||
+              normalizedExistingCategories.includes(category.toLowerCase())
+            }
           >
             {addBudget.isPending ? "Adding..." : "Add Budget"}
           </Button>

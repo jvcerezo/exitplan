@@ -34,7 +34,13 @@ function fromMonthlyAmount(monthlyAmount: number, period: BudgetPeriod): number 
   return (monthlyAmount * 12) / 52;
 }
 
-const BUDGET_QUERY_KEYS = [["budgets"]];
+const BUDGET_QUERY_KEYS = [
+  ["budgets"],
+  ["budgets", "summary"],
+  ["safe-to-spend"],
+  ["health-score"],
+  ["transactions", "summary"],
+];
 
 interface BudgetCardProps {
   budget: Budget;

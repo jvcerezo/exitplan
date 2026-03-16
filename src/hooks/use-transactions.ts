@@ -338,6 +338,7 @@ export function useAddTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
       queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
       queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
       queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
@@ -418,6 +419,7 @@ export function useUpdateTransaction() {
       if (!isBrowserOffline()) {
         queryClient.invalidateQueries({ queryKey: ["transactions"] });
         queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
         queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
         queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
         queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
@@ -510,6 +512,7 @@ export function useImportTransactions() {
       if (!isBrowserOffline()) {
         queryClient.invalidateQueries({ queryKey: ["transactions"] });
         queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
         queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
         queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
         queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
@@ -633,6 +636,7 @@ export function useDeleteTransaction() {
       if (!isBrowserOffline()) {
         queryClient.invalidateQueries({ queryKey: ["transactions"] });
         queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
         queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
         queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
         queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
