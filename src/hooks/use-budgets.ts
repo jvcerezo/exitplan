@@ -10,6 +10,33 @@ import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Budget, BudgetInsert, BudgetPeriod } from "@/lib/types/database";
 
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeBudgetMonthByPeriod(month: string, period: BudgetPeriod): string {
+  const [yearRaw, monthRaw, dayRaw] = month.split("-").map(Number);
+  const year = Number.isFinite(yearRaw) ? yearRaw : new Date().getFullYear();
+  const monthIndex = Number.isFinite(monthRaw) ? monthRaw - 1 : 0;
+  const day = Number.isFinite(dayRaw) ? dayRaw : 1;
+
+  if (period === "monthly") {
+    return `${year}-${String(monthIndex + 1).padStart(2, "0")}-01`;
+  }
+
+  if (period === "quarterly") {
+    const quarterStartMonth = Math.floor(monthIndex / 3) * 3 + 1;
+    return `${year}-${String(quarterStartMonth).padStart(2, "0")}-01`;
+  }
+
+  const date = new Date(year, monthIndex, day);
+  date.setDate(date.getDate() - date.getDay());
+  return formatDateLocal(date);
+}
+
 export function useBudgets(month: string, period: BudgetPeriod = "monthly") {
   return useQuery({
     queryKey: ["budgets", month, period],
@@ -161,6 +188,9 @@ export function useAddBudget() {
 
   return useMutation({
     mutationFn: async (budget: BudgetInsert) => {
+      const period = budget.period ?? "monthly";
+      const normalizedMonth = normalizeBudgetMonthByPeriod(budget.month, period);
+
       if (isBrowserOffline()) {
         const localId = createOfflineId("budget");
         const offlineBudget: Budget = {
@@ -169,8 +199,8 @@ export function useAddBudget() {
           user_id: "offline",
           category: budget.category,
           amount: budget.amount,
-          month: budget.month,
-          period: budget.period ?? "monthly",
+          month: normalizedMonth,
+          period,
           rollover: budget.rollover ?? false,
         };
 
@@ -181,8 +211,8 @@ export function useAddBudget() {
             localId,
             category: budget.category,
             amount: budget.amount,
-            month: budget.month,
-            period: budget.period ?? "monthly",
+            month: normalizedMonth,
+            period,
             rollover: budget.rollover ?? false,
           },
         });
@@ -199,7 +229,12 @@ export function useAddBudget() {
 
       const { data, error } = await supabase
         .from("budgets")
-        .insert({ ...budget, user_id: user.id })
+        .insert({
+          ...budget,
+          month: normalizedMonth,
+          period,
+          user_id: user.id,
+        })
         .select()
         .single();
 

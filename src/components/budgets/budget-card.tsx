@@ -10,13 +10,29 @@ import { useUpdateBudget, useToggleBudgetRollover } from "@/hooks/use-budgets";
 import { useUndoDelete } from "@/hooks/use-undo-delete";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { Budget } from "@/lib/types/database";
+import type { Budget, BudgetPeriod } from "@/lib/types/database";
 
-const PERIOD_LABEL: Record<string, string> = {
+const PERIOD_LABEL: Record<BudgetPeriod, string> = {
   weekly: "Weekly",
   monthly: "Monthly",
   quarterly: "Quarterly",
 };
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function toMonthlyAmount(amount: number, period: BudgetPeriod): number {
+  if (period === "monthly") return amount;
+  if (period === "quarterly") return amount / 3;
+  return (amount * 52) / 12;
+}
+
+function fromMonthlyAmount(monthlyAmount: number, period: BudgetPeriod): number {
+  if (period === "monthly") return monthlyAmount;
+  if (period === "quarterly") return monthlyAmount * 3;
+  return (monthlyAmount * 12) / 52;
+}
 
 const BUDGET_QUERY_KEYS = [["budgets"]];
 
@@ -30,6 +46,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
   const undoDelete = useUndoDelete("budgets", BUDGET_QUERY_KEYS);
   const updateBudget = useUpdateBudget();
   const toggleRollover = useToggleBudgetRollover();
+  const [showEquivalents, setShowEquivalents] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(budget.amount));
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -50,6 +67,13 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
   const percentage = effectiveBudget > 0 ? (spent / effectiveBudget) * 100 : 0;
   const clampedPercentage = Math.min(percentage, 100);
   const remaining = Math.round((effectiveBudget - spent) * 100) / 100;
+  const monthlyEquivalent = toMonthlyAmount(budget.amount, budget.period);
+  const equivalentAmounts = (Object.keys(PERIOD_LABEL) as BudgetPeriod[])
+    .filter((targetPeriod) => targetPeriod !== budget.period)
+    .map((targetPeriod) => ({
+      period: targetPeriod,
+      amount: roundMoney(fromMonthlyAmount(monthlyEquivalent, targetPeriod)),
+    }));
 
   function getProgressColor(pct: number) {
     if (pct > 100) return "bg-destructive";
@@ -83,12 +107,25 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
           <div className="space-y-0.5">
             <CardTitle className="text-base sm:text-sm font-semibold capitalize flex items-center gap-2">
               {budget.category}
-              {budget.period && budget.period !== "monthly" && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                  {PERIOD_LABEL[budget.period]}
-                </span>
-              )}
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                {PERIOD_LABEL[budget.period]}
+              </span>
             </CardTitle>
+            <p className="text-[10px] text-muted-foreground">
+              Base {PERIOD_LABEL[budget.period]}: {formatCurrency(budget.amount)}
+            </p>
+            <button
+              type="button"
+              className="text-[10px] text-muted-foreground hover:text-foreground"
+              onClick={() => setShowEquivalents((current) => !current)}
+            >
+              {showEquivalents ? "Hide" : "View"} equivalents
+            </button>
+            {showEquivalents && (
+              <p className="text-[10px] text-muted-foreground">
+                {equivalentAmounts.map((item) => `${PERIOD_LABEL[item.period]} ${formatCurrency(item.amount)}`).join(" · ")}
+              </p>
+            )}
             {rollover > 0 && (
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                 +{formatCurrency(rollover)} rolled over
@@ -97,6 +134,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
           </div>
           <div className="flex gap-1">
             <Button
+              type="button"
               variant="ghost"
               size="icon-xs"
               className={cn(
@@ -116,6 +154,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
             <Button
+              type="button"
               variant="ghost"
               size="icon-xs"
               className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/70 hover:text-foreground"
@@ -128,6 +167,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
               <Pencil className="h-3.5 w-3.5" />
             </Button>
             <Button
+              type="button"
               variant="ghost"
               size="icon-xs"
               className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/70 hover:text-destructive"
@@ -162,6 +202,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
               }}
             />
             <Button
+              type="button"
               variant="ghost"
               size="icon-xs"
               aria-label="Save"
@@ -171,6 +212,7 @@ export function BudgetCard({ budget, spent, rollover = 0 }: BudgetCardProps) {
               <Check className="h-3.5 w-3.5 text-green-600" />
             </Button>
             <Button
+              type="button"
               variant="ghost"
               size="icon-xs"
               aria-label="Cancel"

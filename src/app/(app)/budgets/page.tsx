@@ -17,11 +17,18 @@ const PERIOD_TABS: { value: BudgetPeriod; label: string }[] = [
   { value: "quarterly", label: "Quarterly" },
 ];
 
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getStartOfWeek(date: Date): string {
   const d = new Date(date);
   const day = d.getDay();
   d.setDate(d.getDate() - day); // Sunday
-  return d.toISOString().split("T")[0];
+  return formatDateLocal(d);
 }
 
 function getFirstOfMonth(date: Date): string {
@@ -62,7 +69,7 @@ function shiftPeriod(startStr: string, period: BudgetPeriod, delta: number): str
   const date = new Date(year, month - 1, day);
   if (period === "weekly") {
     date.setDate(date.getDate() + delta * 7);
-    return date.toISOString().split("T")[0];
+    return formatDateLocal(date);
   }
   if (period === "quarterly") {
     date.setMonth(date.getMonth() + delta * 3);
@@ -77,6 +84,7 @@ function getPrevPeriodStart(startStr: string, period: BudgetPeriod): string {
 }
 
 export default function BudgetsPage() {
+  const [showAdvancedPeriods, setShowAdvancedPeriods] = useState(false);
   const [period, setPeriod] = useState<BudgetPeriod>("monthly");
   const [periodStart, setPeriodStart] = useState(() => getCurrentPeriodStart("monthly"));
   const { data, isLoading } = useBudgetSummary(periodStart, period);
@@ -86,6 +94,17 @@ export default function BudgetsPage() {
   function handlePeriodChange(p: BudgetPeriod) {
     setPeriod(p);
     setPeriodStart(getCurrentPeriodStart(p));
+  }
+
+  function handleToggleAdvancedPeriods() {
+    setShowAdvancedPeriods((current) => {
+      const next = !current;
+      if (!next && period !== "monthly") {
+        setPeriod("monthly");
+        setPeriodStart(getCurrentPeriodStart("monthly"));
+      }
+      return next;
+    });
   }
 
   const existingCategories = data?.budgets.map((b) => b.category) || [];
@@ -100,12 +119,13 @@ export default function BudgetsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Budgets</h1>
           <p className="text-sm text-muted-foreground sm:text-base">
-            Set spending limits by period and track expenses against them
+            Keep it simple with monthly budgets, and use advanced periods only when needed
           </p>
         </div>
         <div className="hidden sm:flex gap-2">
           {data && data.budgets.length === 0 && (
             <Button
+              type="button"
               variant="outline"
               onClick={() =>
                 copyBudgets.mutate({
@@ -126,16 +146,33 @@ export default function BudgetsPage() {
 
       {/* Period tabs */}
       <SegmentedControl
-        options={PERIOD_TABS}
+        options={showAdvancedPeriods ? PERIOD_TABS : [PERIOD_TABS[0]]}
         value={period}
         onChange={handlePeriodChange}
         className="rounded-xl bg-muted/25"
         buttonClassName="text-sm"
       />
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          {showAdvancedPeriods
+            ? "Advanced mode: weekly and quarterly views are enabled."
+            : "Simple mode: monthly view only."}
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={handleToggleAdvancedPeriods}
+        >
+          {showAdvancedPeriods ? "Hide weekly/quarterly" : "Show weekly/quarterly"}
+        </Button>
+      </div>
 
       {/* Period navigator */}
       <div className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-muted/20 p-2 sm:justify-center sm:gap-4">
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           className="h-9 w-9 shrink-0 rounded-lg border border-border/60 bg-background/70"
@@ -148,6 +185,7 @@ export default function BudgetsPage() {
           {formatPeriodLabel(periodStart, period)}
         </span>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           className="h-9 w-9 shrink-0 rounded-lg border border-border/60 bg-background/70"

@@ -4,12 +4,13 @@ import { configDotenv } from "dotenv";
 configDotenv({ path: ".env.local" });
 
 const serverUrl = process.env.CAP_SERVER_URL;
+const useHostedServer = process.env.CAP_USE_SERVER_URL === "true";
 
 const config: CapacitorConfig = {
   appId: "com.jvcerezo.exitplan",
   appName: "ExitPlan",
   webDir: "public",
-  ...(serverUrl
+  ...(useHostedServer && serverUrl
     ? {
         server: {
           url: serverUrl,

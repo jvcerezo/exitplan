@@ -13,8 +13,8 @@
     "cap:open:ios": "node node_modules/@capacitor/cli/bin/capacitor open ios",
     "mobile:android": "node node_modules/@capacitor/cli/bin/capacitor sync android",
     "mobile:ios": "node node_modules/@capacitor/cli/bin/capacitor sync ios",
-    "mobile:android:hosted": "node scripts/ensure-cap-server-url.mjs && node node_modules/@capacitor/cli/bin/capacitor sync android",
-    "mobile:ios:hosted": "node scripts/ensure-cap-server-url.mjs && node node_modules/@capacitor/cli/bin/capacitor sync ios",
+    "mobile:android:hosted": "node scripts/ensure-cap-server-url.mjs && cross-env CAP_USE_SERVER_URL=true node node_modules/@capacitor/cli/bin/capacitor sync android",
+    "mobile:ios:hosted": "node scripts/ensure-cap-server-url.mjs && cross-env CAP_USE_SERVER_URL=true node node_modules/@capacitor/cli/bin/capacitor sync ios",
     "mobile:android:static": "npm run build:mobile && node node_modules/@capacitor/cli/bin/capacitor sync android",
     "mobile:ios:static": "npm run build:mobile && node node_modules/@capacitor/cli/bin/capacitor sync ios"
   },

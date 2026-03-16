@@ -70,11 +70,29 @@ function parseAmountInput(value: string): string {
   return normalizedInt;
 }
 
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function toMonthlyAmount(amount: number, period: BudgetPeriod): number {
+  if (period === "monthly") return amount;
+  if (period === "quarterly") return amount / 3;
+  return (amount * 52) / 12;
+}
+
+function fromMonthlyAmount(monthlyAmount: number, period: BudgetPeriod): number {
+  if (period === "monthly") return monthlyAmount;
+  if (period === "quarterly") return monthlyAmount * 3;
+  return (monthlyAmount * 12) / 52;
+}
+
 export function AddBudgetDialog({ month, existingCategories, period: defaultPeriod = "monthly", open: controlledOpen, onOpenChange: controlledOnOpenChange }: AddBudgetDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
+  const [showAdvancedPeriods, setShowAdvancedPeriods] = useState(defaultPeriod !== "monthly");
+  const [showConvertedOptions, setShowConvertedOptions] = useState(false);
 
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
@@ -85,6 +103,25 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
   const suggestion = recommendations?.find(
     (r) => r.category === category
   );
+
+  const numericAmount = amount ? Number.parseFloat(amount) : NaN;
+  const hasValidAmount = Number.isFinite(numericAmount) && numericAmount > 0;
+  const monthlyEquivalent = hasValidAmount
+    ? toMonthlyAmount(numericAmount, period)
+    : null;
+
+  const convertedOptions = hasValidAmount && monthlyEquivalent !== null
+    ? PERIOD_OPTIONS
+        .filter((opt) => opt.value !== period)
+        .map((opt) => {
+          const converted = roundMoney(fromMonthlyAmount(monthlyEquivalent, opt.value));
+          return {
+            period: opt.value,
+            label: opt.label,
+            amount: converted,
+          };
+        })
+    : [];
 
   const availableCategories = EXPENSE_CATEGORIES.filter(
     (cat) => !existingCategories.includes(cat.toLowerCase())
@@ -104,11 +141,13 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
     setCategory("");
     setAmount("");
     setPeriod(defaultPeriod);
+    setShowAdvancedPeriods(defaultPeriod !== "monthly");
+    setShowConvertedOptions(false);
   }
 
   if (availableCategories.length === 0 && !isControlled) {
     return (
-      <Button disabled>
+      <Button type="button" disabled>
         <Plus className="h-4 w-4 mr-2" />
         All Categories Budgeted
       </Button>
@@ -119,7 +158,7 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
     <Dialog open={open} onOpenChange={setOpen}>
       {!isControlled && (
         <DialogTrigger asChild>
-          <Button>
+          <Button type="button">
             <Plus className="h-4 w-4 mr-2" />
             Add Budget
           </Button>
@@ -130,30 +169,48 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
           <DialogTitle>Add Budget</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Set a spending limit for a category.
+          Set a spending limit for a category. Monthly is the default.
         </p>
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Period selector */}
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Period</p>
-            <div className="grid grid-cols-3 gap-2">
-              {PERIOD_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setPeriod(opt.value)}
-                  className={cn(
-                    "flex flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors border",
-                    period === opt.value
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                  )}
-                >
-                  <span className="font-semibold">{opt.label}</span>
-                  <span className={cn("text-[10px]", period === opt.value ? "text-primary-foreground/70" : "text-muted-foreground/70")}>{opt.desc}</span>
-                </button>
-              ))}
-            </div>
+          <div className="space-y-1">
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setShowAdvancedPeriods((current) => {
+                  const next = !current;
+                  if (!next) {
+                    setPeriod("monthly");
+                  }
+                  return next;
+                });
+              }}
+            >
+              {showAdvancedPeriods ? "Hide weekly/quarterly options" : "Use weekly/quarterly instead"}
+            </button>
+            {showAdvancedPeriods && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Period</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {PERIOD_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPeriod(opt.value)}
+                      className={cn(
+                        "flex flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors border",
+                        period === opt.value
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                      )}
+                    >
+                      <span className="font-semibold">{opt.label}</span>
+                      <span className={cn("text-[10px]", period === opt.value ? "text-primary-foreground/70" : "text-muted-foreground/70")}>{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           {/* Category pills */}
           <div className="space-y-1.5">
@@ -213,6 +270,35 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
                 Suggested: {formatCurrency(suggestion.suggested)} (avg{" "}
                 {formatCurrency(suggestion.average)}/mo)
               </button>
+            )}
+            {convertedOptions.length > 0 && (
+              <div className="space-y-1.5 rounded-lg border border-border/60 bg-muted/20 p-2.5">
+                <button
+                  type="button"
+                  className="text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowConvertedOptions((current) => !current)}
+                >
+                  {showConvertedOptions ? "Hide" : "Show"} equivalent limits
+                </button>
+                {showConvertedOptions && (
+                  <div className="flex flex-wrap gap-2">
+                    {convertedOptions.map((option) => (
+                      <button
+                        key={option.period}
+                        type="button"
+                        onClick={() => {
+                          setPeriod(option.period);
+                          setAmount(String(option.amount));
+                          setShowAdvancedPeriods(true);
+                        }}
+                        className="rounded-full border border-border/60 bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
+                      >
+                        {option.label}: {formatCurrency(option.amount)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
