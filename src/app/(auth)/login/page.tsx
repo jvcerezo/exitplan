@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { SessionRedirectGuard } from "@/components/auth/session-redirect-guard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-2">
+      <SessionRedirectGuard to="/dashboard" />
       {/* ── Left brand panel (desktop only) ── */}
       <div className="hidden lg:flex flex-col justify-between bg-primary p-12 text-primary-foreground">
         <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">

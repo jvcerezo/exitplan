@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { SessionRedirectGuard } from "@/components/auth/session-redirect-guard";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
@@ -107,6 +108,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SessionRedirectGuard to="/dashboard" />
       <Script
         id="landing-structured-data"
         type="application/ld+json"
