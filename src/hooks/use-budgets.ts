@@ -130,11 +130,14 @@ export function useBudgetSummary(month: string, period: BudgetPeriod = "monthly"
       const prevBudgets: Budget[] = prevBudgetsResult.data ?? [];
       const prevTransactions = prevTxResult.data ?? [];
 
-      // Compute spent per category this month
+      // Compute spent per category this month (only for budgeted categories)
+      const budgetedCategories = new Set(budgets.map((b) => b.category));
       const spentByCategory: Record<string, number> = {};
       for (const tx of transactions) {
-        spentByCategory[tx.category] =
-          (spentByCategory[tx.category] || 0) + Math.abs(tx.amount);
+        if (budgetedCategories.has(tx.category)) {
+          spentByCategory[tx.category] =
+            (spentByCategory[tx.category] || 0) + Math.abs(tx.amount);
+        }
       }
       for (const cat of Object.keys(spentByCategory)) {
         spentByCategory[cat] = Math.round(spentByCategory[cat] * 100) / 100;
