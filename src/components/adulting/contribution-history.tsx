@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { useContributions, useUpdateContribution, useDeleteContribution } from "@/hooks/use-contributions";
-import { CheckCircle2, Circle, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, Circle, Trash2, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import type { Contribution } from "@/lib/types/database";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { LogPastContributionsDialog } from "@/components/adulting/log-past-contributions-dialog";
 
 const TYPE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   sss: { label: "SSS", color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -150,6 +151,7 @@ function PeriodGroup({
 
 export function ContributionHistory() {
   const { data, isLoading } = useContributions();
+  const [logOpen, setLogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -163,29 +165,47 @@ export function ContributionHistory() {
 
   if (!data || data.length === 0) {
     return (
-      <Card className="rounded-2xl border border-border/60">
-        <CardContent className="p-8 text-center">
-          <p className="text-sm text-muted-foreground">No saved contributions yet.</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Use the calculator above and click "Save" to start tracking.
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <Card className="rounded-2xl border border-border/60">
+          <CardContent className="p-8 text-center space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground">No saved contributions yet.</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Use the calculator above or log existing contributions manually.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setLogOpen(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Log Past Contributions
+            </Button>
+          </CardContent>
+        </Card>
+        <LogPastContributionsDialog open={logOpen} onOpenChange={setLogOpen} />
+      </>
     );
   }
 
   const grouped = groupByPeriod(data);
 
   return (
-    <Card className="rounded-2xl border border-border/60">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold">Contribution History</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {grouped.map(([period, items]) => (
-          <PeriodGroup key={period} period={period} items={items} />
-        ))}
-      </CardContent>
-    </Card>
+    <>
+      <Card className="rounded-2xl border border-border/60">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Contribution History</CardTitle>
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5" onClick={() => setLogOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              Log Past
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {grouped.map(([period, items]) => (
+            <PeriodGroup key={period} period={period} items={items} />
+          ))}
+        </CardContent>
+      </Card>
+      <LogPastContributionsDialog open={logOpen} onOpenChange={setLogOpen} />
+    </>
   );
 }

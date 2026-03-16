@@ -53,6 +53,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const strength = getPasswordStrength(password);
 
@@ -78,6 +79,11 @@ export default function SignupPage() {
     }
     if (strength.score < 3) {
       setError("Please use a stronger password (add uppercase, numbers, or special characters).");
+      setLoading(false);
+      return;
+    }
+    if (!agreedToTerms) {
+      setError("You must agree to the Privacy Policy and Terms of Service to create an account.");
       setLoading(false);
       return;
     }
@@ -287,7 +293,34 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <div className="flex items-start gap-3">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={agreedToTerms}
+                onClick={() => setAgreedToTerms((v) => !v)}
+                className={`mt-0.5 h-4 w-4 shrink-0 rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  agreedToTerms
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "border-input bg-background"
+                }`}
+              >
+                {agreedToTerms && (
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-full w-full text-primary-foreground">
+                    <path d="M2 6l3 3 5-5" />
+                  </svg>
+                )}
+              </button>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                I have read and agree to the{" "}
+                <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>
+                {" "}and{" "}
+                <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link>.
+                I consent to ExitPlan collecting and processing my personal data as described.
+              </p>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading || !agreedToTerms}>
               {loading ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Creating account...</>
               ) : (

@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X, Bug, Send } from "lucide-react";
+import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X, Bug, Send, Download, ShieldAlert, ExternalLink } from "lucide-react";
 import { useProfile, useUpdateProfile, useUploadAvatar, useRemoveAvatar } from "@/hooks/use-profile";
 import { useExchangeRates, useUpsertExchangeRate } from "@/hooks/use-exchange-rates";
 import { useMarketRates } from "@/hooks/use-market-rates";
 import { useMyBugReports, useSubmitBugReport } from "@/hooks/use-bug-reports";
-import { signOut } from "@/app/(auth)/actions";
+import { signOut, deleteAccount } from "@/app/(auth)/actions";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -56,6 +57,9 @@ export default function SettingsPage() {
   const [bugTitle, setBugTitle] = useState("");
   const [bugDescription, setBugDescription] = useState("");
   const [bugSeverity, setBugSeverity] = useState<BugReportSeverity>("medium");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -118,6 +122,38 @@ export default function SettingsPage() {
         day: "numeric",
       })
     : null;
+
+  const handleExportData = async () => {
+    setExportLoading(true);
+    try {
+      const res = await fetch("/api/export-data");
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `exitplan-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to export data. Please try again.");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return;
+    setIsDeletingAccount(true);
+    const result = await deleteAccount();
+    if (result?.error) {
+      toast.error(result.error);
+      setIsDeletingAccount(false);
+    } else {
+      // deleteAccount signs out + deletes — redirect to home
+      window.location.href = "/";
+    }
+  };
 
   // Get existing user rates keyed by from_currency
   const userRates: Record<string, number> = {};
@@ -576,6 +612,121 @@ export default function SettingsPage() {
               Sign Out
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Privacy Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Privacy</CardTitle>
+          <CardDescription>
+            Your data rights and export options under the Data Privacy Act of 2012
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Export Your Data</p>
+            <p className="text-xs text-muted-foreground">
+              Download a full copy of all your data in JSON format — transactions, accounts,
+              budgets, goals, debts, and contributions.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 gap-2"
+              onClick={handleExportData}
+              disabled={exportLoading}
+            >
+              {exportLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Exporting...</>
+              ) : (
+                <><Download className="h-4 w-4" /> Download My Data</>
+              )}
+            </Button>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Legal Documents</p>
+            <div className="flex flex-col gap-1.5 mt-2">
+              <Link
+                href="/privacy"
+                target="_blank"
+                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Privacy Policy
+              </Link>
+              <Link
+                href="/terms"
+                target="_blank"
+                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+
+          <Separator />
+
+          <p className="text-xs text-muted-foreground">
+            For privacy-related concerns, email{" "}
+            <a href="mailto:privacy@exitplan.app" className="text-primary hover:underline">
+              privacy@exitplan.app
+            </a>
+            . We will respond within 15 business days.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            Permanent and irreversible actions
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-destructive">Delete Account</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Permanently deletes your account and all associated data — transactions, accounts,
+                goals, budgets, debts, and contributions. This cannot be undone.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirm" className="text-xs text-muted-foreground">
+                Type <span className="font-mono font-bold text-foreground">DELETE</span> to confirm
+              </Label>
+              <Input
+                id="delete-confirm"
+                placeholder="DELETE"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className="max-w-[200px] h-8 text-sm font-mono"
+              />
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              disabled={deleteConfirmText !== "DELETE" || isDeletingAccount}
+              onClick={handleDeleteAccount}
+            >
+              {isDeletingAccount ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Deleting...</>
+              ) : (
+                "Delete My Account Permanently"
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

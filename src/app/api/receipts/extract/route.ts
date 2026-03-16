@@ -188,13 +188,9 @@ export async function POST(request: NextRequest) {
       { status: 422 }
     );
   } catch (error) {
+    console.error("OCR extraction error:", error);
     return NextResponse.json(
-      {
-        warning:
-          error instanceof Error
-            ? error.message
-            : "Failed to process OCR extraction",
-      },
+      { warning: "Failed to process OCR extraction. Please try again." },
       { status: 500 }
     );
   }

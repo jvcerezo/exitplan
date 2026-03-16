@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -212,7 +212,8 @@ function PhaseSection({
 }
 
 export default function AdultingChecklistPage() {
-  const { data: completedIds = new Set<string>(), isLoading } = useChecklistProgress();
+  const { data: completedIdsArray = [], isLoading } = useChecklistProgress();
+  const completedIds = useMemo(() => new Set(Array.isArray(completedIdsArray) ? completedIdsArray : []), [completedIdsArray]);
   const toggle = useToggleChecklistItem();
 
   const completedCount = completedIds.size;

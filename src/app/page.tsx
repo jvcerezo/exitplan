@@ -15,6 +15,11 @@ import {
   ArrowDownRight,
   Clock,
   Zap,
+  CreditCard,
+  BookOpen,
+  Receipt,
+  Download,
+  Building2,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { SessionRedirectGuard } from "@/components/auth/session-redirect-guard";
@@ -25,7 +30,7 @@ import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
 export const metadata: Metadata = buildPageMetadata({
   title: "ExitPlan",
   description:
-    "ExitPlan helps you track expenses, manage budgets, grow savings goals, and build a clear path to financial freedom.",
+    "ExitPlan helps you track expenses, manage budgets, grow savings goals, handle debts, and log government contributions — built for Filipinos.",
   path: "/",
   index: true,
 });
@@ -35,46 +40,64 @@ const features = [
     icon: Wallet,
     title: "Track Every Peso",
     description:
-      "Log income and expenses with categories, tags, and dates. Import directly from GCash, BDO, BPI, and most bank CSV exports.",
+      "Log income and expenses with categories, tags, and split transactions. Import directly from GCash, BDO, BPI, and most bank CSV exports — or scan a receipt with your camera.",
   },
   {
     icon: Calculator,
     title: "Smart Budgets",
     description:
-      "Set monthly spending limits per category. Get alerts when you're near or over budget — right on your dashboard.",
+      "Set monthly spending limits per category. Get alerts when you're near or over budget. Copy last month's budgets with one click.",
   },
   {
     icon: Target,
     title: "Savings Goals",
     description:
-      "Set targets with deadlines — emergency fund, debt payoff, travel. Add funds and watch your progress grow.",
+      "Set targets with deadlines — emergency fund, debt payoff, travel fund. Add contributions and watch your progress grow.",
+  },
+  {
+    icon: CreditCard,
+    title: "Debt Manager",
+    description:
+      "Track loans, credit cards, and buy-now-pay-later balances. Record payments linked to real accounts — debts auto-close when the balance hits zero.",
+  },
+  {
+    icon: Building2,
+    title: "Government Contributions",
+    description:
+      "Log your SSS, PhilHealth, and Pag-IBIG contributions. Auto-compute from salary or enter manually. Bulk-import years of past contributions at once.",
   },
   {
     icon: BarChart3,
     title: "Visual Insights",
     description:
-      "Spending breakdowns by category, monthly income vs expense trends, and smart insights — all in one view.",
+      "Spending breakdowns by category, monthly income vs expense trends, and net worth tracking — contributions and all accounts in one view.",
+  },
+  {
+    icon: BookOpen,
+    title: "Filipino Adulting Hub",
+    description:
+      "A step-by-step guide to getting your financial life set up in the Philippines — from getting your TIN and SSS to building an emergency fund.",
   },
   {
     icon: Shield,
     title: "Private & Secure",
     description:
-      "Row-level security ensures only you can see your data. No ads, no tracking, no selling your information.",
+      "Row-level security ensures only you can see your data. All data is encrypted at rest and in transit. Fully compliant with the Data Privacy Act of 2012.",
   },
   {
-    icon: TrendingUp,
-    title: "All-in-One Dashboard",
+    icon: Download,
+    title: "Your Data, Always",
     description:
-      "Balance, budget alerts, goal progress, charts, and recent transactions — everything at a glance.",
+      "Export all your data in JSON format at any time. Delete your account and all associated data permanently — no questions asked.",
   },
 ];
 
 const mockTransactions = [
-  { desc: "Freelance Payment", cat: "freelance", amount: 8500, date: "Today" },
+  { desc: "Monthly Salary", cat: "salary", amount: 35000, date: "Today" },
   { desc: "Grocery Run", cat: "food", amount: -1247.5, date: "Today" },
-  { desc: "Electric Bill", cat: "housing", amount: -2850, date: "Yesterday" },
-  { desc: "Monthly Salary", cat: "salary", amount: 25000, date: "Feb 15" },
-  { desc: "Grab Ride", cat: "transportation", amount: -185, date: "Feb 14" },
+  { desc: "SSS Contribution", cat: "contributions", amount: -1125, date: "Yesterday" },
+  { desc: "Freelance Payment", cat: "freelance", amount: 8500, date: "Mar 15" },
+  { desc: "Electric Bill", cat: "housing", amount: -2850, date: "Mar 14" },
 ];
 
 const mockBudgets = [
@@ -101,7 +124,7 @@ export default function LandingPage() {
     },
     about: {
       "@type": "Thing",
-      name: "Personal finance tracking, budgeting, and savings goals",
+      name: "Personal finance tracking, budgeting, savings goals, debt management, and government contributions",
     },
     primaryImageOfPage: absoluteUrl("/app-icon.svg"),
   };
@@ -151,9 +174,8 @@ export default function LandingPage() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Track spending, set budgets, grow savings, and see it all in one
-            place. ExitPlan is the clean, private financial tracker built for
-            Filipinos who want clarity over complexity.
+            Track spending, manage debts, log government contributions, and grow
+            your savings — all in one clean, private app built for Filipinos.
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
@@ -187,9 +209,9 @@ export default function LandingPage() {
             {/* Balance cards row */}
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { label: "Total Balance", value: "₱42,267.50", color: "text-foreground" },
-                { label: "Income", value: "₱33,500.00", color: "text-green-600" },
-                { label: "Expenses", value: "₱7,232.50", color: "text-foreground" },
+                { label: "Total Balance", value: "₱56,077.50", color: "text-foreground" },
+                { label: "Income", value: "₱43,500.00", color: "text-green-600" },
+                { label: "Expenses", value: "₱13,222.50", color: "text-foreground" },
               ].map((card) => (
                 <div
                   key={card.label}
@@ -286,7 +308,7 @@ export default function LandingPage() {
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-full ${
                         tx.amount > 0
-                          ? "bg-green-100 text-green-600"
+                          ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
                           : "bg-muted text-foreground"
                       }`}
                     >
@@ -304,7 +326,7 @@ export default function LandingPage() {
                     </div>
                     <span
                       className={`text-xs font-semibold shrink-0 ${
-                        tx.amount > 0 ? "text-green-600" : "text-foreground"
+                        tx.amount > 0 ? "text-green-600 dark:text-green-400" : "text-foreground"
                       }`}
                     >
                       {tx.amount > 0 ? "+" : ""}₱
@@ -329,8 +351,8 @@ export default function LandingPage() {
               <span className="text-primary">Nothing you don&apos;t.</span>
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              No ads, no premium upsells, no data selling. Just a clean tool
-              that helps you take control of your finances.
+              No ads, no premium upsells, no data selling. Just a complete tool
+              that helps Filipinos take control of their full financial picture.
             </p>
           </div>
 
@@ -369,19 +391,19 @@ export default function LandingPage() {
                 step: "1",
                 title: "Set up your accounts",
                 description:
-                  "Add your bank accounts, e-wallets, and cash on hand. Import existing transactions from a CSV in seconds.",
+                  "Add your bank accounts, e-wallets, and cash on hand. Import existing transactions from a CSV or scan receipts directly.",
               },
               {
                 step: "2",
-                title: "Set budgets & goals",
+                title: "Track everything",
                 description:
-                  "Create monthly spending limits and savings targets. Copy budgets between months with one click.",
+                  "Log transactions, set budgets, add savings goals, record debt payments, and log your SSS, PhilHealth, and Pag-IBIG contributions.",
               },
               {
                 step: "3",
-                title: "See everything",
+                title: "See the full picture",
                 description:
-                  "Your dashboard shows balance, budget alerts, goal progress, charts, and recent activity — all in one place.",
+                  "Your dashboard shows balance, budget alerts, goal progress, debt payoff status, contributions, and charts — all in one place.",
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
@@ -398,8 +420,59 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Built for Filipinos callout */}
       <section className="border-t border-border/50 bg-muted/30">
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Built for the{" "}
+              <span className="text-primary">Filipino financial reality</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+              Most finance apps ignore the Philippines. ExitPlan doesn&apos;t.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: Building2,
+                label: "SSS, PhilHealth & Pag-IBIG",
+                desc: "Auto-compute and track your mandatory contributions",
+              },
+              {
+                icon: Receipt,
+                label: "GCash & Bank CSV Import",
+                desc: "Import directly from all major Philippine banks and e-wallets",
+              },
+              {
+                icon: BookOpen,
+                label: "Filipino Adulting Checklist",
+                desc: "Step-by-step guide to getting your IDs, insurance, and finances sorted",
+              },
+              {
+                icon: Shield,
+                label: "RA 10173 Compliant",
+                desc: "Your data rights are fully protected under the Data Privacy Act of 2012",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-border/50 bg-card p-5 space-y-2"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <p className="text-sm font-semibold">{item.label}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-border/50">
         <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -429,6 +502,18 @@ export default function LandingPage() {
             &copy; {new Date().getFullYear()} ExitPlan. Built for your freedom.
           </p>
           <div className="flex items-center gap-6">
+            <Link
+              href="/privacy"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Terms of Service
+            </Link>
             <Link
               href="/login"
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
