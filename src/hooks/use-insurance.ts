@@ -43,12 +43,13 @@ export function useInsuranceSummary() {
 
       const totalCoverage = policies.reduce((sum, p) => sum + (p.coverage_amount ?? 0), 0);
       const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const renewingSoon = policies.filter((p) => {
         if (!p.renewal_date) return false;
         // Parse YYYY-MM-DD as local date (avoid UTC midnight offset)
         const [y, m, d] = p.renewal_date.split("-").map(Number);
         const renewal = new Date(y, m - 1, d);
-        const days = (renewal.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+        const days = (renewal.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24);
         return days >= 0 && days <= 30;
       });
 

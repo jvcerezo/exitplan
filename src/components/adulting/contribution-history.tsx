@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useContributions, useUpdateContribution, useDeleteContribution } from "@/hooks/use-contributions";
 import { CheckCircle2, Circle, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import type { Contribution } from "@/lib/types/database";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 const TYPE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   sss: { label: "SSS", color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -34,6 +35,7 @@ function PeriodGroup({
   items: Contribution[];
 }) {
   const [open, setOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const updateContribution = useUpdateContribution();
   const deleteContribution = useDeleteContribution();
 
@@ -116,7 +118,7 @@ function PeriodGroup({
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                      onClick={() => deleteContribution.mutate(c.id)}
+                      onClick={() => setConfirmDeleteId(c.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -127,6 +129,21 @@ function PeriodGroup({
           })}
         </div>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(o) => { if (!o) setConfirmDeleteId(null); }}
+        title="Delete contribution?"
+        description="This will permanently remove this contribution record."
+        isPending={deleteContribution.isPending}
+        onConfirm={() => {
+          if (confirmDeleteId) {
+            deleteContribution.mutate(confirmDeleteId, {
+              onSuccess: () => setConfirmDeleteId(null),
+            });
+          }
+        }}
+      />
     </div>
   );
 }

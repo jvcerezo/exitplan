@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { calculateGovernmentDeductions } from "@/lib/ph-math";
 import { EMPLOYMENT_TYPES } from "@/lib/constants";
-import { useAddContribution } from "@/hooks/use-contributions";
+import { useAddContribution, useContributions } from "@/hooks/use-contributions";
 import type { EmploymentType } from "@/lib/types/database";
 import { Save, Info } from "lucide-react";
 import { toast } from "sonner";
@@ -35,6 +35,8 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
   const [saving, setSaving] = useState(false);
 
   const addContribution = useAddContribution();
+  const { data: allContributions } = useContributions();
+  const periodAlreadySaved = allContributions?.some((c) => c.period === period) ?? false;
 
   const monthlySalary = parseFloat(salary) || 0;
   const deductions = useMemo(
@@ -81,7 +83,7 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
           employment_type: employmentType,
         }),
       ]);
-      toast.success(`Contributions saved for ${period}`);
+      toast.success(periodAlreadySaved ? `Contributions updated for ${period}` : `Contributions saved for ${period}`);
     } finally {
       setSaving(false);
     }
@@ -272,7 +274,7 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
         size="sm"
       >
         <Save className="h-4 w-4 mr-2" />
-        {saving ? "Saving..." : `Save ${period} Contributions`}
+        {saving ? (periodAlreadySaved ? "Updating..." : "Saving...") : (periodAlreadySaved ? `Update ${period}` : `Save ${period} Contributions`)}
       </Button>
 
       {/* Info note */}

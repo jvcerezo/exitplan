@@ -18,6 +18,7 @@ import { useDebts, useUpdateDebt, useDeleteDebt, useRecordDebtPayment } from "@/
 import { useAccounts } from "@/hooks/use-accounts";
 import { CheckCircle2, Trash2, CreditCard, Building2, Car, Home, Wallet, CircleDollarSign } from "lucide-react";
 import type { Debt } from "@/lib/types/database";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
   credit_card: { label: "Credit Card", icon: CreditCard, color: "text-red-500", bg: "bg-red-500/10" },
@@ -38,11 +39,12 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payAmount, setPayAmount] = useState(String(debt.minimum_payment || ""));
   const [pickedAccountId, setPickedAccountId] = useState<string>(debt.account_id ?? "none");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const meta = TYPE_META[debt.type] ?? TYPE_META.other;
   const Icon = meta.icon;
   const paidPct = debt.original_amount > 0
-    ? Math.min(100, ((debt.original_amount - debt.current_balance) / debt.original_amount) * 100)
+    ? Math.max(0, Math.min(100, ((debt.original_amount - debt.current_balance) / debt.original_amount) * 100))
     : 0;
   const linkedAccount = accounts.find((a) => a.id === debt.account_id);
 
@@ -120,7 +122,7 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-destructive hover:text-destructive"
-              onClick={() => remove.mutate(debt.id)}
+              onClick={() => setConfirmDelete(true)}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -138,6 +140,15 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
           </div>
         )}
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Remove debt?"
+        description={`"${debt.name}" will be permanently removed.`}
+        isPending={remove.isPending}
+        onConfirm={() => remove.mutate(debt.id, { onSuccess: () => setConfirmDelete(false) })}
+      />
 
       {/* Payment dialog */}
       <Dialog open={showPayDialog} onOpenChange={setShowPayDialog}>

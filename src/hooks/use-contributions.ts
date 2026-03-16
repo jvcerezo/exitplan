@@ -64,7 +64,10 @@ export function useAddContribution() {
 
       const { data, error } = await supabase
         .from("contributions")
-        .insert({ ...contribution, user_id: user.id })
+        .upsert(
+          { ...contribution, user_id: user.id },
+          { onConflict: "user_id,type,period" }
+        )
         .select()
         .single();
 
@@ -73,7 +76,6 @@ export function useAddContribution() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contributions"] });
-      toast.success("Contribution saved");
     },
     onError: (error) => {
       toast.error("Failed to save contribution", { description: error.message });

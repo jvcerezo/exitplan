@@ -31,8 +31,8 @@ export function FAB() {
   const { data: budgetData } = useBudgetSummary(isBudgets ? currentMonth : "", "monthly");
   const existingBudgetCategories = budgetData?.budgets.map((b) => b.category) ?? [];
 
-  // Hide on settings page — nothing to add
-  if (isSettings) return null;
+  // Hide on pages where FAB has no action
+  if (isSettings || pathname.startsWith("/adulting")) return null;
 
   // Always show a single FAB that opens a minimal action sheet/modal
   return (

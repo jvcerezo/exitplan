@@ -41,10 +41,11 @@ export function useBillsSummary() {
       }, 0);
 
       const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const dueSoon = bills.filter((b) => {
         if (!b.due_day) return false;
         let next = new Date(now.getFullYear(), now.getMonth(), b.due_day);
-        if (next < now) next = new Date(now.getFullYear(), now.getMonth() + 1, b.due_day);
+        if (next < todayMidnight) next = new Date(now.getFullYear(), now.getMonth() + 1, b.due_day);
         const daysUntil = (next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
         return daysUntil >= 0 && daysUntil <= 7;
       });

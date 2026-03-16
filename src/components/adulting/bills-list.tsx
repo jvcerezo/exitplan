@@ -19,6 +19,7 @@ import {
   Monitor, Dumbbell, MoreHorizontal, CheckCircle2, Trash2, AlertCircle, Wallet,
 } from "lucide-react";
 import type { Bill } from "@/lib/types/database";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 const CATEGORY_META: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
   electricity: { label: "Electricity", icon: Zap, color: "text-yellow-500", bg: "bg-yellow-500/10" },
@@ -45,12 +46,11 @@ const FREQ_LABEL: Record<string, string> = {
 function isDueSoon(dueDay: number | null): boolean {
   if (!dueDay) return false;
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  // Try this month's due date; if already passed, check next month
-  let next = new Date(year, month, dueDay);
-  if (next < now) {
-    next = new Date(year, month + 1, dueDay);
+  // Compare against today midnight so bills due today are included
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let next = new Date(now.getFullYear(), now.getMonth(), dueDay);
+  if (next < todayMidnight) {
+    next = new Date(now.getFullYear(), now.getMonth() + 1, dueDay);
   }
   const daysUntil = (next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
   return daysUntil >= 0 && daysUntil <= 7;
@@ -61,6 +61,7 @@ function BillRow({ bill, accounts }: { bill: Bill; accounts: { id: string; name:
   const markPaid = useMarkBillPaid();
   const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [pickedAccountId, setPickedAccountId] = useState<string>("none");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const meta = CATEGORY_META[bill.category] ?? CATEGORY_META.other;
   const Icon = meta.icon;
@@ -132,13 +133,22 @@ function BillRow({ bill, accounts }: { bill: Bill; accounts: { id: string; name:
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-destructive hover:text-destructive"
-              onClick={() => remove.mutate(bill.id)}
+              onClick={() => setConfirmDelete(true)}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Remove bill?"
+        description={`"${bill.name}" will be permanently removed.`}
+        isPending={remove.isPending}
+        onConfirm={() => remove.mutate(bill.id, { onSuccess: () => setConfirmDelete(false) })}
+      />
 
       {/* Account picker dialog — shown when bill has no account linked */}
       <Dialog open={showAccountPicker} onOpenChange={setShowAccountPicker}>

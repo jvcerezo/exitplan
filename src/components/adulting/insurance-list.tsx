@@ -19,6 +19,7 @@ import {
 import { useAccounts } from "@/hooks/use-accounts";
 import { Shield, Heart, Car, Home, Trash2, AlertTriangle, Wallet, CircleDollarSign } from "lucide-react";
 import type { InsurancePolicy } from "@/lib/types/database";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
   life: { label: "Life", icon: Shield, color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -51,6 +52,7 @@ function PolicyRow({
 
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [pickedAccountId, setPickedAccountId] = useState<string>(policy.account_id ?? "none");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const meta = TYPE_META[policy.type] ?? TYPE_META.other;
   const Icon = meta.icon;
@@ -61,7 +63,9 @@ function PolicyRow({
     if (!policy.renewal_date) return false;
     const [y, m, d] = policy.renewal_date.split("-").map(Number);
     const renewal = new Date(y, m - 1, d);
-    const days = (renewal.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const days = (renewal.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24);
     return days >= 0 && days <= 30;
   })();
 
@@ -145,13 +149,22 @@ function PolicyRow({
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-destructive hover:text-destructive"
-              onClick={() => remove.mutate(policy.id)}
+              onClick={() => setConfirmDelete(true)}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
       </div>
+
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Remove policy?"
+        description={`"${policy.name}" will be permanently removed.`}
+        isPending={remove.isPending}
+        onConfirm={() => remove.mutate(policy.id, { onSuccess: () => setConfirmDelete(false) })}
+      />
 
       {/* Account picker shown when no account linked */}
       <Dialog open={showPayDialog} onOpenChange={setShowPayDialog}>

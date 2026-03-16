@@ -29,6 +29,17 @@ create policy "Users can manage own contributions"
 create index if not exists contributions_user_period
   on contributions(user_id, period desc);
 
+-- Migration: unique constraint prevents saving the same (user, type, period) twice
+do $$ begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'contributions_user_type_period_key'
+  ) then
+    alter table contributions
+      add constraint contributions_user_type_period_key unique (user_id, type, period);
+  end if;
+end $$;
+
 -- ─── tax_records ──────────────────────────────────────────────────────────────
 create table if not exists tax_records (
   id               uuid primary key default gen_random_uuid(),
