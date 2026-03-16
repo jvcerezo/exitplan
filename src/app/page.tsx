@@ -40,7 +40,7 @@ const features = [
     icon: Wallet,
     title: "Track Every Peso",
     description:
-      "Log income and expenses with categories, tags, and split transactions. Import directly from GCash, BDO, BPI, and most bank CSV exports — or scan a receipt with your camera.",
+      "Log income and expenses with categories, tags, and split transactions. Import directly from GCash, BDO, BPI, and most bank CSV exports. Attach receipt photos to any transaction.",
   },
   {
     icon: Calculator,
@@ -391,7 +391,7 @@ export default function LandingPage() {
                 step: "1",
                 title: "Set up your accounts",
                 description:
-                  "Add your bank accounts, e-wallets, and cash on hand. Import existing transactions from a CSV or scan receipts directly.",
+                  "Add your bank accounts, e-wallets, and cash on hand. Import existing transactions from a CSV in seconds.",
               },
               {
                 step: "2",
@@ -443,7 +443,7 @@ export default function LandingPage() {
               {
                 icon: Receipt,
                 label: "GCash & Bank CSV Import",
-                desc: "Import directly from all major Philippine banks and e-wallets",
+                desc: "Import transaction history from all major Philippine banks and e-wallets",
               },
               {
                 icon: BookOpen,
