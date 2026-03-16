@@ -16,8 +16,8 @@ export default function BillsPage() {
       {/* Header */}
       <div>
         <Link href="/adulting"
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-3 transition-colors">
-          <ArrowLeft className="h-3 w-3" />
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
+          <ArrowLeft className="h-4 w-4" />
           Adulting Hub
         </Link>
         <div className="flex items-center justify-between">

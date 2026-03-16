@@ -1,13 +1,5 @@
 import Link from "next/link";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
   Landmark,
   ReceiptText,
   Gift,
@@ -15,91 +7,92 @@ import {
   CreditCard,
   Shield,
   ChevronRight,
-  GraduationCap,
   Receipt,
   Calculator,
 } from "lucide-react";
 
-const features = [
+const groups = [
   {
-    href: "/adulting/contributions",
-    icon: Landmark,
-    title: "Gov't Contributions",
-    description: "Calculate and track your SSS, PhilHealth, and Pag-IBIG deductions every month.",
-    badge: null,
-    available: true,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
+    id: "compliance",
+    label: "Compliance",
+    items: [
+      {
+        href: "/adulting/contributions",
+        icon: Landmark,
+        title: "Gov't Contributions",
+        subtitle: "SSS · PhilHealth · Pag-IBIG",
+        color: "text-blue-500",
+        bg: "bg-blue-500/10",
+      },
+      {
+        href: "/adulting/taxes",
+        icon: ReceiptText,
+        title: "BIR Tax Tracker",
+        subtitle: "TRAIN Law income tax",
+        color: "text-orange-500",
+        bg: "bg-orange-500/10",
+      },
+      {
+        href: "/adulting/thirteenth-month",
+        icon: Gift,
+        title: "13th Month Pay",
+        subtitle: "₱90,000 tax exemption calculator",
+        color: "text-green-500",
+        bg: "bg-green-500/10",
+      },
+    ],
   },
   {
-    href: "/adulting/taxes",
-    icon: ReceiptText,
-    title: "BIR Tax Tracker",
-    description: "Compute your income tax under TRAIN Law and track quarterly / annual filings.",
-    badge: null,
-    available: true,
-    color: "text-orange-500",
-    bg: "bg-orange-500/10",
+    id: "management",
+    label: "Management",
+    items: [
+      {
+        href: "/adulting/debts",
+        icon: CreditCard,
+        title: "Debt Manager",
+        subtitle: "Loans, credit cards & payoff strategies",
+        color: "text-red-500",
+        bg: "bg-red-500/10",
+      },
+      {
+        href: "/adulting/bills",
+        icon: Receipt,
+        title: "Bills & Subscriptions",
+        subtitle: "Meralco, PLDT, Netflix, rent...",
+        color: "text-indigo-500",
+        bg: "bg-indigo-500/10",
+      },
+      {
+        href: "/adulting/insurance",
+        icon: Shield,
+        title: "Insurance Tracker",
+        subtitle: "Policies & renewal dates",
+        color: "text-teal-500",
+        bg: "bg-teal-500/10",
+      },
+    ],
   },
   {
-    href: "/adulting/thirteenth-month",
-    icon: Gift,
-    title: "13th Month Pay",
-    description: "Estimate your 13th month pay and understand the ₱90,000 tax exemption.",
-    badge: null,
-    available: true,
-    color: "text-green-500",
-    bg: "bg-green-500/10",
-  },
-  {
-    href: "/adulting/debts",
-    icon: CreditCard,
-    title: "Debt Manager",
-    description: "Track all loans and credit cards. Avalanche vs. Snowball payoff strategies.",
-    badge: null,
-    available: true,
-    color: "text-red-500",
-    bg: "bg-red-500/10",
-  },
-  {
-    href: "/adulting/insurance",
-    icon: Shield,
-    title: "Insurance Tracker",
-    description: "Monitor your life, health, HMO, car, and property policies and renewals.",
-    badge: null,
-    available: true,
-    color: "text-teal-500",
-    bg: "bg-teal-500/10",
-  },
-  {
-    href: "/adulting/bills",
-    icon: Receipt,
-    title: "Bills & Subscriptions",
-    description: "Track recurring bills — Meralco, PLDT, Netflix, rent — with due date alerts.",
-    badge: null,
-    available: true,
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10",
-  },
-  {
-    href: "/adulting/calculators",
-    icon: Calculator,
-    title: "Financial Calculators",
-    description: "Loan amortization, compound interest, and FIRE number calculator.",
-    badge: null,
-    available: true,
-    color: "text-purple-500",
-    bg: "bg-purple-500/10",
-  },
-  {
-    href: "#",
-    icon: BookOpen,
-    title: "Financial Literacy",
-    description: "Bite-sized PH-contextualized lessons on budgeting, investing, and adulting.",
-    badge: "Soon",
-    available: false,
-    color: "text-yellow-600",
-    bg: "bg-yellow-500/10",
+    id: "planning",
+    label: "Planning",
+    items: [
+      {
+        href: "/adulting/calculators",
+        icon: Calculator,
+        title: "Financial Calculators",
+        subtitle: "Loan amortization, compound interest, FIRE",
+        color: "text-purple-500",
+        bg: "bg-purple-500/10",
+      },
+      {
+        href: "/adulting/checklist",
+        icon: BookOpen,
+        title: "Adulting Checklist",
+        subtitle: "Step-by-step Filipino adulting guide",
+        color: "text-yellow-600",
+        bg: "bg-yellow-500/10",
+      },
+    ],
   },
 ];
 
@@ -108,68 +101,45 @@ export default function AdultingPage() {
     <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <GraduationCap className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Adulting Hub</h1>
-        </div>
-        <p className="text-sm text-muted-foreground sm:text-base">
+        <h1 className="text-2xl font-bold tracking-tight">Adulting Hub</h1>
+        <p className="text-sm text-muted-foreground sm:text-base mt-0.5">
           Everything a Filipino adult needs — taxes, contributions, benefits, and more.
         </p>
       </div>
 
-      {/* Feature grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((f) => {
-          const card = (
-            <Card
-              className={`rounded-2xl border border-border/60 bg-card/95 shadow-sm transition-all ${
-                f.available
-                  ? "hover:shadow-md hover:border-border cursor-pointer"
-                  : "opacity-60 cursor-not-allowed"
-              }`}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${f.bg}`}>
-                    <f.icon className={`h-5 w-5 ${f.color}`} />
+      {/* Grouped tool list */}
+      <div className="space-y-6">
+        {groups.map((group) => (
+          <div key={group.id}>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2 px-1">
+              {group.label}
+            </p>
+            <div className="rounded-2xl border border-border/60 overflow-hidden divide-y divide-border/40">
+              {group.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-3.5 bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.bg}`}>
+                    <item.icon className={`h-4 w-4 ${item.color}`} />
                   </div>
-                  <div className="flex items-center gap-2">
-                    {f.badge && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        {f.badge}
-                      </Badge>
-                    )}
-                    {f.available && (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.subtitle}</p>
                   </div>
-                </div>
-                <CardTitle className="text-sm font-semibold mt-3">{f.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <CardDescription className="text-xs leading-relaxed">
-                  {f.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          );
-
-          return f.available ? (
-            <Link key={f.href} href={f.href} className="block">
-              {card}
-            </Link>
-          ) : (
-            <div key={f.title}>{card}</div>
-          );
-        })}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* PH tip */}
-      <div className="rounded-2xl border border-border/40 bg-muted/30 p-4">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          <span className="font-semibold text-foreground">Did you know?</span> As a Filipino employee, SSS, PhilHealth, and Pag-IBIG aren&apos;t just deductions — they&apos;re benefits. SSS provides loans, disability, and retirement pension. PhilHealth covers hospitalization. Pag-IBIG gives housing loans and MP2 savings with 6–7% tax-free dividends.
-        </p>
-      </div>
+      {/* Tip */}
+      <p className="text-xs text-muted-foreground leading-relaxed px-1">
+        <span className="font-semibold text-foreground">Tip:</span> SSS, PhilHealth, and Pag-IBIG aren&apos;t just deductions — they&apos;re benefits. Pag-IBIG&apos;s MP2 savings earn 6–7% tax-free dividends.
+      </p>
     </div>
   );
 }
