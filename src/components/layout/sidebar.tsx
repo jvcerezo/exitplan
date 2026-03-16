@@ -12,6 +12,7 @@ import {
   LogOut,
   Search,
   Map,
+  GraduationCap,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
   { href: "/budgets", label: "Budgets", icon: Calculator, tourId: "sidebar-budgets" },
   { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
+  { href: "/adulting", label: "Adulting Hub", icon: GraduationCap, tourId: "sidebar-adulting" },
   { href: "/settings", label: "Settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 

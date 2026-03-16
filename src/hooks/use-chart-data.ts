@@ -81,10 +81,17 @@ export function useNetWorthOverTime() {
       const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
       const startDate = twelveMonthsAgo.toISOString().split("T")[0];
 
-      const [txResult, accountResult, goalsResult] = await Promise.all([
+      const [preWindowResult, windowResult, accountResult, goalsResult] = await Promise.all([
+        // Sum of all transactions BEFORE the 12-month window (for baseline)
+        supabase
+          .from("transactions")
+          .select("amount, account_id")
+          .lt("date", startDate),
+        // Individual transactions WITHIN the 12-month window
         supabase
           .from("transactions")
           .select("amount, date, account_id")
+          .gte("date", startDate)
           .order("date", { ascending: true }),
         supabase
           .from("accounts")
@@ -92,9 +99,11 @@ export function useNetWorthOverTime() {
         supabase.from("goals").select("current_amount"),
       ]);
 
-      if (txResult.error) throw new Error(txResult.error.message);
+      if (preWindowResult.error) throw new Error(preWindowResult.error.message);
+      if (windowResult.error) throw new Error(windowResult.error.message);
 
-      const data = txResult.data;
+      const preWindowData = preWindowResult.data ?? [];
+      const data = windowResult.data ?? [];
       const accounts = accountResult.data ?? [];
       const goals = goalsResult.data ?? [];
 
@@ -108,27 +117,25 @@ export function useNetWorthOverTime() {
         (sum, g) => sum + Number(g.current_amount),
         0
       );
-      const allTimeUnlinkedBalance = data
-        .filter((t) => !t.account_id)
-        .reduce((sum, t) => sum + t.amount, 0);
+      const allTimeUnlinkedBalance = [
+        ...preWindowData.filter((t) => !t.account_id),
+        ...data.filter((t) => !t.account_id),
+      ].reduce((sum, t) => sum + t.amount, 0);
       const currentNetWorth = accountsTotal + goalsTotalSaved + allTimeUnlinkedBalance;
 
       // Compute total of all transactions (linked + unlinked) to find starting point
-      const allTimeTxTotal = data.reduce((sum, t) => sum + t.amount, 0);
+      const allPreWindowTotal = preWindowData.reduce((sum, t) => sum + t.amount, 0);
+      const allWindowTotal = data.reduce((sum, t) => sum + t.amount, 0);
+      const allTimeTxTotal = allPreWindowTotal + allWindowTotal;
 
       // The non-transaction baseline is the difference
       // (e.g. initial account balances that weren't recorded as transactions)
       const nonTxBaseline = currentNetWorth - allTimeTxTotal;
 
       // Compute balance before the 12-month window (transactions only)
-      let runningTotal = nonTxBaseline;
-      for (const tx of data) {
-        if (tx.date < startDate) {
-          runningTotal += tx.amount;
-        }
-      }
+      let runningTotal = nonTxBaseline + allPreWindowTotal;
 
-      // Initialize 12 months
+      // Initialize 12 months (runningTotal already accounts for pre-window transactions)
       const monthKeys: string[] = [];
       const monthContributions: Record<string, number> = {};
       for (let i = 0; i < 12; i++) {
@@ -138,14 +145,12 @@ export function useNetWorthOverTime() {
         monthContributions[key] = 0;
       }
 
-      // Sum contributions within window
+      // Sum contributions within window (data is already filtered to >= startDate)
       for (const tx of data) {
-        if (tx.date >= startDate) {
-          const [year, month] = tx.date.split("-");
-          const key = `${year}-${month}`;
-          if (monthContributions[key] !== undefined) {
-            monthContributions[key] += tx.amount;
-          }
+        const [year, month] = tx.date.split("-");
+        const key = `${year}-${month}`;
+        if (monthContributions[key] !== undefined) {
+          monthContributions[key] += tx.amount;
         }
       }
 

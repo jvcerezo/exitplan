@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/layout/sidebar";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { FAB } from "@/components/layout/fab";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageTransition } from "@/components/layout/page-transition";
-import { MobileSearchButton } from "@/components/layout/mobile-search-button";
 
 export const metadata: Metadata = {
   title: {
@@ -22,14 +21,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AppShell>
       <div className="min-h-screen bg-background">
         <Sidebar />
+        <MobileNav />
         <main className="md:pl-64">
-          <div className="mx-auto max-w-5xl px-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pt-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] md:pt-6 md:pb-6">
+          <div className="mx-auto max-w-5xl px-4 pt-[calc(env(safe-area-inset-top)+4.25rem)] sm:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pt-6 md:pb-6">
             <PageTransition>{children}</PageTransition>
           </div>
         </main>
-        <BottomNav />
         <FAB />
-        <MobileSearchButton />
       </div>
     </AppShell>
   );

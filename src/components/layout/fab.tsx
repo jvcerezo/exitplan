@@ -31,8 +31,8 @@ export function FAB() {
   const { data: budgetData } = useBudgetSummary(isBudgets ? currentMonth : "", "monthly");
   const existingBudgetCategories = budgetData?.budgets.map((b) => b.category) ?? [];
 
-  // Hide on settings page — nothing to add
-  if (isSettings) return null;
+  // Hide on pages where FAB has no action
+  if (isSettings || pathname.startsWith("/adulting")) return null;
 
   // Always show a single FAB that opens a minimal action sheet/modal
   return (
@@ -44,7 +44,7 @@ export function FAB() {
           onClick={() => setMenuOpen(false)}
         />
       )}
-      <div data-tour="fab" className="md:hidden fixed right-[calc(env(safe-area-inset-right)+0.875rem)] bottom-[calc(env(safe-area-inset-bottom)+4.6rem)] z-50 flex flex-col-reverse items-end gap-3 pointer-events-none">
+      <div data-tour="fab" className="md:hidden fixed right-[calc(env(safe-area-inset-right)+0.875rem)] bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-50 flex flex-col-reverse items-end gap-3 pointer-events-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
           className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg border-2 border-background/80 active:scale-95 transition-all"
