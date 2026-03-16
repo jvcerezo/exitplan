@@ -135,12 +135,14 @@ export function useBudgetSummary(month: string, period: BudgetPeriod = "monthly"
       const prevTransactions = prevTxResult.data ?? [];
 
       // Compute spent per category this month (only for budgeted categories)
+      // Budgets are stored lowercase; normalize tx.category for case-insensitive matching
       const budgetedCategories = new Set(budgets.map((b) => b.category));
       const spentByCategory: Record<string, number> = {};
       for (const tx of transactions) {
-        if (budgetedCategories.has(tx.category)) {
-          spentByCategory[tx.category] =
-            (spentByCategory[tx.category] || 0) + Math.abs(tx.amount);
+        const normalizedCat = tx.category.trim().toLowerCase();
+        if (budgetedCategories.has(normalizedCat)) {
+          spentByCategory[normalizedCat] =
+            (spentByCategory[normalizedCat] || 0) + Math.abs(tx.amount);
         }
       }
       for (const cat of Object.keys(spentByCategory)) {
@@ -150,8 +152,9 @@ export function useBudgetSummary(month: string, period: BudgetPeriod = "monthly"
       // Compute previous month spent per category (for rollover)
       const prevSpentByCategory: Record<string, number> = {};
       for (const tx of prevTransactions) {
-        prevSpentByCategory[tx.category] =
-          (prevSpentByCategory[tx.category] || 0) + Math.abs(tx.amount);
+        const normalizedCat = tx.category.trim().toLowerCase();
+        prevSpentByCategory[normalizedCat] =
+          (prevSpentByCategory[normalizedCat] || 0) + Math.abs(tx.amount);
       }
 
       // Compute rollover amounts: for each current budget with rollover=true,

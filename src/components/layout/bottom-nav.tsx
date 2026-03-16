@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Target, Wallet, Settings, Calculator } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Target, Settings, Calculator, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,7 +10,7 @@ const navItems = [
   { href: "/transactions", label: "Activity", icon: ArrowLeftRight, tourId: "sidebar-transactions" },
   { href: "/budgets", label: "Budgets", icon: Calculator, tourId: "sidebar-budgets" },
   { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
-  { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
+  { href: "/adulting", label: "Adulting", icon: GraduationCap, tourId: "sidebar-adulting" },
   { href: "/settings", label: "Settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 

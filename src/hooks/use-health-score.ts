@@ -68,11 +68,13 @@ export function useHealthScore() {
       const savingsScore = Math.min(100, Math.max(0, (savingsRate / 0.2) * 100));
 
       // ----- Budget Adherence (25%) -----
+      // Budgets are stored lowercase; normalize tx.category to match
       const spentByCategory: Record<string, number> = {};
       for (const tx of transactions) {
         if (tx.amount < 0) {
-          spentByCategory[tx.category] =
-            (spentByCategory[tx.category] || 0) + Math.abs(tx.amount);
+          const normalizedCat = tx.category.trim().toLowerCase();
+          spentByCategory[normalizedCat] =
+            (spentByCategory[normalizedCat] || 0) + Math.abs(tx.amount);
         }
       }
       let budgetScore = 0;
@@ -105,7 +107,9 @@ export function useHealthScore() {
           g.name.toLowerCase().includes("emergency") ||
           g.category.toLowerCase().includes("emergency")
       );
-      const monthlyExpenses = expenses || 1;
+      // Use a ₱10,000/month floor so new users with no expense history get a
+      // meaningful (not trivially-100%) emergency fund score.
+      const monthlyExpenses = expenses > 0 ? expenses : 10000;
       const targetEmergency = monthlyExpenses * 3;
       const cushionAmount = emergencyGoal
         ? emergencyGoal.current_amount
