@@ -190,13 +190,12 @@ export function useTransactionsSummary() {
     queryFn: async () => {
       const supabase = createClient();
 
-      const [txResult, accountResult, goalsResult, budgetsResult] = await Promise.all([
+      const [txResult, accountResult, goalsResult, budgetsResult, contribResult] = await Promise.all([
         supabase.from("transactions").select("amount, account_id"),
-        supabase
-          .from("accounts")
-          .select("balance"),
+        supabase.from("accounts").select("balance"),
         supabase.from("goals").select("current_amount"),
         supabase.from("budgets").select("amount"),
+        supabase.from("contributions").select("employee_share").eq("is_paid", true),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
@@ -208,13 +207,15 @@ export function useTransactionsSummary() {
       const accounts = accountResult.data ?? [];
       const goals = goalsResult.data ?? [];
       const budgets = budgetsResult.data ?? [];
+      const paidContributions = contribResult.data ?? [];
 
       const income = transactions
         .filter((t) => t.amount > 0)
         .reduce((sum, t) => sum + t.amount, 0);
+      const contributionsExpenses = paidContributions.reduce((sum, c) => sum + c.employee_share, 0);
       const expenses = transactions
         .filter((t) => t.amount < 0)
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0) + contributionsExpenses;
 
       // Account balances already include their linked transactions,
       // so only add unlinked transaction amounts to avoid double-counting.

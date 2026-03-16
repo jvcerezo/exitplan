@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -12,8 +11,6 @@ interface UserWithStats {
   role: string;
   created_at: string;
   transactionCount: number;
-  totalIncome: number;
-  totalExpenses: number;
   goalCount: number;
   lastTransactionAt: string | null;
 }
@@ -37,7 +34,7 @@ async function getUsers(): Promise<UserWithStats[]> {
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false }),
-      supabase.from("transactions").select("user_id, amount, created_at"),
+      supabase.from("transactions").select("user_id, created_at"),
       supabase.from("goals").select("user_id"),
       supabase.from("admin_users").select("user_id"),
     ]);
@@ -47,26 +44,13 @@ async function getUsers(): Promise<UserWithStats[]> {
   const adminIds = new Set((adminUsers ?? []).map((entry) => entry.user_id));
 
   // Group transactions by user
-  const txByUser = new Map<
-    string,
-    { count: number; income: number; expenses: number; lastTransactionAt: string | null }
-  >();
+  const txByUser = new Map<string, { count: number; lastTransactionAt: string | null }>();
   for (const tx of transactions ?? []) {
-    const existing = txByUser.get(tx.user_id) ?? {
-      count: 0,
-      income: 0,
-      expenses: 0,
-      lastTransactionAt: null,
-    };
+    const existing = txByUser.get(tx.user_id) ?? { count: 0, lastTransactionAt: null };
     existing.count++;
-    const amount = Number(tx.amount);
-    if (amount > 0) existing.income += amount;
-    else existing.expenses += Math.abs(amount);
-
     if (!existing.lastTransactionAt || new Date(tx.created_at) > new Date(existing.lastTransactionAt)) {
       existing.lastTransactionAt = tx.created_at;
     }
-
     txByUser.set(tx.user_id, existing);
   }
 
@@ -77,12 +61,7 @@ async function getUsers(): Promise<UserWithStats[]> {
   }
 
   return profiles.map((p) => {
-    const txStats = txByUser.get(p.id) ?? {
-      count: 0,
-      income: 0,
-      expenses: 0,
-      lastTransactionAt: null,
-    };
+    const txStats = txByUser.get(p.id) ?? { count: 0, lastTransactionAt: null };
     return {
       id: p.id,
       email: p.email,
@@ -90,8 +69,6 @@ async function getUsers(): Promise<UserWithStats[]> {
       role: adminIds.has(p.id) ? "admin" : "user",
       created_at: p.created_at,
       transactionCount: txStats.count,
-      totalIncome: txStats.income,
-      totalExpenses: txStats.expenses,
       goalCount: goalsByUser.get(p.id) ?? 0,
       lastTransactionAt: txStats.lastTransactionAt,
     };
@@ -176,18 +153,6 @@ export default async function AdminUsersPage() {
                         <p className="text-xs text-muted-foreground">Goals</p>
                         <p className="font-medium tabular-nums">{user.goalCount}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Income</p>
-                        <p className="font-medium tabular-nums text-emerald-600">
-                          {formatCurrency(user.totalIncome)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Expenses</p>
-                        <p className="font-medium tabular-nums text-foreground">
-                          {formatCurrency(user.totalExpenses)}
-                        </p>
-                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                       <p>
@@ -228,19 +193,10 @@ export default async function AdminUsersPage() {
                         Transactions
                       </th>
                       <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                        Income
-                      </th>
-                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                        Expenses
-                      </th>
-                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
                         Goals
                       </th>
                       <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                        Net
-                      </th>
-                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
-                        Last Tx
+                        Last Active
                       </th>
                       <th className="pb-3 font-medium text-muted-foreground text-right">
                         Joined
@@ -289,17 +245,8 @@ export default async function AdminUsersPage() {
                         <td className="py-3 pr-4 text-right tabular-nums">
                           {user.transactionCount}
                         </td>
-                        <td className="py-3 pr-4 text-right tabular-nums text-emerald-600">
-                          {formatCurrency(user.totalIncome)}
-                        </td>
-                        <td className="py-3 pr-4 text-right tabular-nums text-foreground">
-                          {formatCurrency(user.totalExpenses)}
-                        </td>
                         <td className="py-3 pr-4 text-right tabular-nums">
                           {user.goalCount}
-                        </td>
-                        <td className="py-3 pr-4 text-right tabular-nums">
-                          {formatCurrency(user.totalIncome - user.totalExpenses)}
                         </td>
                         <td className="py-3 pr-4 text-right text-muted-foreground whitespace-nowrap">
                           {user.lastTransactionAt

@@ -92,7 +92,6 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
   const rows = [
     {
       label: "SSS",
-      msc: deductions.sss.msc,
       employee: deductions.sss.employee,
       employer: deductions.sss.employer + deductions.sss.ec,
       total: deductions.sss.employee + deductions.sss.employer + deductions.sss.ec,
@@ -102,7 +101,6 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
     },
     {
       label: "PhilHealth",
-      msc: null,
       employee: deductions.philhealth.employee,
       employer: deductions.philhealth.employer,
       total: deductions.philhealth.total,
@@ -112,7 +110,6 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
     },
     {
       label: "Pag-IBIG",
-      msc: null,
       employee: deductions.pagibig.employee,
       employer: deductions.pagibig.employer,
       total: deductions.pagibig.total,

@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { CURRENCIES } from "@/lib/constants";
 
 const SUPPORTED_CODES = CURRENCIES.map((c) => c.code).filter((c) => c !== "PHP");
 const CACHE_HOURS = 24;
 
 export async function GET() {
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const supabase = createAdminClient();
 
   // Check if we have fresh cached rates
@@ -102,10 +109,7 @@ export async function GET() {
 
     // No cached rates at all — return error
     return NextResponse.json(
-      {
-        error: "Failed to fetch exchange rates",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
+      { error: "Failed to fetch exchange rates. Please try again later." },
       { status: 502 }
     );
   }

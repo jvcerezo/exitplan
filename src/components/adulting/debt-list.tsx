@@ -16,7 +16,8 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { useDebts, useUpdateDebt, useDeleteDebt, useRecordDebtPayment } from "@/hooks/use-debts";
 import { useAccounts } from "@/hooks/use-accounts";
-import { CheckCircle2, Trash2, CreditCard, Building2, Car, Home, Wallet, CircleDollarSign } from "lucide-react";
+import { CheckCircle2, Trash2, CreditCard, Building2, Car, Home, Wallet, CircleDollarSign, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import type { Debt } from "@/lib/types/database";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
@@ -38,7 +39,7 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
 
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payAmount, setPayAmount] = useState(String(debt.minimum_payment || ""));
-  const [pickedAccountId, setPickedAccountId] = useState<string>(debt.account_id ?? "none");
+  const [pickedAccountId, setPickedAccountId] = useState<string>(debt.account_id ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const meta = TYPE_META[debt.type] ?? TYPE_META.other;
@@ -50,19 +51,24 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
 
   function openPayDialog() {
     setPayAmount(String(debt.minimum_payment || ""));
-    setPickedAccountId(debt.account_id ?? "none");
+    setPickedAccountId(debt.account_id ?? (accounts[0]?.id ?? ""));
     setShowPayDialog(true);
   }
 
   function confirmPayment() {
     const amount = parseFloat(payAmount);
     if (!amount || amount <= 0) return;
+    if (!pickedAccountId) return;
     recordPayment.mutate({
       debt,
       paymentAmount: amount,
-      accountId: pickedAccountId !== "none" ? pickedAccountId : undefined,
+      accountId: pickedAccountId,
     });
     setShowPayDialog(false);
+  }
+
+  function handleReopen() {
+    update.mutate({ id: debt.id, is_paid_off: false });
   }
 
   return (
@@ -93,31 +99,9 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="text-right">
-              <p className={`text-sm font-bold ${debt.is_paid_off ? "text-primary" : "text-destructive"}`}>
-                {debt.is_paid_off ? "Paid Off" : formatCurrency(debt.current_balance)}
-              </p>
-            </div>
-            {!debt.is_paid_off && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2"
-                onClick={openPayDialog}
-                title="Record a payment"
-              >
-                <CircleDollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2"
-              onClick={() => update.mutate({ id: debt.id, is_paid_off: !debt.is_paid_off })}
-              title={debt.is_paid_off ? "Mark as active" : "Mark as paid off"}
-            >
-              <CheckCircle2 className={`h-3.5 w-3.5 ${debt.is_paid_off ? "text-primary" : "text-muted-foreground"}`} />
-            </Button>
+            <p className={`text-sm font-bold ${debt.is_paid_off ? "text-primary" : "text-destructive"}`}>
+              {debt.is_paid_off ? "Paid Off" : formatCurrency(debt.current_balance)}
+            </p>
             <Button
               variant="ghost"
               size="sm"
@@ -137,6 +121,25 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
               <div className="h-full rounded-full bg-primary/60 transition-all" style={{ width: `${paidPct}%` }} />
             </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        {debt.is_paid_off ? (
+          <div className="mt-3 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-xs text-muted-foreground flex-1">This debt has been fully paid off.</span>
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={handleReopen}>
+              <RotateCcw className="h-3 w-3" />
+              Reopen
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <Button variant="outline" size="sm" className="w-full gap-2 h-8" onClick={openPayDialog}>
+              <CircleDollarSign className="h-3.5 w-3.5" />
+              Record Payment
+            </Button>
           </div>
         )}
       </div>
@@ -174,16 +177,18 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Pay From Account <span className="text-muted-foreground">(optional)</span></Label>
+              <Label className="text-xs">Pay From Account <span className="text-destructive">*</span></Label>
               <Select value={pickedAccountId} onValueChange={setPickedAccountId}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select account…" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="text-xs">No transaction</SelectItem>
                   {accounts.map((a) => (
                     <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {accounts.length === 0 && (
+                <p className="text-[10px] text-destructive">Add an account first before recording payments.</p>
+              )}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowPayDialog(false)}>
@@ -193,9 +198,9 @@ function DebtRow({ debt, accounts }: { debt: Debt; accounts: { id: string; name:
                 size="sm"
                 className="flex-1"
                 onClick={confirmPayment}
-                disabled={recordPayment.isPending || !parseFloat(payAmount)}
+                disabled={recordPayment.isPending || !parseFloat(payAmount) || !pickedAccountId}
               >
-                {recordPayment.isPending ? "Saving…" : pickedAccountId !== "none" ? "Pay & Record" : "Record Only"}
+                {recordPayment.isPending ? "Saving…" : "Pay & Record"}
               </Button>
             </div>
           </div>

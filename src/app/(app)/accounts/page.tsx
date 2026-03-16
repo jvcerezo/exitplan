@@ -6,11 +6,54 @@ import { AddAccountDialog } from "@/components/accounts/add-account-dialog";
 import { AccountCard } from "@/components/accounts/account-card";
 import { TransferDialog } from "@/components/transactions/transfer-dialog";
 import { formatCurrency } from "@/lib/utils";
-import { AlertCircle, Archive, ArchiveRestore, ChevronDown, ChevronRight, Loader2, Wallet } from "lucide-react";
+import { AlertCircle, Archive, ArchiveRestore, ChevronDown, ChevronRight, Loader2, Wallet, Landmark } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useContributionSummary } from "@/hooks/use-contributions";
+
+const FUND_META = [
+  { key: "sss", label: "SSS", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+  { key: "philhealth", label: "PhilHealth", color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/20" },
+  { key: "pagibig", label: "Pag-IBIG", color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20" },
+] as const;
+
+function GovernmentContributionsSection() {
+  const { data } = useContributionSummary();
+  if (!data || data.contributions.length === 0) return null;
+
+  const totals = {
+    sss: data.byType.sss.filter((c) => c.is_paid).reduce((sum, c) => sum + c.employee_share, 0),
+    philhealth: data.byType.philhealth.filter((c) => c.is_paid).reduce((sum, c) => sum + c.employee_share, 0),
+    pagibig: data.byType.pagibig.filter((c) => c.is_paid).reduce((sum, c) => sum + c.employee_share, 0),
+  };
+  const grandTotal = totals.sss + totals.philhealth + totals.pagibig;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Landmark className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-semibold">Government Contributions</span>
+        <span className="text-xs text-muted-foreground ml-auto">Total paid: <span className="font-medium text-foreground">{formatCurrency(grandTotal)}</span></span>
+      </div>
+      <div className="grid gap-3 grid-cols-3">
+        {FUND_META.map((f) => {
+          const count = data.byType[f.key].filter((c) => c.is_paid).length;
+          return (
+            <Card key={f.key} className={`rounded-xl border ${f.border}`}>
+              <CardContent className="p-3">
+                <div className={`text-[10px] font-bold mb-1 ${f.color}`}>{f.label}</div>
+                <div className="text-base font-bold">{formatCurrency(totals[f.key])}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{count} month{count !== 1 ? "s" : ""} paid</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const TYPE_LABELS: Record<string, string> = {
   cash: "Cash",
@@ -94,6 +137,9 @@ export default function AccountsPage() {
               description="All accounts are archived. Restore one or add a new account."
             />
           )}
+
+          {/* Government contributions */}
+          <GovernmentContributionsSection />
 
           {/* Archived accounts section */}
           {archivedList.length > 0 && (

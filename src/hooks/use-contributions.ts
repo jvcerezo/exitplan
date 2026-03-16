@@ -109,6 +109,31 @@ export function useUpdateContribution() {
   });
 }
 
+export function useBulkAddContributions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (contributions: ContributionInsert[]) => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const records = contributions.map((c) => ({ ...c, user_id: user.id }));
+      const { error } = await supabase
+        .from("contributions")
+        .upsert(records, { onConflict: "user_id,type,period" });
+
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contributions"] });
+    },
+    onError: () => {
+      toast.error("Failed to import contributions. Please try again.");
+    },
+  });
+}
+
 export function useDeleteContribution() {
   const queryClient = useQueryClient();
 

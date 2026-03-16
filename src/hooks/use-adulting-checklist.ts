@@ -4,14 +4,15 @@ import { createClient } from "@/lib/supabase/client";
 export function useChecklistProgress() {
   return useQuery({
     queryKey: ["adulting-checklist"],
-    queryFn: async (): Promise<Set<string>> => {
+    staleTime: 0,
+    queryFn: async (): Promise<string[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("adulting_checklist_progress")
         .select("item_id");
 
       if (error) throw new Error(error.message);
-      return new Set((data ?? []).map((r) => r.item_id));
+      return (data ?? []).map((r) => r.item_id);
     },
   });
 }
@@ -38,13 +39,12 @@ export function useToggleChecklistItem() {
     },
     onMutate: async ({ itemId, completed }) => {
       await queryClient.cancelQueries({ queryKey: ["adulting-checklist"] });
-      const prev = queryClient.getQueryData<Set<string>>(["adulting-checklist"]);
+      const prev = queryClient.getQueryData<string[]>(["adulting-checklist"]);
 
-      queryClient.setQueryData<Set<string>>(["adulting-checklist"], (old) => {
-        const next = new Set(old ?? []);
-        if (completed) next.add(itemId);
-        else next.delete(itemId);
-        return next;
+      queryClient.setQueryData<string[]>(["adulting-checklist"], (old) => {
+        const arr = old ?? [];
+        if (completed) return arr.includes(itemId) ? arr : [...arr, itemId];
+        return arr.filter((id) => id !== itemId);
       });
 
       return { prev };

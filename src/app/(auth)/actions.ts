@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 function normalizeOrigin(value: string) {
   try {
@@ -74,7 +75,14 @@ export async function signUp(formData: FormData) {
   });
 
   if (error) {
-    return { error: error.message };
+    const status = error.status ?? 0;
+    const msg =
+      status === 422 || status === 400
+        ? "Invalid email or password format."
+        : status === 429
+          ? "Too many attempts. Please try again later."
+          : "Could not create account. Please try again.";
+    return { error: msg };
   }
 
   if (data.session) {
@@ -97,7 +105,14 @@ export async function signIn(formData: FormData) {
   });
 
   if (error) {
-    return { error: error.message };
+    const status = error.status ?? 0;
+    const msg =
+      status === 400
+        ? "Invalid email or password."
+        : status === 429
+          ? "Too many attempts. Please try again later."
+          : "Sign in failed. Please try again.";
+    return { error: msg };
   }
 
   redirect("/dashboard");
@@ -107,6 +122,31 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+export async function deleteAccount() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated." };
+  }
+
+  // Sign out first so the session is cleared before the user row is deleted
+  await supabase.auth.signOut();
+
+  // Use the admin client to delete the auth user — this cascades to all user data
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(user.id);
+
+  if (error) {
+    console.error("Error deleting account:", error);
+    return { error: "Could not delete account. Please try again or contact support@exitplan.app." };
+  }
+
+  return { success: true };
 }
 
 export async function completeOnboarding() {
@@ -123,7 +163,7 @@ export async function completeOnboarding() {
 
   if (error) {
     console.error("Error completing onboarding:", error);
-    return { error: error.message };
+    return { error: "Could not complete onboarding. Please try again." };
   }
 
   return { success: true };
