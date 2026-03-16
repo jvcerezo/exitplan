@@ -2,6 +2,10 @@
 
 # dependencies
 /node_modules
+**/node_modules
+
+# turborepo
+.turbo
 /.pnp
 .pnp.*
 .yarn/*
@@ -14,11 +18,12 @@
 /coverage
 
 # next.js
-/.next/
+.next/
 /out/
 
 # production
 /build
+dist/
 
 # misc
 .DS_Store

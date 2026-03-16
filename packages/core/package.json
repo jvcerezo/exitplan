@@ -1,0 +1,18 @@
+{
+  "name": "@exitplan/core",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0"
+  },
+  "devDependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4"
+  }
+}

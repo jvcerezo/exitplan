@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv src:*)",
+      "Bash(mv public:*)",
+      "Bash(mv next.config.ts apps/web/next.config.ts)",
+      "Bash(mv tsconfig.json apps/web/tsconfig.json)",
+      "Bash(mv next-env.d.ts apps/web/next-env.d.ts)",
+      "Bash(mv postcss.config.mjs apps/web/postcss.config.mjs)",
+      "Bash(mv eslint.config.mjs apps/web/eslint.config.mjs)",
+      "Bash(mv components.json apps/web/components.json)",
+      "Bash(mv capacitor.config.ts apps/web/capacitor.config.ts)",
+      "Bash(mv android:*)",
+      "Bash(mv ios:*)",
+      "Bash(mv supabase:*)",
+      "Bash(mv scripts:*)",
+      "Bash(mv docs:*)",
+      "Bash(mv .env.local.example apps/web/.env.local.example)",
+      "Bash(rm package-lock.json)",
+      "Bash(rm -f tsconfig.tsbuildinfo)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npx expo:*)"
+    ]
+  }
+}
