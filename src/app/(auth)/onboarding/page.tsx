@@ -16,9 +16,6 @@ import {
   Wallet,
   Banknote,
   Target,
-  Briefcase,
-  UserCheck,
-  Globe,
   Loader2,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
@@ -49,22 +46,6 @@ const MONEY_GOALS = [
   { id: "grow-wealth", label: "Grow my wealth", icon: TrendingUp, goalCategory: "investment", goalName: "Wealth Growth" },
 ] as const;
 
-const EMPLOYMENT_OPTIONS = [
-  { value: "employed", label: "Employed", icon: Briefcase, sub: "Company / government employee" },
-  { value: "self_employed", label: "Self-Employed", icon: UserCheck, sub: "Freelancer or business owner" },
-  { value: "ofw", label: "OFW", icon: Globe, sub: "Overseas Filipino Worker" },
-  { value: "student", label: "Student / Not working", icon: PiggyBank, sub: "No regular income yet" },
-] as const;
-
-const INCOME_RANGES = [
-  "Below ₱15,000",
-  "₱15,000 – ₱25,000",
-  "₱25,000 – ₱50,000",
-  "₱50,000 – ₱100,000",
-  "Above ₱100,000",
-  "Prefer not to say",
-] as const;
-
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   cash: "Cash",
   bank: "Bank",
@@ -72,7 +53,8 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   "credit-card": "Credit Card",
 };
 
-const TOTAL_STEPS = 4;
+// Steps: 0 = welcome, 1 = money goal, 2 = accounts
+const STEP_COUNT = 3;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -124,12 +106,9 @@ export default function OnboardingPage() {
 
   // Step 1: Money goal
   const [selectedGoal, setSelectedGoal] = useState("");
+  const [goalAmount, setGoalAmount] = useState("");
 
-  // Step 2: Employment & income
-  const [employment, setEmployment] = useState("");
-  const [incomeRange, setIncomeRange] = useState("");
-
-  // Step 3: Accounts
+  // Step 2: Accounts
   const [addedAccounts, setAddedAccounts] = useState<AddedAccount[]>([]);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customName, setCustomName] = useState("");
@@ -186,10 +165,11 @@ export default function OnboardingPage() {
 
       // Create goal based on selected money goal
       const goalInfo = MONEY_GOALS.find((g) => g.id === selectedGoal);
-      if (goalInfo) {
+      const parsedGoalAmount = parseFloat(goalAmount) || 0;
+      if (goalInfo && parsedGoalAmount > 0) {
         await addGoal.mutateAsync({
           name: goalInfo.goalName,
-          target_amount: 0,
+          target_amount: parsedGoalAmount,
           current_amount: 0,
           deadline: null,
           category: goalInfo.goalCategory,
@@ -246,23 +226,21 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* ── Steps 1-3 ──────────────────────────────────────────────── */}
+      {/* ── Steps 1-2 ──────────────────────────────────────────────── */}
       {step >= 1 && (
         <div className="flex flex-1 flex-col w-full max-w-lg px-5 py-8 sm:py-12">
           {/* Header with progress */}
           <div className="flex items-center gap-4 mb-8">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border hover:bg-muted transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-            )}
-            <StepProgress current={step} total={TOTAL_STEPS} />
+            <button
+              type="button"
+              onClick={() => setStep(step - 1)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border hover:bg-muted transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <StepProgress current={step} total={STEP_COUNT} />
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {step}/{TOTAL_STEPS - 1}
+              {step}/{STEP_COUNT - 1}
             </span>
           </div>
 
@@ -305,6 +283,30 @@ export default function OnboardingPage() {
                 })}
               </div>
 
+              {selectedGoal && (
+                <div className="space-y-2 rounded-xl border bg-card p-4">
+                  <Label htmlFor="goalAmount" className="text-sm font-medium">
+                    How much are you aiming for?
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">₱</span>
+                    <input
+                      id="goalAmount"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="e.g. 50,000"
+                      value={formatAmount(goalAmount)}
+                      onChange={(e) => setGoalAmount(parseAmountInput(e.target.value))}
+                      className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/50"
+                      autoFocus
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    A rough estimate is fine — you can adjust this anytime.
+                  </p>
+                </div>
+              )}
+
               <div className="mt-auto pt-4 flex gap-3">
                 <Button
                   variant="ghost"
@@ -316,7 +318,7 @@ export default function OnboardingPage() {
                 <Button
                   className="flex-1"
                   onClick={() => setStep(2)}
-                  disabled={!selectedGoal}
+                  disabled={!selectedGoal || !goalAmount || parseFloat(goalAmount) <= 0}
                 >
                   Continue
                   <ArrowRight className="h-4 w-4 ml-1.5" />
@@ -325,90 +327,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Step 2: Employment & Income ─────────────────────────── */}
+          {/* ── Step 2: Add Accounts ───────────────────────────────── */}
           {step === 2 && (
-            <div className="flex flex-1 flex-col space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight">
-                  Quick financial context
-                </h2>
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  Helps us tailor PH-specific features like SSS, PhilHealth, and tax tools. Completely optional.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Employment status</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {EMPLOYMENT_OPTIONS.map((opt) => {
-                      const isSelected = employment === opt.value;
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setEmployment(isSelected ? "" : opt.value)}
-                          className={cn(
-                            "flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition-all",
-                            isSelected
-                              ? "border-primary bg-primary/5 ring-1 ring-primary"
-                              : "hover:border-foreground/20 hover:bg-muted/50"
-                          )}
-                        >
-                          <opt.icon className={cn("h-4 w-4", isSelected ? "text-primary" : "text-muted-foreground")} />
-                          <div>
-                            <p className="text-xs font-semibold">{opt.label}</p>
-                            <p className="text-[10px] text-muted-foreground leading-tight">{opt.sub}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Monthly income range</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {INCOME_RANGES.map((range) => {
-                      const isSelected = incomeRange === range;
-                      return (
-                        <button
-                          key={range}
-                          type="button"
-                          onClick={() => setIncomeRange(isSelected ? "" : range)}
-                          className={cn(
-                            "rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                            isSelected
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                          )}
-                        >
-                          {range}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-auto pt-4 flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground"
-                  onClick={() => setStep(3)}
-                >
-                  Skip
-                </Button>
-                <Button className="flex-1" onClick={() => setStep(3)}>
-                  Continue
-                  <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* ── Step 3: Add Accounts ───────────────────────────────── */}
-          {step === 3 && (
             <div className="flex flex-1 flex-col space-y-5">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">
@@ -527,8 +447,6 @@ export default function OnboardingPage() {
                 >
                   {saving ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Setting up...</>
-                  ) : addedAccounts.length > 0 ? (
-                    <>Finish Setup <ArrowRight className="h-4 w-4 ml-1.5" /></>
                   ) : (
                     <>Finish Setup <ArrowRight className="h-4 w-4 ml-1.5" /></>
                   )}

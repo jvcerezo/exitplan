@@ -8,8 +8,16 @@ interface SessionRedirectGuardProps {
   to: string;
 }
 
+const CACHE_KEY = "EXITPLAN_OFFLINE_CACHE";
+
 export function SessionRedirectGuard({ to }: SessionRedirectGuardProps) {
   const router = useRouter();
+
+  // Clear persisted React Query cache so a new sign-in never shows
+  // stale data from a previous user (e.g., wrong profile name).
+  useEffect(() => {
+    localStorage.removeItem(CACHE_KEY);
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();

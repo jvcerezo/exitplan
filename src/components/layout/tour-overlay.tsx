@@ -9,6 +9,8 @@ import {
   BarChart3,
   CheckCircle2,
   CircleDollarSign,
+  CreditCard,
+  GraduationCap,
   Landmark,
   LayoutDashboard,
   Map,
@@ -16,6 +18,7 @@ import {
   Plane,
   Plus,
   Receipt,
+  ReceiptText,
   Search,
   Settings,
   Shield,
@@ -199,6 +202,38 @@ function AccountsMockup() {
   );
 }
 
+function AdultingMockup() {
+  const items = [
+    { name: "Gov't Contributions", sub: "SSS · PhilHealth · Pag-IBIG", Icon: Landmark, color: "bg-blue-500" },
+    { name: "BIR Tax Tracker", sub: "TRAIN Law income tax", Icon: ReceiptText, color: "bg-orange-500" },
+    { name: "Debt Manager", sub: "Snowball & avalanche", Icon: CreditCard, color: "bg-rose-500" },
+    { name: "Bills & Insurance", sub: "Recurring payments", Icon: Shield, color: "bg-violet-500" },
+  ];
+
+  return (
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-[10px] font-bold">Adulting Hub</div>
+        <GraduationCap className="h-3 w-3 text-muted-foreground/60" />
+      </div>
+      <div className="rounded-lg bg-primary/10 px-3 py-1.5 text-[9px] text-primary font-semibold">
+        Your Filipino adulting toolkit
+      </div>
+      {items.map((item) => (
+        <div key={item.name} className="flex items-center gap-2 rounded-lg border bg-card px-2.5 py-2">
+          <div className={cn("flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full", item.color)}>
+            <item.Icon className="h-2.5 w-2.5 text-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[9px] font-semibold">{item.name}</div>
+            <div className="text-[8px] text-muted-foreground">{item.sub}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function FabMockup() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 p-4 select-none pointer-events-none">
@@ -308,6 +343,7 @@ const SCREENSHOT_COMPONENTS: Record<NonNullable<TourStep["screenshot"]>, React.C
   goals: GoalsMockup,
   budgets: BudgetsMockup,
   accounts: AccountsMockup,
+  adulting: AdultingMockup,
   fab: FabMockup,
   search: SearchMockup,
   settings: SettingsMockup,
@@ -320,6 +356,7 @@ const SCREENSHOT_URLS: Record<NonNullable<TourStep["screenshot"]>, string> = {
   goals: "exitplan.app/goals",
   budgets: "exitplan.app/budgets",
   accounts: "exitplan.app/accounts",
+  adulting: "exitplan.app/adulting",
   fab: "exitplan.app/dashboard",
   search: "exitplan.app/search",
   settings: "exitplan.app/settings",
