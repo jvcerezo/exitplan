@@ -20,6 +20,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Relax COOP for the OAuth callback so cross-origin redirects
+        // (Google → Supabase → app) work inside the Capacitor WebView.
+        source: "/auth/callback",
+        headers: [
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
+          },
+        ],
+      },
+      {
         source: "/:path*",
         headers: [
           {

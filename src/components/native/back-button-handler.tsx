@@ -36,9 +36,11 @@ export function BackButtonHandler() {
   }, [router]);
 
   // App resume → check session validity, redirect to /login if expired.
-  // This runs client-side (in-WebView navigation) so the server-side
-  // middleware redirect — which can open the system browser on Capacitor —
-  // is never reached.
+  // Uses getUser() (server round-trip) instead of getSession() (local cache)
+  // so that truly-expired sessions are detected reliably.  This runs
+  // client-side (in-WebView navigation) so the server-side middleware
+  // redirect — which can open the system browser on Capacitor — is never
+  // reached.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -48,10 +50,10 @@ export function BackButtonHandler() {
 
       const supabase = createClient();
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (!user) {
         router.replace("/login");
       }
     });
