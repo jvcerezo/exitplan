@@ -18,6 +18,7 @@ export interface TourStep {
     | "goals"
     | "budgets"
     | "accounts"
+    | "adulting"
     | "fab"
     | "search"
     | "settings"
@@ -72,6 +73,14 @@ export const TOUR_STEPS: TourStep[] = [
       "Manage all your cash, bank, and e-wallet accounts in one place. Balances update automatically as you log transactions.",
     placement: "center",
     screenshot: "accounts",
+  },
+  {
+    target: null,
+    title: "Adulting Hub",
+    description:
+      "Your all-in-one Filipino adulting toolkit. Track SSS, PhilHealth, and Pag-IBIG contributions, compute BIR taxes, manage debts and bills, and explore insurance and calculators — all in one place.",
+    placement: "center",
+    screenshot: "adulting",
   },
   {
     target: null,

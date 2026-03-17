@@ -14,7 +14,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co https://open.er-api.com https://api.ocr.space",
   "frame-src 'self' https://*.supabase.co",
-  "upgrade-insecure-requests",
+  ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const nextConfig: NextConfig = {
