@@ -12,7 +12,12 @@ jobs:
     timeout-minutes: 45
 
     env:
-      CAP_SERVER_URL: ${{ secrets.CAP_SERVER_URL }}
+      # Supabase public keys — inlined by Next.js at build time
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+
+      # Android signing
       EXITPLAN_UPLOAD_STORE_FILE: ${{ github.workspace }}/android/keystore/upload.jks
       EXITPLAN_UPLOAD_STORE_PASSWORD: ${{ secrets.EXITPLAN_UPLOAD_STORE_PASSWORD }}
       EXITPLAN_UPLOAD_KEY_ALIAS: ${{ secrets.EXITPLAN_UPLOAD_KEY_ALIAS }}
@@ -39,7 +44,8 @@ jobs:
 
       - name: Validate required secrets
         run: |
-          test -n "$CAP_SERVER_URL" || (echo "Missing CAP_SERVER_URL secret" && exit 1)
+          test -n "$NEXT_PUBLIC_SUPABASE_URL" || (echo "Missing NEXT_PUBLIC_SUPABASE_URL secret" && exit 1)
+          test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" || (echo "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY secret" && exit 1)
           test -n "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" || (echo "Missing ANDROID_UPLOAD_KEYSTORE_BASE64 secret" && exit 1)
           test -n "$EXITPLAN_UPLOAD_STORE_PASSWORD" || (echo "Missing EXITPLAN_UPLOAD_STORE_PASSWORD secret" && exit 1)
           test -n "$EXITPLAN_UPLOAD_KEY_ALIAS" || (echo "Missing EXITPLAN_UPLOAD_KEY_ALIAS secret" && exit 1)
@@ -50,8 +56,11 @@ jobs:
           mkdir -p android/keystore
           echo "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" | base64 --decode > android/keystore/upload.jks
 
-      - name: Sync Android project (hosted mode)
-        run: npm run mobile:android:hosted
+      # Build a self-contained static export — NO remote server.url.
+      # This bundles all HTML/JS/CSS into android/app/src/main/assets/
+      # so the app works offline and passes Play Store review.
+      - name: Build static export & sync to Android
+        run: npm run mobile:android:static
 
       - name: Make gradlew executable
         working-directory: android
