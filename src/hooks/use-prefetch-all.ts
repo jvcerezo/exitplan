@@ -29,21 +29,29 @@ async function prefetchAllData(queryClient: ReturnType<typeof useQueryClient>) {
 
   if (!session?.user) return;
 
-  // Prefetch all data queries in parallel. Each uses the same queryKey
-  // that the corresponding hook uses, so the cache is shared.
+  const month = new Date().toISOString().slice(0, 7);
+
   const prefetches = [
-    // Core
     queryClient.prefetchQuery({
       queryKey: ["accounts"],
-      queryFn: () => supabase.from("accounts").select("*").eq("is_archived", false).order("name").then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("accounts").select("*").eq("is_archived", false).order("name");
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["transactions", "recent"],
-      queryFn: () => supabase.from("transactions").select("*").order("date", { ascending: false }).order("created_at", { ascending: false }).limit(10).then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("transactions").select("*").order("date", { ascending: false }).order("created_at", { ascending: false }).limit(10);
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["goals"],
-      queryFn: () => supabase.from("goals").select("*").order("is_completed").order("created_at", { ascending: false }).then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("goals").select("*").order("is_completed").order("created_at", { ascending: false });
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["goals", "summary"],
@@ -59,36 +67,48 @@ async function prefetchAllData(queryClient: ReturnType<typeof useQueryClient>) {
         };
       },
     }),
-
-    // Budgets (current month)
     queryClient.prefetchQuery({
-      queryKey: ["budgets", new Date().toISOString().slice(0, 7)],
-      queryFn: () => supabase.from("budgets").select("*").eq("month", new Date().toISOString().slice(0, 7)).then(r => r.data ?? []),
+      queryKey: ["budgets", month],
+      queryFn: async () => {
+        const { data } = await supabase.from("budgets").select("*").eq("month", month);
+        return data ?? [];
+      },
     }),
-
-    // Adulting
     queryClient.prefetchQuery({
       queryKey: ["debts"],
-      queryFn: () => supabase.from("debts").select("*").order("created_at", { ascending: false }).then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("debts").select("*").order("created_at", { ascending: false });
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["contributions"],
-      queryFn: () => supabase.from("contributions").select("*").order("period", { ascending: false }).then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("contributions").select("*").order("period", { ascending: false });
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["tax-records"],
-      queryFn: () => supabase.from("tax_records").select("*").order("year", { ascending: false }).then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("tax_records").select("*").order("year", { ascending: false });
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["insurance"],
-      queryFn: () => supabase.from("insurance_policies").select("*").order("created_at", { ascending: false }).then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("insurance_policies").select("*").order("created_at", { ascending: false });
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["bills"],
-      queryFn: () => supabase.from("bills").select("*").order("created_at", { ascending: false }).then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("bills").select("*").order("created_at", { ascending: false });
+        return data ?? [];
+      },
     }),
-
-    // Profile & exchange rates
     queryClient.prefetchQuery({
       queryKey: ["profile"],
       queryFn: async () => {
@@ -98,11 +118,17 @@ async function prefetchAllData(queryClient: ReturnType<typeof useQueryClient>) {
     }),
     queryClient.prefetchQuery({
       queryKey: ["exchange-rates"],
-      queryFn: () => supabase.from("exchange_rates").select("*").then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("exchange_rates").select("*");
+        return data ?? [];
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["recurring-transactions"],
-      queryFn: () => supabase.from("recurring_transactions").select("*").order("next_run_date").then(r => r.data ?? []),
+      queryFn: async () => {
+        const { data } = await supabase.from("recurring_transactions").select("*").order("next_run_date");
+        return data ?? [];
+      },
     }),
   ];
 
@@ -110,6 +136,6 @@ async function prefetchAllData(queryClient: ReturnType<typeof useQueryClient>) {
     await Promise.allSettled(prefetches);
     console.log("[prefetch] All data cached for offline use");
   } catch {
-    // Non-critical — pages will just show loading if data isn't cached
+    // Non-critical
   }
 }
