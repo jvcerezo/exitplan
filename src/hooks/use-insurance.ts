@@ -6,7 +6,7 @@ import type { InsurancePolicy, InsurancePolicyInsert } from "@/lib/types/databas
 export function useInsurancePolicies() {
   return useQuery({
     queryKey: ["insurance"],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<InsurancePolicy[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -23,14 +23,16 @@ export function useInsurancePolicies() {
 export function useInsuranceSummary() {
   return useQuery({
     queryKey: ["insurance", "summary"],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
-        .from("insurance_policies").select("*").eq("is_active", true);
+        .from("insurance_policies")
+        .select("id, name, premium_amount, premium_frequency, coverage_amount, renewal_date")
+        .eq("is_active", true);
       if (error) throw new Error(error.message);
 
-      const policies = data as InsurancePolicy[];
+      const policies = data;
 
       const FREQ_MULTIPLIER: Record<string, number> = {
         monthly: 12, quarterly: 4, semi_annual: 2, annual: 1,

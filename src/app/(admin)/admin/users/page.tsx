@@ -13,6 +13,12 @@ interface UserWithStats {
   transactionCount: number;
   goalCount: number;
   lastTransactionAt: string | null;
+  contributionCount: number;
+  debtCount: number;
+  billCount: number;
+  insuranceCount: number;
+  taxRecordCount: number;
+  adultingTotal: number;
 }
 
 function getInitials(name: string | null) {
@@ -28,16 +34,30 @@ function getInitials(name: string | null) {
 async function getUsers(): Promise<UserWithStats[]> {
   const supabase = createAdminClient();
 
-  const [{ data: profiles }, { data: transactions }, { data: goals }, { data: adminUsers }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false }),
-      supabase.from("transactions").select("user_id, created_at"),
-      supabase.from("goals").select("user_id"),
-      supabase.from("admin_users").select("user_id"),
-    ]);
+  const [
+    { data: profiles },
+    { data: transactions },
+    { data: goals },
+    { data: adminUsers },
+    { data: contributions },
+    { data: debts },
+    { data: bills },
+    { data: insurance },
+    { data: taxRecords },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase.from("transactions").select("user_id, created_at"),
+    supabase.from("goals").select("user_id"),
+    supabase.from("admin_users").select("user_id"),
+    supabase.from("contributions").select("user_id"),
+    supabase.from("debts").select("user_id"),
+    supabase.from("bills").select("user_id"),
+    supabase.from("insurance_policies").select("user_id"),
+    supabase.from("tax_records").select("user_id"),
+  ]);
 
   if (!profiles) return [];
 
@@ -60,8 +80,28 @@ async function getUsers(): Promise<UserWithStats[]> {
     goalsByUser.set(g.user_id, (goalsByUser.get(g.user_id) ?? 0) + 1);
   }
 
+  // Group adulting features by user
+  const countByUser = (rows: { user_id: string }[] | null) => {
+    const map = new Map<string, number>();
+    for (const r of rows ?? []) {
+      map.set(r.user_id, (map.get(r.user_id) ?? 0) + 1);
+    }
+    return map;
+  };
+
+  const contribByUser = countByUser(contributions);
+  const debtsByUser = countByUser(debts);
+  const billsByUser = countByUser(bills);
+  const insuranceByUser = countByUser(insurance);
+  const taxByUser = countByUser(taxRecords);
+
   return profiles.map((p) => {
     const txStats = txByUser.get(p.id) ?? { count: 0, lastTransactionAt: null };
+    const contributionCount = contribByUser.get(p.id) ?? 0;
+    const debtCount = debtsByUser.get(p.id) ?? 0;
+    const billCount = billsByUser.get(p.id) ?? 0;
+    const insuranceCount = insuranceByUser.get(p.id) ?? 0;
+    const taxRecordCount = taxByUser.get(p.id) ?? 0;
     return {
       id: p.id,
       email: p.email,
@@ -71,6 +111,12 @@ async function getUsers(): Promise<UserWithStats[]> {
       transactionCount: txStats.count,
       goalCount: goalsByUser.get(p.id) ?? 0,
       lastTransactionAt: txStats.lastTransactionAt,
+      contributionCount,
+      debtCount,
+      billCount,
+      insuranceCount,
+      taxRecordCount,
+      adultingTotal: contributionCount + debtCount + billCount + insuranceCount + taxRecordCount,
     };
   });
 }
@@ -81,6 +127,7 @@ export default async function AdminUsersPage() {
   const activeUsers = users.filter((user) => user.transactionCount > 0).length;
   const usersWithGoals = users.filter((user) => user.goalCount > 0).length;
   const usersMissingEmail = users.filter((user) => !user.email).length;
+  const usersUsingAdulting = users.filter((user) => user.adultingTotal > 0).length;
 
   return (
     <div className="space-y-4">
@@ -91,11 +138,12 @@ export default async function AdminUsersPage() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <SummaryCard title="Total Users" value={users.length} />
         <SummaryCard title="Admins" value={adminCount} tone="warn" />
         <SummaryCard title="Active Users" value={activeUsers} subtitle="with transactions" />
         <SummaryCard title="Missing Email" value={usersMissingEmail} tone={usersMissingEmail > 0 ? "critical" : "ok"} />
+        <SummaryCard title="Using Adulting Hub" value={usersUsingAdulting} subtitle="with adulting records" />
       </div>
 
       <Card>
@@ -144,7 +192,7 @@ export default async function AdminUsersPage() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-3 gap-2 text-sm">
                       <div>
                         <p className="text-xs text-muted-foreground">Transactions</p>
                         <p className="font-medium tabular-nums">{user.transactionCount}</p>
@@ -152,6 +200,10 @@ export default async function AdminUsersPage() {
                       <div>
                         <p className="text-xs text-muted-foreground">Goals</p>
                         <p className="font-medium tabular-nums">{user.goalCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Adulting</p>
+                        <p className="font-medium tabular-nums">{user.adultingTotal}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
@@ -194,6 +246,9 @@ export default async function AdminUsersPage() {
                       </th>
                       <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
                         Goals
+                      </th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
+                        Adulting
                       </th>
                       <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">
                         Last Active
@@ -248,6 +303,9 @@ export default async function AdminUsersPage() {
                         <td className="py-3 pr-4 text-right tabular-nums">
                           {user.goalCount}
                         </td>
+                        <td className="py-3 pr-4 text-right tabular-nums">
+                          {user.adultingTotal}
+                        </td>
                         <td className="py-3 pr-4 text-right text-muted-foreground whitespace-nowrap">
                           {user.lastTransactionAt
                             ? new Date(user.lastTransactionAt).toLocaleDateString("en-PH", {
@@ -281,6 +339,8 @@ export default async function AdminUsersPage() {
         <CardContent className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
           <p>Users with goals: <span className="font-medium text-foreground">{usersWithGoals}</span></p>
           <p>Users with no transactions: <span className="font-medium text-foreground">{users.length - activeUsers}</span></p>
+          <p>Users using Adulting Hub: <span className="font-medium text-foreground">{usersUsingAdulting}</span></p>
+          <p>Users not using Adulting Hub: <span className="font-medium text-foreground">{users.length - usersUsingAdulting}</span></p>
         </CardContent>
       </Card>
     </div>

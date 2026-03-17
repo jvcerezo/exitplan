@@ -12,17 +12,18 @@ type ProfileUpdates = {
 export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<Profile> => {
       const supabase = createClient();
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
+        .eq("id", session.user.id)
         .single();
 
       if (error) throw new Error(error.message);

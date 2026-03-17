@@ -16,9 +16,6 @@ export interface EmergencyFundData {
 export function useEmergencyFund(targetMonths: number = 3) {
   return useQuery({
     queryKey: ["emergency-fund", targetMonths],
-    staleTime: 10 * 60 * 1000,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
     queryFn: async (): Promise<EmergencyFundData> => {
       const supabase = createClient();
 

@@ -4,24 +4,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
+  ArrowLeft,
   X,
   Shield,
   CreditCard,
   PiggyBank,
   TrendingUp,
-  Clock,
-  Plane,
-  GraduationCap,
-  Home,
-  Car,
-  Ellipsis,
-  Wallet,
-  Plus,
+  Receipt,
   Landmark,
+  Plus,
+  Wallet,
+  Banknote,
   Target,
-  ChevronRight,
-  BarChart3,
-  CircleDollarSign,
+  Briefcase,
+  UserCheck,
+  Globe,
+  Loader2,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -31,60 +29,10 @@ import { useProfile } from "@/hooks/use-profile";
 import { useAddAccount } from "@/hooks/use-accounts";
 import { useAddGoal } from "@/hooks/use-goals";
 import { completeOnboarding } from "@/app/(auth)/actions";
-import { COMMON_ACCOUNTS, GOAL_CATEGORIES, ACCOUNT_TYPES } from "@/lib/constants";
+import { COMMON_ACCOUNTS, ACCOUNT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-const GOAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  "emergency fund": Shield,
-  "debt payoff": CreditCard,
-  savings: PiggyBank,
-  investment: TrendingUp,
-  retirement: Clock,
-  travel: Plane,
-  education: GraduationCap,
-  home: Home,
-  vehicle: Car,
-  other: Ellipsis,
-};
-
-const ACCOUNT_TYPE_LABELS: Record<string, string> = {
-  cash: "Cash",
-  bank: "Bank",
-  "e-wallet": "E-Wallet",
-};
-
-/** Formats a raw numeric string like "10000.50" → "10,000.50" for display. */
-function formatAmount(raw: string): string {
-  if (!raw) return "";
-  // Split on decimal point
-  const [intPart, decPart] = raw.split(".");
-  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
-}
-
-/**
- * Handles a change event on a money text input.
- * Strips commas, allows only digits and a single decimal point,
- * then returns the clean numeric string to store in state.
- */
-function parseAmountInput(value: string): string {
-  // Remove all commas, then strip any char that isn't a digit or decimal
-  const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
-  if (!stripped) return "";
-
-  // Keep only a single decimal point while preserving decimal digits
-  const [intPartRaw, ...rest] = stripped.split(".");
-  const decimalPart = rest.join("");
-
-  // Normalize leading zeros: 05000 -> 5000, 000 -> 0
-  const normalizedInt = intPartRaw.replace(/^0+(?=\d)/, "");
-
-  if (rest.length > 0) {
-    return `${normalizedInt || "0"}.${decimalPart}`;
-  }
-
-  return normalizedInt;
-}
+// ─── Types & Constants ───────────────────────────────────────────────────────
 
 interface AddedAccount {
   name: string;
@@ -92,152 +40,78 @@ interface AddedAccount {
   balance: string;
 }
 
-// ─── Mock Screenshots ────────────────────────────────────────────────────────
+const MONEY_GOALS = [
+  { id: "track-expenses", label: "Track my daily expenses", icon: Receipt, goalCategory: "savings", goalName: "Build Savings" },
+  { id: "budget-salary", label: "Budget my salary", icon: Wallet, goalCategory: "savings", goalName: "Monthly Budget" },
+  { id: "pay-off-debt", label: "Pay off debt", icon: CreditCard, goalCategory: "debt payoff", goalName: "Debt Payoff" },
+  { id: "build-emergency", label: "Build an emergency fund", icon: Shield, goalCategory: "emergency fund", goalName: "Emergency Fund" },
+  { id: "save-for-goal", label: "Save for a big purchase", icon: Target, goalCategory: "savings", goalName: "Savings Goal" },
+  { id: "grow-wealth", label: "Grow my wealth", icon: TrendingUp, goalCategory: "investment", goalName: "Wealth Growth" },
+] as const;
 
-function AccountsScreenshot() {
-  const mockAccounts = [
-    { name: "GCash", type: "E-Wallet", balance: "₱3,200.00", color: "bg-blue-500" },
-    { name: "BDO", type: "Bank", balance: "₱18,450.00", color: "bg-green-500" },
-    { name: "Cash", type: "Cash", balance: "₱1,500.00", color: "bg-amber-500" },
-  ];
-  return (
-    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
-      {/* fake header */}
-      <div className="flex items-center justify-between mb-1">
-        <div className="text-[10px] font-bold text-foreground/80">Accounts</div>
-        <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center">
-          <Plus className="h-2.5 w-2.5 text-primary" />
-        </div>
-      </div>
-      {/* total bar */}
-      <div className="rounded-lg bg-primary/10 px-3 py-2 flex items-center justify-between">
-        <div className="text-[9px] text-muted-foreground">Total Balance</div>
-        <div className="text-[11px] font-bold text-primary">₱23,150.00</div>
-      </div>
-      {/* account cards */}
-      {mockAccounts.map((acc) => (
-        <div key={acc.name} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-          <div className={cn("h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0", acc.color)}>
-            <Landmark className="h-3 w-3 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-semibold truncate">{acc.name}</div>
-            <div className="text-[8px] text-muted-foreground">{acc.type}</div>
-          </div>
-          <div className="text-[10px] font-mono font-medium">{acc.balance}</div>
-        </div>
-      ))}
-      {/* add button hint */}
-      <div className="mt-auto flex items-center justify-center gap-1 rounded-lg border border-dashed border-primary/30 py-2">
-        <Plus className="h-3 w-3 text-primary/50" />
-        <span className="text-[9px] text-primary/50">Add Account</span>
-      </div>
-    </div>
-  );
+const EMPLOYMENT_OPTIONS = [
+  { value: "employed", label: "Employed", icon: Briefcase, sub: "Company / government employee" },
+  { value: "self_employed", label: "Self-Employed", icon: UserCheck, sub: "Freelancer or business owner" },
+  { value: "ofw", label: "OFW", icon: Globe, sub: "Overseas Filipino Worker" },
+  { value: "student", label: "Student / Not working", icon: PiggyBank, sub: "No regular income yet" },
+] as const;
+
+const INCOME_RANGES = [
+  "Below ₱15,000",
+  "₱15,000 – ₱25,000",
+  "₱25,000 – ₱50,000",
+  "₱50,000 – ₱100,000",
+  "Above ₱100,000",
+  "Prefer not to say",
+] as const;
+
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+  cash: "Cash",
+  bank: "Bank",
+  "e-wallet": "E-Wallet",
+  "credit-card": "Credit Card",
+};
+
+const TOTAL_STEPS = 4;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatAmount(raw: string): string {
+  if (!raw) return "";
+  const [intPart, decPart] = raw.split(".");
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
 }
 
-function GoalsScreenshot() {
-  const mockGoals = [
-    { name: "Emergency Fund", target: "₱50,000", current: 40, color: "bg-blue-500", Icon: Shield },
-    { name: "Travel Fund", target: "₱30,000", current: 62, color: "bg-violet-500", Icon: Plane },
-    { name: "New Laptop", target: "₱80,000", current: 15, color: "bg-emerald-500", Icon: Target },
-  ];
+function parseAmountInput(value: string): string {
+  const stripped = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!stripped) return "";
+  const [intPartRaw, ...rest] = stripped.split(".");
+  const decimalPart = rest.join("");
+  const normalizedInt = intPartRaw.replace(/^0+(?=\d)/, "");
+  if (rest.length > 0) return `${normalizedInt || "0"}.${decimalPart}`;
+  return normalizedInt;
+}
+
+// ─── Progress Bar ────────────────────────────────────────────────────────────
+
+function StepProgress({ current, total }: { current: number; total: number }) {
   return (
-    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
-      <div className="flex items-center justify-between mb-1">
-        <div className="text-[10px] font-bold text-foreground/80">Goals</div>
-        <BarChart3 className="h-3.5 w-3.5 text-muted-foreground/60" />
-      </div>
-      {/* summary pill */}
-      <div className="rounded-lg bg-primary/10 px-3 py-1.5 flex items-center gap-2">
-        <CircleDollarSign className="h-3 w-3 text-primary" />
-        <span className="text-[9px] text-muted-foreground">3 active goals · </span>
-        <span className="text-[9px] font-semibold text-primary">₱32,000 saved</span>
-      </div>
-      {/* goal cards */}
-      {mockGoals.map((g) => (
-        <div key={g.name} className="rounded-lg border bg-card px-3 py-2 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div className={cn("h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0", g.color)}>
-              <g.Icon className="h-2.5 w-2.5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[9px] font-semibold truncate">{g.name}</div>
-            </div>
-            <div className="text-[9px] text-muted-foreground">{g.current}%</div>
-          </div>
-          {/* progress bar */}
-          <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-            <div
-              className={cn("h-full rounded-full", g.color)}
-              style={{ width: `${g.current}%` }}
-            />
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[8px] text-muted-foreground">Target: {g.target}</span>
-            <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/40" />
-          </div>
-        </div>
+    <div className="flex gap-1.5 w-full max-w-xs">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "h-1 flex-1 rounded-full transition-colors duration-300",
+            i < current ? "bg-primary" : i === current ? "bg-primary/50" : "bg-muted"
+          )}
+        />
       ))}
     </div>
   );
 }
 
-// ── Shared panel renderer ──────────────────────────────────────────────────
-// Defined OUTSIDE OnboardingPage so React's component identity is stable
-// across re-renders. If defined inside, every keystroke recreates the
-// component, unmounting/remounting inputs and losing focus.
-function StepPanel({
-  screenshot,
-  url,
-  caption,
-  captionSub,
-  title,
-  step: stepLabel,
-  children,
-}: {
-  screenshot: React.ReactNode;
-  url: string;
-  caption: string;
-  captionSub: string;
-  title: string;
-  step: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col sm:flex-row w-full h-full">
-      {/* Screenshot panel — mobile: top 45% of screen, desktop: left 42% */}
-      <div className="flex flex-col sm:w-[42%] bg-muted/40 border-b sm:border-b-0 sm:border-r flex-shrink-0 sm:flex-shrink sm:min-h-full" style={{ height: 'clamp(200px, 45dvh, 320px)' }}>
-        <div className="flex items-center gap-2 px-4 pt-3 pb-2 shrink-0">
-          <div className="flex gap-1.5">
-            <div className="h-2.5 w-2.5 rounded-full bg-red-400/60" />
-            <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/60" />
-            <div className="h-2.5 w-2.5 rounded-full bg-green-400/60" />
-          </div>
-          <div className="flex-1 h-5 rounded bg-muted text-[9px] text-muted-foreground flex items-center justify-center">
-            {url}
-          </div>
-        </div>
-        <div className="flex-1 overflow-hidden min-h-0">
-          {screenshot}
-        </div>
-        <div className="hidden sm:block px-5 py-4 border-t bg-background/60 shrink-0">
-          <p className="text-sm font-medium">{caption}</p>
-          <p className="text-xs text-muted-foreground mt-1">{captionSub}</p>
-        </div>
-      </div>
-
-      {/* Form panel — takes remaining height, scrollable */}
-      <div className="flex-1 flex flex-col p-5 sm:p-8 gap-4 sm:gap-6 overflow-y-auto min-h-0">
-        <div className="flex items-start justify-between gap-2">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">{title}</h2>
-          <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap pt-1">{stepLabel}</span>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -246,57 +120,61 @@ export default function OnboardingPage() {
   const addGoal = useAddGoal();
 
   const [step, setStep] = useState(0);
-
-  // Accounts step
-  const [addedAccounts, setAddedAccounts] = useState<AddedAccount[]>([]);
-  const [showCustomAccountForm, setShowCustomAccountForm] = useState(false);
-  const [customAccountName, setCustomAccountName] = useState("");
-  const [customAccountType, setCustomAccountType] = useState("bank");
-
-  // Goal step
-  const [goalCategory, setGoalCategory] = useState("");
-  const [goalName, setGoalName] = useState("");
-  const [goalTarget, setGoalTarget] = useState("");
-  const handleGoalTargetChange = (value: string) => setGoalTarget(parseAmountInput(value));
-
   const [saving, setSaving] = useState(false);
+
+  // Step 1: Money goal
+  const [selectedGoal, setSelectedGoal] = useState("");
+
+  // Step 2: Employment & income
+  const [employment, setEmployment] = useState("");
+  const [incomeRange, setIncomeRange] = useState("");
+
+  // Step 3: Accounts
+  const [addedAccounts, setAddedAccounts] = useState<AddedAccount[]>([]);
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customType, setCustomType] = useState("bank");
+
+  const firstName = profile?.full_name?.split(" ")[0] ?? "";
+
+  // ── Account helpers ──────────────────────────────────────────────────
 
   function toggleAccount(preset: { name: string; type: string }) {
     setAddedAccounts((prev) => {
       const exists = prev.some((a) => a.name === preset.name);
-      if (exists) {
-        return prev.filter((a) => a.name !== preset.name);
-      }
+      if (exists) return prev.filter((a) => a.name !== preset.name);
       return [...prev, { name: preset.name, type: preset.type, balance: "" }];
     });
   }
 
   function addCustomAccount() {
-    if (!customAccountName.trim()) return;
+    if (!customName.trim()) return;
     setAddedAccounts((prev) => [
       ...prev,
-      { name: customAccountName, type: customAccountType, balance: "" },
+      { name: customName.trim(), type: customType, balance: "" },
     ]);
-    setCustomAccountName("");
-    setCustomAccountType("bank");
-    setShowCustomAccountForm(false);
+    setCustomName("");
+    setCustomType("bank");
+    setShowCustomForm(false);
   }
 
   function removeAccount(index: number) {
     setAddedAccounts((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function updateAccountBalance(index: number, raw: string) {
+  function updateBalance(index: number, raw: string) {
     const cleaned = parseAmountInput(raw);
     setAddedAccounts((prev) =>
       prev.map((a, i) => (i === index ? { ...a, balance: cleaned } : a))
     );
   }
 
-  async function handleAccountsContinue() {
-    if (addedAccounts.length === 0) return;
+  // ── Finish onboarding ────────────────────────────────────────────────
+
+  async function handleFinish() {
     setSaving(true);
     try {
+      // Create accounts
       for (const acc of addedAccounts) {
         await addAccount.mutateAsync({
           name: acc.name,
@@ -305,385 +183,361 @@ export default function OnboardingPage() {
           balance: parseFloat(acc.balance) || 0,
         });
       }
-      setSaving(false);
-      setStep(2);
+
+      // Create goal based on selected money goal
+      const goalInfo = MONEY_GOALS.find((g) => g.id === selectedGoal);
+      if (goalInfo) {
+        await addGoal.mutateAsync({
+          name: goalInfo.goalName,
+          target_amount: 0,
+          current_amount: 0,
+          deadline: null,
+          category: goalInfo.goalCategory,
+        });
+      }
+
+      await completeOnboarding();
+      localStorage.setItem("exitplan_tour_required", "1");
+      localStorage.setItem("exitplan_tour_pending", "1");
+      router.push("/dashboard?tour=1");
     } catch (error) {
-      console.error("Failed to add accounts:", error);
+      console.error("Onboarding error:", error);
       setSaving(false);
     }
   }
 
-  async function handleGoalCreate() {
-    if (!goalCategory || !goalName || !goalTarget) return;
-    setSaving(true);
-    try {
-      await addGoal.mutateAsync({
-        name: goalName,
-        target_amount: parseFloat(goalTarget),
-        current_amount: 0,
-        deadline: null,
-        category: goalCategory,
-      });
-      await completeOnboarding();
-      // Require completing the tour before onboarding is marked as complete
-      localStorage.setItem("exitplan_tour_required", "1");
-      localStorage.setItem("exitplan_tour_pending", "1");
-      // Small delay before redirect
-      await new Promise(resolve => setTimeout(resolve, 100));
-      router.push("/dashboard?tour=1");
-    } catch (error) {
-      console.error("Failed to create goal or finish onboarding:", error);
-      setSaving(false);
-    }
-  }
-
-  async function handleFinish() {
-    setSaving(true);
-    try {
-      await completeOnboarding();
-      // Require completing the tour before onboarding is marked as complete
-      localStorage.setItem("exitplan_tour_required", "1");
-      localStorage.setItem("exitplan_tour_pending", "1");
-      // Small delay before redirect
-      await new Promise(resolve => setTimeout(resolve, 100));
-      router.push("/dashboard?tour=1");
-    } catch (error) {
-      console.error("Failed to finish onboarding:", error);
-      setSaving(false);
-    }
-  }
+  // ── Render ───────────────────────────────────────────────────────────
 
   return (
-    <>
-      {/* ── Step 0: Welcome ─────────────────────────────────────────────────── */}
+    <div className="flex min-h-[100dvh] flex-col items-center bg-background">
+      {/* ── Step 0: Welcome ────────────────────────────────────────── */}
       {step === 0 && (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-          <div className="w-full max-w-sm sm:max-w-md text-center space-y-6">
-            <div className="flex justify-center">
-              <BrandMark className="h-24 w-24 rounded-[28px]" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Welcome to Exit<span className="text-primary">Plan</span>
-                {profile?.full_name ? `, ${profile.full_name}` : ""}!
-              </h1>
-              <p className="mt-3 text-muted-foreground">
-                A quick 2-step setup and you&apos;ll have a personalised financial dashboard ready to go.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-left">
-              {[
-                { icon: Landmark, label: "Connect accounts", sub: "Track every balance" },
-                { icon: Target, label: "Set a goal", sub: "Work toward what matters" },
-              ].map(({ icon: Icon, label, sub }) => (
-                <div key={label} className="rounded-xl border bg-card p-4 space-y-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                    <Icon className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="text-sm font-semibold">{label}</p>
-                  <p className="text-xs text-muted-foreground">{sub}</p>
-                </div>
-              ))}
-            </div>
-            <Button className="w-full" size="lg" onClick={() => setStep(1)}>
-              Get Started
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              You can always change these later in Settings.
+        <div className="flex flex-1 flex-col items-center justify-center px-5 py-12 w-full max-w-md text-center space-y-8">
+          <BrandMark className="h-20 w-20 rounded-[22px]" />
+
+          <div className="space-y-3">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {firstName ? `Hey ${firstName}!` : "Welcome!"}
+            </h1>
+            <p className="text-muted-foreground text-balance">
+              Let&apos;s set up your personal finance dashboard in under 2 minutes.
             </p>
           </div>
+
+          <div className="w-full space-y-2.5 text-left">
+            {[
+              { icon: Wallet, text: "See all your money in one place" },
+              { icon: Target, text: "Set goals and track progress" },
+              { icon: Banknote, text: "Know exactly where your money goes" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <p className="text-sm font-medium">{text}</p>
+              </div>
+            ))}
+          </div>
+
+          <Button className="w-full" size="lg" onClick={() => setStep(1)}>
+            Let&apos;s Go
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
         </div>
       )}
 
-      {/* ── Steps 1 & 2: Mobile = full-screen page, Desktop = maximized dialog ── */}
-      {(step === 1 || step === 2) && (
-        <>
-          {/* ── MOBILE: full-screen layout ─────────────────────────────────── */}
-          <div className="sm:hidden flex flex-col h-[100dvh] bg-background overflow-hidden">
-            {step === 1 ? (
-              <StepPanel
-                screenshot={<AccountsScreenshot />}
-                url="exitplan.app/accounts"
-                caption="Track all your money in one place"
-                captionSub="See live balances across all accounts at a glance."
-                title="Add your accounts"
-                step="Step 1 of 2"
+      {/* ── Steps 1-3 ──────────────────────────────────────────────── */}
+      {step >= 1 && (
+        <div className="flex flex-1 flex-col w-full max-w-lg px-5 py-8 sm:py-12">
+          {/* Header with progress */}
+          <div className="flex items-center gap-4 mb-8">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={() => setStep(step - 1)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border hover:bg-muted transition-colors"
               >
-                <p className="text-sm text-muted-foreground -mt-3">
-                  Select your accounts and enter their current balances.
-                </p>
-                {/* Preset pills */}
-                <div className="flex flex-wrap gap-2">
-                  {COMMON_ACCOUNTS.map((preset) => {
-                    const isAdded = addedAccounts.some((a) => a.name === preset.name);
-                    return (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => toggleAccount(preset)}
-                        className={cn(
-                          "rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                          isAdded
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
-                        )}
-                      >
-                        {preset.name}
-                      </button>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomAccountForm(true)}
-                    className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors border bg-muted/50 text-muted-foreground border-transparent hover:bg-muted flex items-center gap-1"
-                  >
-                    <Plus className="h-3 w-3" />
-                    Custom
-                  </button>
-                </div>
-                {showCustomAccountForm && (
-                  <div className="rounded-lg border p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Custom Account</h3>
-                      <button type="button" onClick={() => { setShowCustomAccountForm(false); setCustomAccountName(""); setCustomAccountType("bank"); }} className="text-muted-foreground hover:text-foreground">
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="m-customName">Name</Label>
-                      <Input id="m-customName" value={customAccountName} onChange={(e) => setCustomAccountName(e.target.value)} placeholder="e.g., BDO, BPI" autoFocus />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="m-customType">Type</Label>
-                      <select id="m-customType" value={customAccountType} onChange={(e) => setCustomAccountType(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                        {ACCOUNT_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
-                      </select>
-                    </div>
-                    <Button onClick={addCustomAccount} disabled={!customAccountName.trim()} className="w-full" size="sm">Add Account</Button>
-                  </div>
-                )}
-                {addedAccounts.length > 0 && (
-                  <div className="space-y-2 pr-1">
-                    {addedAccounts.map((acc, i) => (
-                      <div key={i} className="flex items-center gap-3 rounded-lg border px-3 py-2.5">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{acc.name}</p>
-                          <p className="text-xs text-muted-foreground">{ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-muted-foreground">₱</span>
-                          <input type="text" inputMode="decimal" placeholder="0" value={formatAmount(acc.balance)} onChange={(e) => updateAccountBalance(i, e.target.value)} className="w-28 bg-transparent text-sm font-medium text-right outline-none" />
-                        </div>
-                        <button type="button" onClick={() => removeAccount(i)} className="text-muted-foreground hover:text-foreground transition-colors"><X className="h-4 w-4" /></button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-3 pt-1 mt-auto">
-                  <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>Skip</Button>
-                  <Button className="flex-1" onClick={handleAccountsContinue} disabled={addedAccounts.length === 0 || saving}>
-                    {saving ? "Saving…" : "Continue"}{!saving && <ArrowRight className="h-4 w-4 ml-1.5" />}
-                  </Button>
-                </div>
-              </StepPanel>
-            ) : (
-              <StepPanel
-                screenshot={<GoalsScreenshot />}
-                url="exitplan.app/goals"
-                caption="Stay motivated with clear targets"
-                captionSub="Watch your progress grow toward every goal."
-                title="Set your first goal"
-                step="Step 2 of 2"
-              >
-                <p className="text-sm text-muted-foreground -mt-3">
-                  What are you saving toward?{" "}
-                  <span className="italic text-muted-foreground/70">Optional</span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {GOAL_CATEGORIES.map((cat) => {
-                    const Icon = GOAL_ICONS[cat.toLowerCase()] ?? Ellipsis;
-                    const isSelected = goalCategory === cat.toLowerCase();
-                    return (
-                      <button key={cat} type="button" onClick={() => { setGoalCategory(cat.toLowerCase()); if (!goalName) setGoalName(cat); }}
-                        className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                          isSelected ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted")}>
-                        <Icon className="h-3 w-3" />{cat}
-                      </button>
-                    );
-                  })}
-                </div>
-                {goalCategory && (
-                  <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="m-goalName">Goal name</Label>
-                      <Input id="m-goalName" value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="e.g., Europe trip" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="m-goalTarget">Target amount</Label>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">₱</span>
-                        <input id="m-goalTarget" type="text" inputMode="decimal" placeholder="0.00" value={formatAmount(goalTarget)} onChange={(e) => handleGoalTargetChange(e.target.value)}
-                          className="w-full rounded-md border border-input bg-background py-2 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div className="flex gap-3 pt-1 mt-auto">
-                  <Button variant="outline" className="flex-1" onClick={handleFinish} disabled={saving}>{saving ? "Loading…" : "Skip"}</Button>
-                  <Button className="flex-1" onClick={handleGoalCreate} disabled={saving || !goalCategory || !goalName || !goalTarget}>
-                    {saving ? "Creating…" : "Finish Setup"}{!saving && <ArrowRight className="h-4 w-4 ml-1.5" />}
-                  </Button>
-                </div>
-              </StepPanel>
+                <ArrowLeft className="h-4 w-4" />
+              </button>
             )}
+            <StepProgress current={step} total={TOTAL_STEPS} />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {step}/{TOTAL_STEPS - 1}
+            </span>
           </div>
 
-          {/* ── DESKTOP: maximized centered dialog ─────────────────────────── */}
-          <div className="hidden sm:flex fixed inset-0 z-50 items-center justify-center bg-black/50 p-6">
-            <div className="bg-background border shadow-xl rounded-xl w-full max-w-5xl h-full max-h-[88vh] overflow-hidden flex">
-              {step === 1 ? (
-                <StepPanel
-                  screenshot={<AccountsScreenshot />}
-                  url="exitplan.app/accounts"
-                  caption="Track all your money in one place"
-                  captionSub="See live balances across all accounts at a glance."
-                  title="Add your accounts"
-                  step="Step 1 of 2"
+          {/* ── Step 1: Money Goal ──────────────────────────────────── */}
+          {step === 1 && (
+            <div className="flex flex-1 flex-col space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  What&apos;s your #1 money goal?
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  This helps us personalize your dashboard. You can change it anytime.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {MONEY_GOALS.map((goal) => {
+                  const isSelected = selectedGoal === goal.id;
+                  return (
+                    <button
+                      key={goal.id}
+                      type="button"
+                      onClick={() => setSelectedGoal(goal.id)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all",
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "hover:border-foreground/20 hover:bg-muted/50"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
+                        isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+                      )}>
+                        <goal.icon className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-medium">{goal.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-auto pt-4 flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() => setStep(2)}
                 >
-                  <p className="text-sm text-muted-foreground -mt-3">
-                    Select your accounts and enter their current balances.
-                  </p>
-                  {/* Preset pills */}
-                  <div className="flex flex-wrap gap-2">
-                    {COMMON_ACCOUNTS.map((preset) => {
-                      const isAdded = addedAccounts.some((a) => a.name === preset.name);
+                  Skip
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => setStep(2)}
+                  disabled={!selectedGoal}
+                >
+                  Continue
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 2: Employment & Income ─────────────────────────── */}
+          {step === 2 && (
+            <div className="flex flex-1 flex-col space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Quick financial context
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Helps us tailor PH-specific features like SSS, PhilHealth, and tax tools. Completely optional.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Employment status</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {EMPLOYMENT_OPTIONS.map((opt) => {
+                      const isSelected = employment === opt.value;
                       return (
                         <button
-                          key={preset.name}
+                          key={opt.value}
                           type="button"
-                          onClick={() => toggleAccount(preset)}
+                          onClick={() => setEmployment(isSelected ? "" : opt.value)}
+                          className={cn(
+                            "flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition-all",
+                            isSelected
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "hover:border-foreground/20 hover:bg-muted/50"
+                          )}
+                        >
+                          <opt.icon className={cn("h-4 w-4", isSelected ? "text-primary" : "text-muted-foreground")} />
+                          <div>
+                            <p className="text-xs font-semibold">{opt.label}</p>
+                            <p className="text-[10px] text-muted-foreground leading-tight">{opt.sub}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Monthly income range</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {INCOME_RANGES.map((range) => {
+                      const isSelected = incomeRange === range;
+                      return (
+                        <button
+                          key={range}
+                          type="button"
+                          onClick={() => setIncomeRange(isSelected ? "" : range)}
                           className={cn(
                             "rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                            isAdded
+                            isSelected
                               ? "bg-primary text-primary-foreground border-primary"
                               : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                           )}
                         >
-                          {preset.name}
+                          {range}
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-auto pt-4 flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() => setStep(3)}
+                >
+                  Skip
+                </Button>
+                <Button className="flex-1" onClick={() => setStep(3)}>
+                  Continue
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3: Add Accounts ───────────────────────────────── */}
+          {step === 3 && (
+            <div className="flex flex-1 flex-col space-y-5">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Where do you keep your money?
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Add your accounts with their current balances. You can add more later.
+                </p>
+              </div>
+
+              {/* Preset pills */}
+              <div className="flex flex-wrap gap-2">
+                {COMMON_ACCOUNTS.map((preset) => {
+                  const isAdded = addedAccounts.some((a) => a.name === preset.name);
+                  return (
                     <button
+                      key={preset.name}
                       type="button"
-                      onClick={() => setShowCustomAccountForm(true)}
-                      className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors border bg-muted/50 text-muted-foreground border-transparent hover:bg-muted flex items-center gap-1"
+                      onClick={() => toggleAccount(preset)}
+                      className={cn(
+                        "rounded-full px-3.5 py-2 text-xs font-medium transition-colors border",
+                        isAdded
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                      )}
                     >
-                      <Plus className="h-3 w-3" />
-                      Custom
+                      {preset.name}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomForm(true)}
+                  className="rounded-full px-3.5 py-2 text-xs font-medium transition-colors border bg-muted/50 text-muted-foreground border-transparent hover:bg-muted flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  Custom
+                </button>
+              </div>
+
+              {/* Custom form */}
+              {showCustomForm && (
+                <div className="rounded-xl border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Custom Account</p>
+                    <button type="button" onClick={() => { setShowCustomForm(false); setCustomName(""); setCustomType("bank"); }} className="text-muted-foreground hover:text-foreground">
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
-                  {showCustomAccountForm && (
-                    <div className="rounded-lg border p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold">Custom Account</h3>
-                        <button type="button" onClick={() => { setShowCustomAccountForm(false); setCustomAccountName(""); setCustomAccountType("bank"); }} className="text-muted-foreground hover:text-foreground">
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5 col-span-2">
-                          <Label htmlFor="d-customName">Name</Label>
-                          <Input id="d-customName" value={customAccountName} onChange={(e) => setCustomAccountName(e.target.value)} placeholder="e.g., BDO, BPI" autoFocus />
-                        </div>
-                        <div className="space-y-1.5 col-span-2">
-                          <Label htmlFor="d-customType">Type</Label>
-                          <select id="d-customType" value={customAccountType} onChange={(e) => setCustomAccountType(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                            {ACCOUNT_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
-                          </select>
-                        </div>
-                      </div>
-                      <Button onClick={addCustomAccount} disabled={!customAccountName.trim()} className="w-full" size="sm">Add Account</Button>
-                    </div>
-                  )}
-                  {addedAccounts.length > 0 && (
-                    <div className="space-y-2 overflow-y-auto pr-1">
-                      {addedAccounts.map((acc, i) => (
-                        <div key={i} className="flex items-center gap-3 rounded-lg border px-3 py-2.5">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{acc.name}</p>
-                            <p className="text-xs text-muted-foreground">{ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type}</p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-muted-foreground">₱</span>
-                            <input type="text" inputMode="decimal" placeholder="0" value={formatAmount(acc.balance)} onChange={(e) => updateAccountBalance(i, e.target.value)} className="w-28 bg-transparent text-sm font-medium text-right outline-none" />
-                          </div>
-                          <button type="button" onClick={() => removeAccount(i)} className="text-muted-foreground hover:text-foreground transition-colors"><X className="h-4 w-4" /></button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex gap-3 pt-2 mt-auto">
-                    <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>Skip</Button>
-                    <Button className="flex-1" onClick={handleAccountsContinue} disabled={addedAccounts.length === 0 || saving}>
-                      {saving ? "Saving…" : "Continue"}{!saving && <ArrowRight className="h-4 w-4 ml-1.5" />}
-                    </Button>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="customName">Name</Label>
+                    <Input id="customName" value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="e.g., BDO, BPI, Tonik" autoFocus />
                   </div>
-                </StepPanel>
-              ) : (
-                <StepPanel
-                  screenshot={<GoalsScreenshot />}
-                  url="exitplan.app/goals"
-                  caption="Stay motivated with clear targets"
-                  captionSub="Watch your progress grow toward every goal."
-                  title="Set your first goal"
-                  step="Step 2 of 2"
-                >
-                  <p className="text-sm text-muted-foreground -mt-3">
-                    What are you saving toward?{" "}
-                    <span className="italic text-muted-foreground/70">Optional</span>
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {GOAL_CATEGORIES.map((cat) => {
-                      const Icon = GOAL_ICONS[cat.toLowerCase()] ?? Ellipsis;
-                      const isSelected = goalCategory === cat.toLowerCase();
-                      return (
-                        <button key={cat} type="button" onClick={() => { setGoalCategory(cat.toLowerCase()); if (!goalName) setGoalName(cat); }}
-                          className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
-                            isSelected ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted")}>
-                          <Icon className="h-3 w-3" />{cat}
-                        </button>
-                      );
-                    })}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="customType">Type</Label>
+                    <select id="customType" value={customType} onChange={(e) => setCustomType(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                      {ACCOUNT_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
+                    </select>
                   </div>
-                  {goalCategory && (
-                    <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="d-goalName">Goal name</Label>
-                        <Input id="d-goalName" value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="e.g., Europe trip" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="d-goalTarget">Target amount</Label>
-                        <div className="relative">
-                          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">₱</span>
-                          <input id="d-goalTarget" type="text" inputMode="decimal" placeholder="0.00" value={formatAmount(goalTarget)} onChange={(e) => handleGoalTargetChange(e.target.value)}
-                            className="w-full rounded-md border border-input bg-background py-2 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex gap-3 pt-2 mt-auto">
-                    <Button variant="outline" className="flex-1" onClick={handleFinish} disabled={saving}>{saving ? "Loading…" : "Skip"}</Button>
-                    <Button className="flex-1" onClick={handleGoalCreate} disabled={saving || !goalCategory || !goalName || !goalTarget}>
-                      {saving ? "Creating…" : "Finish Setup"}{!saving && <ArrowRight className="h-4 w-4 ml-1.5" />}
-                    </Button>
-                  </div>
-                </StepPanel>
+                  <Button onClick={addCustomAccount} disabled={!customName.trim()} className="w-full" size="sm">Add Account</Button>
+                </div>
               )}
+
+              {/* Account list with balances */}
+              {addedAccounts.length > 0 && (
+                <div className="space-y-2 flex-1 overflow-y-auto">
+                  {addedAccounts.map((acc, i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-xl border px-4 py-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <Landmark className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{acc.name}</p>
+                        <p className="text-xs text-muted-foreground">{ACCOUNT_TYPE_LABELS[acc.type] ?? acc.type}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm text-muted-foreground">₱</span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0"
+                          value={formatAmount(acc.balance)}
+                          onChange={(e) => updateBalance(i, e.target.value)}
+                          className="w-24 bg-transparent text-sm font-medium text-right outline-none"
+                        />
+                      </div>
+                      <button type="button" onClick={() => removeAccount(i)} className="text-muted-foreground hover:text-foreground transition-colors">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {addedAccounts.length === 0 && !showCustomForm && (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Tap an account above to get started, or add a custom one.
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-4 flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={handleFinish}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Skip"}
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleFinish}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Setting up...</>
+                  ) : addedAccounts.length > 0 ? (
+                    <>Finish Setup <ArrowRight className="h-4 w-4 ml-1.5" /></>
+                  ) : (
+                    <>Finish Setup <ArrowRight className="h-4 w-4 ml-1.5" /></>
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
-        </>
+          )}
+        </div>
       )}
-    </>
+    </div>
   );
 }

@@ -9,6 +9,7 @@ import type {
 export function useRecurringTransactions() {
   return useQuery({
     queryKey: ["recurring-transactions"],
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<RecurringTransaction[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -148,6 +149,7 @@ export function useProcessDueRecurringTransactions() {
 export function useDueRecurringCount() {
   return useQuery({
     queryKey: ["recurring-transactions", "due-count"],
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<number> => {
       const supabase = createClient();
       const today = new Date().toISOString().split("T")[0];
