@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useOfflineStatus } from "@/hooks/use-offline-status";
+import { usePrefetchAll } from "@/hooks/use-prefetch-all";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { TourProvider } from "@/providers/tour-provider";
 import { TourOverlay } from "@/components/layout/tour-overlay";
@@ -11,6 +12,7 @@ import { RecurringProcessor } from "@/components/transactions/recurring-processo
 
 function AppShellInner({ children }: { children: ReactNode }) {
   useKeyboardShortcuts();
+  usePrefetchAll();
 
   const queryClient = useQueryClient();
   const { isOnline } = useOfflineStatus();

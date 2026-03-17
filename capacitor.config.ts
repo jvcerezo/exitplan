@@ -9,7 +9,7 @@ const useHostedServer = process.env.CAP_USE_SERVER_URL === "true";
 const config: CapacitorConfig = {
   appId: "com.jvcerezo.exitplan",
   appName: "ExitPlan",
-  webDir: "public",
+  webDir: "out",
   ...(useHostedServer && serverUrl
     ? {
         server: {

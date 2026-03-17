@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:mobile": "cross-env CAPACITOR_BUILD=true next build",
+    "build:mobile": "node scripts/build-mobile.mjs",
     "start": "next start",
     "lint": "eslint",
     "cap:sync": "node node_modules/@capacitor/cli/bin/capacitor sync",
