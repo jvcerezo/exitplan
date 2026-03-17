@@ -1,6 +1,6 @@
 "use client";
 
-import { CloudOff, RefreshCcw, WifiOff } from "lucide-react";
+import { WifiOff, RefreshCcw } from "lucide-react";
 import { useOfflineStatus } from "@/hooks/use-offline-status";
 import { useOfflineSyncStatus } from "@/hooks/use-offline-sync-status";
 
@@ -8,33 +8,32 @@ export function OfflineStatusBanner() {
   const { isOffline } = useOfflineStatus();
   const syncMeta = useOfflineSyncStatus();
 
-  if (!isOffline && syncMeta.queuedCount === 0 && syncMeta.status !== "syncing") {
+  const isSyncing = !isOffline && syncMeta.status === "syncing";
+  const hasPending = syncMeta.queuedCount > 0;
+
+  if (!isOffline && !isSyncing && !hasPending) {
     return null;
   }
 
-  const message = isOffline
-    ? `Offline mode · ${syncMeta.queuedCount} change${syncMeta.queuedCount === 1 ? "" : "s"} pending sync`
-    : syncMeta.status === "syncing"
-      ? `Syncing ${syncMeta.queuedCount} offline change${syncMeta.queuedCount === 1 ? "" : "s"}`
-      : syncMeta.failedCount > 0
-        ? `${syncMeta.failedCount} offline change${syncMeta.failedCount === 1 ? " needs" : "s need"} review`
-        : "Offline changes synced";
-
-  const Icon = isOffline
-    ? WifiOff
-    : syncMeta.status === "syncing"
-      ? RefreshCcw
-      : syncMeta.failedCount > 0
-        ? CloudOff
-        : RefreshCcw;
-
   return (
-    <div className="sticky top-0 z-[60] border-b border-amber-200 bg-amber-50 px-4 py-2 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/70 dark:text-amber-100">
-      <div className="mx-auto flex max-w-6xl items-center gap-2 text-sm">
-        <Icon className={`h-4 w-4 shrink-0 ${syncMeta.status === "syncing" && !isOffline ? "animate-spin" : ""}`} />
-        <p>
-          {message}
-        </p>
+    <div className="fixed bottom-20 left-3 z-50 md:bottom-4 md:left-4">
+      <div className="flex items-center gap-2 rounded-full border bg-background/95 px-3 py-1.5 shadow-lg backdrop-blur text-xs text-muted-foreground">
+        {isOffline ? (
+          <>
+            <WifiOff className="h-3.5 w-3.5 text-amber-500" />
+            <span>Offline{hasPending ? ` · ${syncMeta.queuedCount} pending` : ""}</span>
+          </>
+        ) : isSyncing ? (
+          <>
+            <RefreshCcw className="h-3.5 w-3.5 animate-spin text-primary" />
+            <span>Syncing...</span>
+          </>
+        ) : hasPending ? (
+          <>
+            <WifiOff className="h-3.5 w-3.5 text-amber-500" />
+            <span>{syncMeta.queuedCount} pending</span>
+          </>
+        ) : null}
       </div>
     </div>
   );
