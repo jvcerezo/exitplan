@@ -2,28 +2,21 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAdultingScore } from "@/hooks/use-adulting-score";
 import { cn } from "@/lib/utils";
 
-function getScoreColor(score: number) {
-  if (score >= 80) return "text-green-600 dark:text-green-400";
-  if (score >= 60) return "text-blue-600 dark:text-blue-400";
-  if (score >= 40) return "text-yellow-500 dark:text-yellow-400";
-  return "text-red-500 dark:text-red-400";
-}
-
-function getStrokeColor(score: number) {
-  if (score >= 80) return "stroke-green-500";
-  if (score >= 60) return "stroke-blue-500";
-  if (score >= 40) return "stroke-yellow-500";
-  return "stroke-red-500";
+function getScoreGradient(score: number) {
+  if (score >= 80) return "from-green-500 to-emerald-600";
+  if (score >= 60) return "from-blue-500 to-indigo-600";
+  if (score >= 40) return "from-amber-500 to-orange-600";
+  return "from-red-500 to-rose-600";
 }
 
 function getBarColor(score: number) {
   if (score >= 80) return "bg-green-500";
   if (score >= 60) return "bg-blue-500";
-  if (score >= 40) return "bg-yellow-500";
+  if (score >= 40) return "bg-amber-500";
   return "bg-red-500";
 }
 
@@ -32,82 +25,58 @@ export function AdultingScoreCard() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="h-5 w-40 bg-muted rounded animate-pulse" />
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6 animate-pulse">
-            <div className="h-24 w-24 rounded-full bg-muted" />
-            <div className="flex-1 space-y-2 w-full">
-              <div className="h-3 w-full bg-muted rounded" />
-              <div className="h-3 w-3/4 bg-muted rounded" />
-              <div className="h-3 w-1/2 bg-muted rounded" />
-            </div>
-          </div>
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="h-40 bg-muted animate-pulse" />
         </CardContent>
       </Card>
     );
   }
 
-  const circumference = 2 * Math.PI * 42;
-  const dashOffset = circumference - (total / 100) * circumference;
+  const gradient = getScoreGradient(total);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Adulting Score</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
-          {/* Circular score */}
-          <div className="relative h-24 w-24 shrink-0">
-            <svg className="h-24 w-24 -rotate-90" viewBox="0 0 96 96">
-              <circle cx="48" cy="48" r="42" fill="none" className="stroke-muted" strokeWidth="6" />
-              <circle
-                cx="48"
-                cy="48"
-                r="42"
-                fill="none"
-                strokeWidth="6"
-                strokeLinecap="round"
-                className={getStrokeColor(total)}
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                style={{ transition: "stroke-dashoffset 0.5s ease" }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={cn("text-2xl font-bold", getScoreColor(total))}>{total}</span>
-              <span className="text-[10px] text-muted-foreground">/100</span>
-            </div>
-          </div>
-
-          {/* Sub-scores */}
-          <div className="w-full flex-1 space-y-2">
-            <p className={cn("text-sm font-semibold mb-3", getScoreColor(total))}>{level}</p>
-            {subScores.map((sub) => (
-              <div key={sub.label} className="space-y-0.5">
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="font-medium truncate">{sub.label}</span>
-                  <span className="text-muted-foreground shrink-0">{sub.detail}</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={cn("h-full rounded-full transition-all", getBarColor(sub.score))}
-                    style={{ width: `${sub.score}%` }}
-                  />
-                </div>
+    <Card className="overflow-hidden border-0 shadow-lg">
+      <CardContent className="p-0">
+        {/* Score hero section with gradient */}
+        <div className={cn("bg-gradient-to-br p-5 sm:p-6 text-white", gradient)}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-white/70 uppercase tracking-wider">
+                Adulting Score
+              </p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-4xl sm:text-5xl font-bold tabular-nums">{total}</span>
+                <span className="text-lg font-medium text-white/60">/100</span>
               </div>
-            ))}
+              <p className="text-sm font-medium text-white/80 mt-0.5">{level}</p>
+            </div>
             <Link
               href="/guide"
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline mt-2"
+              className="flex items-center gap-1 text-xs font-medium text-white/80 hover:text-white bg-white/15 hover:bg-white/25 backdrop-blur-sm px-3 py-2 rounded-xl transition-all"
             >
-              See what&apos;s next
+              Improve
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
+        </div>
+
+        {/* Sub-scores breakdown */}
+        <div className="px-5 py-4 sm:px-6 space-y-2.5">
+          {subScores.map((sub) => (
+            <div key={sub.label} className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-24 shrink-0 truncate">{sub.label}</span>
+              <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn("h-full rounded-full transition-all", getBarColor(sub.score))}
+                  style={{ width: `${sub.score}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground w-10 text-right tabular-nums">
+                {sub.detail}
+              </span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

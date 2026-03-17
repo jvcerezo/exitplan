@@ -2,6 +2,90 @@ import type { Guide } from "../types";
 
 export const UNANG_HAKBANG_GUIDES: Guide[] = [
   {
+    slug: "first-job-documents",
+    title: "Preparing Documents for Your First Job",
+    description:
+      "The complete list of documents Filipino employers require — and how to get them fast and free with your First Time Jobseeker certificate.",
+    category: "government",
+    readTimeMinutes: 6,
+    toolLinks: [
+      { href: "/guide/unang-hakbang", label: "View Stage Progress" },
+    ],
+    sections: [
+      {
+        heading: "The standard requirements",
+        content:
+          "Almost every employer in the Philippines asks for the same set of documents. Having these ready before you even start applying puts you ahead of 90% of fresh graduates.",
+        items: [
+          "Resume/CV (updated, 1-2 pages max)",
+          "PSA Birth Certificate (not the local civil registrar copy — must be PSA-issued)",
+          "Transcript of Records (TOR) or diploma",
+          "NBI Clearance",
+          "Police Clearance or Barangay Clearance",
+          "TIN (Tax Identification Number) from BIR",
+          "SSS number (E-1 form or printout)",
+          "PhilHealth number (PMRF or printout)",
+          "Pag-IBIG MID number",
+          "2x2 and 1x1 ID photos (white background, at least 4 copies each)",
+          "Valid government-issued ID",
+          "First Time Jobseeker Certificate from your Barangay (saves you money on fees)",
+        ],
+      },
+      {
+        heading: "Get your First Time Jobseeker Certificate first",
+        content:
+          "Before applying for NBI clearance, police clearance, or any other document — go to your Barangay Hall and get a First Time Jobseeker Certificate under RA 11261. This exempts you from paying fees on most employment requirements. It typically saves ₱500–₱1,500.",
+        callout: {
+          type: "tip",
+          text: "Get the First Time Jobseeker Certificate BEFORE anything else. It makes NBI Clearance, Police Clearance, Barangay Clearance, and even your PSA Birth Certificate FREE. Valid for 1 year.",
+        },
+      },
+      {
+        heading: "NBI Clearance — step by step",
+        content:
+          "The NBI Clearance is the most commonly required pre-employment document. Here's how to get it:",
+        items: [
+          "Go to clearance.nbi.gov.ph and create an account",
+          "Fill out the online application form",
+          "Select your preferred NBI branch and appointment date",
+          "Pay the fee online (₱155) or present your First Time Jobseeker Certificate for exemption",
+          "On your appointment date, bring: valid ID, printed reference number, and First Time Jobseeker Certificate (if applicable)",
+          "Biometrics capture (fingerprints and photo) takes about 10-15 minutes",
+          "If no 'hit' (name match in records): clearance is released same day",
+          "If there's a 'hit': you'll need to return after 7-14 business days for verification",
+        ],
+      },
+      {
+        heading: "BIR Form 1902 — for new employees",
+        content:
+          "When you get hired, your employer will ask you to fill out BIR Form 1902. This registers you as a new employee with the Bureau of Internal Revenue and generates your TIN if you don't already have one.",
+        items: [
+          "Your employer's HR department provides the form — don't go to BIR yourself",
+          "Fill it out completely: personal info, employer details, and tax status",
+          "Tax status: 'S' for single with no dependents, 'S1' for single with 1 dependent, 'ME' for married",
+          "If you already have a TIN from a previous registration (e.g., freelancing), inform HR immediately — do NOT get a second TIN",
+          "Your employer submits this to BIR within 10 days of your start date",
+        ],
+        callout: {
+          type: "warning",
+          text: "Never apply for a second TIN. If you already have one (from freelancing, OJT, or scholarship), tell your employer. Having multiple TINs is a criminal offense under the Tax Code.",
+        },
+      },
+      {
+        heading: "Pro tips for first-time applicants",
+        content:
+          "Save time and avoid common mistakes:",
+        items: [
+          "Process all documents in one week: Day 1 — Barangay (FTJC), Day 2 — NBI, Day 3 — SSS/PhilHealth/Pag-IBIG, Day 4 — PSA birth cert, Day 5 — photos",
+          "Bring at least 5 photocopies of every document — employers, banks, and government offices all ask for copies",
+          "Wear a collared shirt for your ID photos — some companies require this for their employee IDs",
+          "Save digital copies (photos/scans) of all documents on your phone and cloud storage",
+          "Create a folder (physical and digital) labeled 'Employment Documents' — you'll need these for your entire career",
+        ],
+      },
+    ],
+  },
+  {
     slug: "first-payslip-decoded",
     title: "Your First Payslip, Decoded",
     description:
@@ -9,7 +93,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
     category: "financial-literacy",
     readTimeMinutes: 5,
     toolLinks: [
-      { href: "/tools/payslip-decoder", label: "Open Payslip Decoder" },
+      { href: "/tools/contributions", label: "Salary & Deductions Calculator" },
       { href: "/tools/contributions", label: "Track Contributions" },
     ],
     sections: [
@@ -24,7 +108,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
           "Gross pay is your salary before deductions. Net pay (take-home pay) is what actually lands in your bank account. The difference? Mandatory government contributions and income tax. On a P25,000 gross salary, expect roughly P2,500–P3,000 in total deductions, leaving you with around P22,000–P22,500 net.",
         callout: {
           type: "tip",
-          text: "Use the Payslip Decoder tool to see the exact breakdown for your salary. It calculates SSS, PhilHealth, Pag-IBIG, and withholding tax automatically.",
+          text: "Use the Gov't Contributions calculator to see the exact breakdown for your salary — it computes your SSS, PhilHealth, Pag-IBIG deductions, and withholding tax automatically based on current 2024 rates.",
         },
       },
       {
@@ -66,7 +150,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
         content:
           "Don't just look at your payslip — verify it. Check that your SSS, PhilHealth, and Pag-IBIG deductions match the official contribution tables. Some employers make errors or, worse, deduct but fail to remit. Track your contributions monthly using ExitPlan.",
         items: [
-          "Open the Payslip Decoder and enter your gross salary",
+          "Open the Gov't Contributions calculator and enter your gross salary",
           "Compare the calculated deductions with your actual payslip",
           "Start logging your contributions in the Contributions Tracker",
           "Set a monthly reminder to verify your contributions are posted",
@@ -82,7 +166,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
     category: "government",
     readTimeMinutes: 6,
     toolLinks: [
-      { href: "/guide/checklist", label: "Open Adulting Checklist" },
+      { href: "/guide/unang-hakbang", label: "View Stage Progress" },
     ],
     sections: [
       {
@@ -200,7 +284,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
     category: "financial-literacy",
     readTimeMinutes: 4,
     toolLinks: [
-      { href: "/tools/payslip-decoder", label: "Open Payslip Decoder" },
+      { href: "/tools/contributions", label: "Salary & Deductions Calculator" },
       { href: "/tools/contributions", label: "Contributions Tracker" },
     ],
     sections: [
@@ -240,7 +324,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
       {
         heading: "Verify your deductions",
         content:
-          "Don't blindly trust your payslip. Use the Payslip Decoder to check if your deductions are computed correctly. Then log your contributions monthly to catch any discrepancies early — some employers deduct but fail to remit to SSS/PhilHealth/Pag-IBIG.",
+          "Don't blindly trust your payslip. Use the Gov't Contributions calculator to check if your deductions are computed correctly. Then log your contributions monthly to catch any discrepancies early — some employers deduct but fail to remit to SSS/PhilHealth/Pag-IBIG.",
       },
     ],
   },

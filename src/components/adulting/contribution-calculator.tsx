@@ -220,8 +220,8 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
           {/* Totals */}
           <div className="grid grid-cols-4 items-center px-6 py-4 bg-muted/30 rounded-b-2xl">
             <span className="text-xs font-semibold">Total</span>
-            <span className="text-right text-sm font-bold text-destructive">
-              − {formatCurrency(deductions.total_employee)}
+            <span className="text-right text-sm font-bold">
+              {formatCurrency(deductions.total_employee)}
             </span>
             <span className="text-right text-sm text-muted-foreground">
               {employmentType === "employed" ? formatCurrency(deductions.total_employer) : "—"}
@@ -245,11 +245,11 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
             <p className="text-xl font-bold mt-0.5">{formatCurrency(monthlySalary)}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-2xl border border-destructive/20 bg-destructive/5">
+        <Card className="rounded-2xl border border-border/60">
           <CardContent className="p-4">
             <p className="text-[11px] text-muted-foreground">Your Deductions</p>
-            <p className="text-xl font-bold mt-0.5 text-destructive">
-              − {formatCurrency(deductions.total_employee)}
+            <p className="text-xl font-bold mt-0.5">
+              {formatCurrency(deductions.total_employee)}
             </p>
           </CardContent>
         </Card>

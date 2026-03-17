@@ -16,6 +16,9 @@ export interface LifeStage {
   bg: string;
   borderColor: string;
   icon: string;
+  coverImage: string;
+  coverAlt: string;
+  coverCredit: string;
   guides: Guide[];
   checklistItemIds: string[];
 }

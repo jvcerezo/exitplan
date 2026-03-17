@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export interface SearchResult {
   id: string;
-  type: "transaction" | "goal" | "budget" | "account";
+  type: "transaction" | "goal" | "budget" | "account" | "navigation";
   title: string;
   subtitle: string;
   href: string;

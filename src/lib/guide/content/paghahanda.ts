@@ -94,7 +94,7 @@ export const PAGHAHANDA_GUIDES: Guide[] = [
     category: "retirement",
     readTimeMinutes: 5,
     toolLinks: [
-      { href: "/guide/checklist", label: "Estate Planning Checklist" },
+      { href: "/guide/paghahanda", label: "View Stage Progress" },
     ],
     sections: [
       {

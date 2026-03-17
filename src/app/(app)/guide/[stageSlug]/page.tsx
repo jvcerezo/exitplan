@@ -3,13 +3,13 @@
 import { use } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, CheckCircle2 } from "lucide-react";
-import { StageSwitcher } from "@/components/guide/stage-switcher";
+import { ArrowLeft, BookOpen, CheckCircle2, ChevronRight } from "lucide-react";
+import { StageCoverBanner } from "@/components/guide/stage-cover-banner";
 import { GuideListItem } from "@/components/guide/guide-list-item";
 import { StageProgressBar } from "@/components/guide/stage-progress-bar";
 import { getStageBySlug } from "@/lib/guide";
 import { useGuideProgress } from "@/hooks/use-guide-progress";
-import { useChecklistProgress, useToggleChecklistItem } from "@/hooks/use-adulting-checklist";
+import { useChecklistProgress } from "@/hooks/use-adulting-checklist";
 import { ALL_ITEMS, PRIORITY_META, type ChecklistItem } from "@/lib/adulting-checklist-data";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,6 @@ export default function StageDetailPage({ params }: { params: Promise<{ stageSlu
   const { stages } = useGuideProgress();
   const stageProgress = stages.find((s) => s.slug === stageSlug);
   const { data: completedIds = [] } = useChecklistProgress();
-  const toggleItem = useToggleChecklistItem();
   const completedSet = new Set(completedIds);
 
   const checklistItems = stage.checklistItemIds
@@ -30,24 +29,17 @@ export default function StageDetailPage({ params }: { params: Promise<{ stageSlu
 
   return (
     <div className="space-y-6">
-      <StageSwitcher activeSlug={stageSlug} />
-
-      {/* Header */}
-      <div className="space-y-1">
+      {/* Cover Banner */}
+      <div className="space-y-3">
         <Link
           href="/guide"
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-3 w-3" />
           Back to Journey
         </Link>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">{stage.title}</h1>
-          <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", stage.bg, stage.color)}>
-            {stage.ageRange}
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">{stage.subtitle} — {stage.description}</p>
+        <StageCoverBanner stage={stage} />
+        <p className="text-sm text-muted-foreground">{stage.description}</p>
       </div>
 
       {/* Progress */}
@@ -80,26 +72,24 @@ export default function StageDetailPage({ params }: { params: Promise<{ stageSlu
               const completed = completedSet.has(item.id);
               const priority = PRIORITY_META[item.priority];
               return (
-                <div
+                <Link
                   key={item.id}
+                  href={`/guide/checklist/${item.id}`}
                   className={cn(
-                    "flex items-start gap-3 rounded-xl border p-3.5 transition-all",
+                    "flex items-start gap-3 rounded-xl border p-3.5 transition-all group hover:border-primary/30",
                     completed ? "border-border/40 bg-muted/20" : "border-border bg-card"
                   )}
                 >
-                  <button
-                    onClick={() => toggleItem.mutate({ itemId: item.id, completed: !completed })}
-                    className="mt-0.5 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center -m-2"
-                  >
+                  <div className="mt-0.5 shrink-0">
                     {completed ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
                     ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary/50 transition-colors" />
                     )}
-                  </button>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className={cn("text-sm font-medium", completed && "line-through text-muted-foreground")}>
+                      <p className={cn("text-sm font-medium group-hover:text-primary transition-colors", completed && "line-through text-muted-foreground")}>
                         {item.title}
                       </p>
                       <span className={cn("text-[9px] font-bold uppercase px-1.5 py-0.5 rounded", priority.bg, priority.color)}>
@@ -109,8 +99,13 @@ export default function StageDetailPage({ params }: { params: Promise<{ stageSlu
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                       {item.description}
                     </p>
+                    <span className="text-[10px] text-primary font-medium mt-1.5 inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      View step-by-step guide
+                      <ChevronRight className="h-3 w-3" />
+                    </span>
                   </div>
-                </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground shrink-0 mt-1 transition-colors" />
+                </Link>
               );
             })}
           </div>

@@ -44,7 +44,7 @@ function ContributionsSection() {
           <Badge variant="secondary" className="text-[10px]">{periods.length} months</Badge>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-destructive">− {formatCurrency(totalPaid)}</span>
+          <span className="text-sm font-semibold">{formatCurrency(totalPaid)}</span>
           {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
         </div>
       </button>
@@ -74,7 +74,7 @@ function ContributionsSection() {
                     </div>
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-destructive shrink-0">− {formatCurrency(periodTotal)}</span>
+                <span className="text-sm font-semibold shrink-0">{formatCurrency(periodTotal)}</span>
               </div>
             );
           })}

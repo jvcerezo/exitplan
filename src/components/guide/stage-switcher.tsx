@@ -31,7 +31,7 @@ export function StageSwitcher({ activeSlug }: StageSwitcherProps) {
                   : "bg-muted/50 text-muted-foreground hover:bg-muted"
               )}
             >
-              {stage.ageRange}
+              {stage.title}
               {hasProgress && !isActive && (
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               )}

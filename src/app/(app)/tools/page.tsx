@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Receipt,
   Calculator,
-  FileText,
   PiggyBank,
   Home,
   Heart,
@@ -79,15 +78,7 @@ const groups = [
     id: "planning",
     label: "Planning & Calculators",
     items: [
-      {
-        href: "/tools/payslip-decoder",
-        icon: FileText,
-        title: "Payslip Decoder",
-        subtitle: "See where every peso of your salary goes",
-        color: "text-cyan-500",
-        bg: "bg-cyan-500/10",
-      },
-      {
+{
         href: "/tools/retirement-projection",
         icon: PiggyBank,
         title: "Retirement Projection",

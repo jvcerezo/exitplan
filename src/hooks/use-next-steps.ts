@@ -31,8 +31,8 @@ export function useNextSteps(maxCards = 5) {
           type: "checklist",
           title: item.title,
           description: item.description.slice(0, 100) + (item.description.length > 100 ? "..." : ""),
-          href: item.appLink ?? "/guide/checklist",
-          actionLabel: item.appLinkLabel ?? "View Checklist",
+          href: `/guide/checklist/${item.id}`,
+          actionLabel: "View Guide",
           icon: meta.label === "Must Do" ? "AlertCircle" : "CheckCircle2",
           priority: PRIORITY_ORDER[item.priority] ?? 2,
         });
