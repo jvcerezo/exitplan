@@ -1,18 +1,12 @@
 import {
   Activity,
-  AlertTriangle,
   Bug,
   CheckCircle2,
-  Clock3,
   Database,
-  Mail,
-  ShieldCheck,
-  TriangleAlert,
+  GraduationCap,
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { OfflineSyncHealth } from "@/components/admin/offline-sync-health";
-import { OfflineObservability } from "@/components/admin/offline-observability";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -71,6 +65,11 @@ async function getMetrics() {
     { data: budgets },
     { data: accounts },
     { data: bugReports },
+    { data: contributions },
+    { data: taxRecords },
+    { data: debts },
+    { data: insurancePolicies },
+    { data: bills },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -85,6 +84,11 @@ async function getMetrics() {
       .from("bug_reports")
       .select("id, user_id, title, severity, status, created_at")
       .order("created_at", { ascending: false }),
+    supabase.from("contributions").select("user_id, type, created_at, is_paid"),
+    supabase.from("tax_records").select("user_id, created_at"),
+    supabase.from("debts").select("user_id, created_at, is_paid_off"),
+    supabase.from("insurance_policies").select("user_id, created_at, is_active"),
+    supabase.from("bills").select("user_id, created_at, is_active"),
   ]);
 
   const allProfiles = profiles ?? [];
@@ -93,6 +97,11 @@ async function getMetrics() {
   const allBudgets = budgets ?? [];
   const allAccounts = accounts ?? [];
   const allBugReports = bugReports ?? [];
+  const allContributions = contributions ?? [];
+  const allTaxRecords = taxRecords ?? [];
+  const allDebts = debts ?? [];
+  const allInsurance = insurancePolicies ?? [];
+  const allBills = bills ?? [];
 
   const accountTypes: Record<string, number> = {};
   for (const a of allAccounts) {
@@ -109,12 +118,6 @@ async function getMetrics() {
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
   const totalUsers = allProfiles.length;
-  const recentUsers = [...allProfiles]
-    .sort(
-      (left, right) =>
-        new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
-    )
-    .slice(0, 5);
 
   const newUsersThisWeek = allProfiles.filter((user) =>
     isOnOrAfter(user.created_at, sevenDaysAgo)
@@ -161,15 +164,6 @@ async function getMetrics() {
     isOnOrAfter(report.created_at, thirtyDaysAgo)
   ).length;
 
-  const profileById = new Map(allProfiles.map((profile) => [profile.id, profile]));
-  const recentBugReports = allBugReports.slice(0, 6).map((report) => {
-    const profile = profileById.get(report.user_id);
-    return {
-      ...report,
-      reporterName: profile?.full_name || profile?.email || "Unknown User",
-      reporterEmail: profile?.email || null,
-    };
-  });
   const withAttachments = allTransactions.filter(
     (transaction) => transaction.attachment_path
   ).length;
@@ -235,6 +229,35 @@ async function getMetrics() {
     budgets: budgetsCreatedByDay.get(day.key) ?? 0,
   }));
 
+  // ── Adulting Hub metrics ──────────────────────────────────────────────
+  const usersWithContributions = new Set(allContributions.map((c) => c.user_id));
+  const usersWithTaxRecords = new Set(allTaxRecords.map((t) => t.user_id));
+  const usersWithDebts = new Set(allDebts.map((d) => d.user_id));
+  const usersWithInsurance = new Set(allInsurance.map((i) => i.user_id));
+  const usersWithBills = new Set(allBills.map((b) => b.user_id));
+
+  const adultingUsers = new Set([
+    ...usersWithContributions,
+    ...usersWithTaxRecords,
+    ...usersWithDebts,
+    ...usersWithInsurance,
+    ...usersWithBills,
+  ]);
+
+  const contributionsLast30d = allContributions.filter((c) =>
+    isOnOrAfter(c.created_at, thirtyDaysAgo)
+  ).length;
+  const paidContributions = allContributions.filter((c) => c.is_paid).length;
+  const activeDebts = allDebts.filter((d) => !d.is_paid_off).length;
+  const paidOffDebts = allDebts.filter((d) => d.is_paid_off).length;
+  const activeInsurance = allInsurance.filter((i) => i.is_active).length;
+  const activeBills = allBills.filter((b) => b.is_active).length;
+
+  const contributionsByType: Record<string, number> = {};
+  for (const c of allContributions) {
+    contributionsByType[c.type] = (contributionsByType[c.type] || 0) + 1;
+  }
+
   const healthData = [
     {
       metric: "Onboarding",
@@ -292,7 +315,6 @@ async function getMetrics() {
     transactionsLast30d: transactionsLast30d.length,
     avgTransactionsPerActiveUser30d:
       activeUsers30d === 0 ? 0 : transactionsLast30d.length / activeUsers30d,
-    recentUsers,
     withAttachments,
     completedGoals,
     attachmentRate: getPercentage(withAttachments, allTransactions.length),
@@ -308,10 +330,29 @@ async function getMetrics() {
     openBugReports,
     criticalOpenBugReports,
     bugReportsLast30d,
-    recentBugReports,
     trafficData,
     provisioningData,
     healthData,
+    // Adulting Hub
+    adultingUsers: adultingUsers.size,
+    adultingAdoptionRate: getPercentage(adultingUsers.size, totalUsers),
+    totalContributions: allContributions.length,
+    contributionsLast30d,
+    paidContributions,
+    contributionsByType,
+    usersWithContributions: usersWithContributions.size,
+    totalTaxRecords: allTaxRecords.length,
+    usersWithTaxRecords: usersWithTaxRecords.size,
+    totalDebts: allDebts.length,
+    activeDebts,
+    paidOffDebts,
+    usersWithDebts: usersWithDebts.size,
+    totalInsurance: allInsurance.length,
+    activeInsurance,
+    usersWithInsurance: usersWithInsurance.size,
+    totalBills: allBills.length,
+    activeBills,
+    usersWithBills: usersWithBills.size,
   };
 }
 
@@ -365,6 +406,12 @@ export default async function AdminDashboardPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
+            href="/admin/adulting"
+            className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            Adulting Hub
+          </Link>
+          <Link
             href="/admin/bug-reports"
             className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
           >
@@ -415,10 +462,11 @@ export default async function AdminDashboardPage() {
           tone={metrics.openBugReports === 0 ? "ok" : "warn"}
         />
         <CompactMetric
-          title="Tx / Active"
-          value={metrics.avgTransactionsPerActiveUser30d.toFixed(1)}
-          detail="30d avg"
-          icon={ShieldCheck}
+          title="Adulting Hub"
+          value={formatPercent(metrics.adultingAdoptionRate)}
+          detail={`${metrics.adultingUsers} users`}
+          icon={GraduationCap}
+          tone={metrics.adultingAdoptionRate >= 20 ? "ok" : "warn"}
         />
       </div>
 
@@ -468,6 +516,14 @@ export default async function AdminDashboardPage() {
                 <span className="text-muted-foreground">Profiles missing email</span>
                 <span className="font-medium">{metrics.profilesMissingEmail}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Users with contributions</span>
+                <span className="font-medium">{metrics.usersWithContributions}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Users with debts</span>
+                <span className="font-medium">{metrics.usersWithDebts}</span>
+              </div>
             </div>
 
             <div className="grid gap-1.5 rounded-md border p-3 text-sm">
@@ -502,39 +558,65 @@ export default async function AdminDashboardPage() {
         </Card>
 
         <div className="space-y-4">
-          <OfflineSyncHealth />
-          <OfflineObservability />
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Recent Signups</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Adulting Hub</CardTitle>
+                <Link
+                  href="/admin/adulting"
+                  className="text-xs text-primary hover:underline"
+                >
+                  View details
+                </Link>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {metrics.recentUsers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No users yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {metrics.recentUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">
-                          {user.full_name || "No name"}
-                        </p>
-                        <p className="text-muted-foreground text-xs truncate">
-                          {user.email || "No email"}
-                        </p>
-                      </div>
-                      <div className="text-xs text-muted-foreground shrink-0">
-                        {new Date(user.created_at).toLocaleDateString("en-PH", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </div>
-                    </div>
-                  ))}
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                <span className="text-muted-foreground">Hub Adoption</span>
+                <Badge
+                  variant="secondary"
+                  className={
+                    metrics.adultingAdoptionRate >= 30
+                      ? "text-emerald-700"
+                      : metrics.adultingAdoptionRate >= 10
+                        ? "text-amber-700"
+                        : "text-red-600"
+                  }
+                >
+                  {formatPercent(metrics.adultingAdoptionRate)} ({metrics.adultingUsers} users)
+                </Badge>
+              </div>
+              <div className="grid gap-1.5 rounded-md border p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Contributions</span>
+                  <span className="font-medium">{metrics.totalContributions} ({metrics.usersWithContributions} users)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Tax Records</span>
+                  <span className="font-medium">{metrics.totalTaxRecords} ({metrics.usersWithTaxRecords} users)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Debts</span>
+                  <span className="font-medium">{metrics.totalDebts} ({metrics.activeDebts} active)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Insurance</span>
+                  <span className="font-medium">{metrics.totalInsurance} ({metrics.activeInsurance} active)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Bills</span>
+                  <span className="font-medium">{metrics.totalBills} ({metrics.activeBills} active)</span>
+                </div>
+              </div>
+              {Object.keys(metrics.contributionsByType).length > 0 && (
+                <div className="grid gap-1.5 rounded-md border p-3 text-sm">
+                  <p className="font-medium">Contribution Mix</p>
+                  <p className="text-muted-foreground uppercase text-xs">
+                    {Object.entries(metrics.contributionsByType)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([type, count]) => `${count} ${type}`)
+                      .join(" · ")}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -542,38 +624,47 @@ export default async function AdminDashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Recent Bug Reports</CardTitle>
+              <CardTitle className="text-base">Signups</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {metrics.recentBugReports.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No bug reports yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {metrics.recentBugReports.map((report) => (
-                    <div
-                      key={report.id}
-                      className="flex items-start justify-between gap-3 rounded-md border px-3 py-2 text-sm"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{report.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {report.reporterName}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground/80 mt-0.5 uppercase">
-                          {report.severity} · {report.status.replace("_", " ")}
-                        </p>
-                      </div>
-                      <div className="text-xs text-muted-foreground shrink-0">
-                        {new Date(report.created_at).toLocaleDateString("en-PH", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">This week</span>
+                <span className="font-medium">{metrics.newUsersThisWeek}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">This month</span>
+                <span className="font-medium">{metrics.newUsersThisMonth}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Trend</span>
+                <span className="font-medium text-xs">{metrics.signupTrend}</span>
+              </div>
+              <Link
+                href="/admin/users"
+                className="inline-flex text-xs text-primary hover:underline"
+              >
+                View all users
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Bug Reports</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Open</span>
+                <span className="font-medium">{metrics.openBugReports}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Critical open</span>
+                <span className="font-medium text-red-600">{metrics.criticalOpenBugReports}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Filed (30d)</span>
+                <span className="font-medium">{metrics.bugReportsLast30d}</span>
+              </div>
               <Link
                 href="/admin/bug-reports"
                 className="inline-flex text-xs text-primary hover:underline"

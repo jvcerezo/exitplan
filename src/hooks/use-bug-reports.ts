@@ -10,24 +10,18 @@ import type {
 export function useMyBugReports(limit: number = 10) {
   return useQuery({
     queryKey: ["bug-reports", "mine", limit],
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchInterval: 15000,
-    refetchIntervalInBackground: true,
     queryFn: async (): Promise<BugReport[]> => {
       const supabase = createClient();
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (!user) throw new Error("Not authenticated");
+      if (!session?.user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("bug_reports")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
         .limit(limit);
 

@@ -3,7 +3,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { useRealtimeSync } from "@/hooks/use-realtime";
 import { useOfflineStatus } from "@/hooks/use-offline-status";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { TourProvider } from "@/providers/tour-provider";
@@ -12,7 +11,6 @@ import { RecurringProcessor } from "@/components/transactions/recurring-processo
 
 function AppShellInner({ children }: { children: ReactNode }) {
   useKeyboardShortcuts();
-  useRealtimeSync();
 
   const queryClient = useQueryClient();
   const { isOnline } = useOfflineStatus();

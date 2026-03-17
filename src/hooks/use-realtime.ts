@@ -1,46 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 
-export function useRealtimeSync() {
+/**
+ * Batches realtime invalidations so rapid-fire DB changes
+ * (e.g. a transaction insert that also updates the account balance)
+ * coalesce into a single invalidation pass instead of 20+ individual refetches.
+ */
+function useDebouncedInvalidator(delayMs = 300) {
   const queryClient = useQueryClient();
+  const pendingKeys = useRef<Set<string>>(new Set());
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const schedule = useCallback((...queryKeys: string[][]) => {
+    for (const key of queryKeys) {
+      pendingKeys.current.add(JSON.stringify(key));
+    }
+
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const keys = [...pendingKeys.current];
+      pendingKeys.current.clear();
+      for (const serialized of keys) {
+        queryClient.invalidateQueries({ queryKey: JSON.parse(serialized) });
+      }
+    }, delayMs);
+  }, [queryClient, delayMs]);
+
+  return schedule;
+}
+
+export function useRealtimeSync() {
   const [userId, setUserId] = useState<string | null>(null);
-
-  function invalidateTransactionDerivedQueries() {
-    queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-    queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions", "spending-by-category"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions", "net-worth"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions", "spending-comparison"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions", "monthly-trend"] });
-    queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-    queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-    queryClient.invalidateQueries({ queryKey: ["health-score"] });
-  }
-
-  function invalidateGoalDerivedQueries() {
-    queryClient.invalidateQueries({ queryKey: ["goals"] });
-    queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
-    queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-    queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-    queryClient.invalidateQueries({ queryKey: ["health-score"] });
-  }
-
-  function invalidateBudgetDerivedQueries() {
-    queryClient.invalidateQueries({ queryKey: ["budgets"] });
-    queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-    queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-    queryClient.invalidateQueries({ queryKey: ["health-score"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
-  }
+  const schedule = useDebouncedInvalidator();
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUserId(session.user.id);
     });
   }, []);
 
@@ -56,64 +55,96 @@ export function useRealtimeSync() {
         "postgres_changes",
         { event: "*", schema: "public", table: "transactions", filter },
         () => {
-          invalidateTransactionDerivedQueries();
-          queryClient.invalidateQueries({ queryKey: ["accounts"] });
-          queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+          schedule(
+            ["transactions"],
+            ["transactions", "summary"],
+            ["budgets", "summary"],
+            ["transactions", "spending-by-category"],
+            ["transactions", "net-worth"],
+            ["transactions", "spending-comparison"],
+            ["transactions", "monthly-trend"],
+            ["safe-to-spend"],
+            ["savings-rate"],
+            ["health-score"],
+            ["accounts"],
+            ["emergency-fund"]
+          );
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "goals", filter },
         () => {
-          invalidateGoalDerivedQueries();
+          schedule(
+            ["goals"],
+            ["goals", "summary"],
+            ["safe-to-spend"],
+            ["emergency-fund"],
+            ["health-score"]
+          );
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "goal_fundings", filter },
         () => {
-          invalidateGoalDerivedQueries();
-          invalidateTransactionDerivedQueries();
-          queryClient.invalidateQueries({ queryKey: ["accounts"] });
+          schedule(
+            ["goals"],
+            ["goals", "summary"],
+            ["safe-to-spend"],
+            ["emergency-fund"],
+            ["health-score"],
+            ["transactions"],
+            ["transactions", "summary"],
+            ["accounts"]
+          );
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "budgets", filter },
         () => {
-          invalidateBudgetDerivedQueries();
+          schedule(
+            ["budgets"],
+            ["budgets", "summary"],
+            ["safe-to-spend"],
+            ["health-score"],
+            ["transactions", "summary"]
+          );
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "exchange_rates", filter },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["exchange-rates"] });
+          schedule(["exchange-rates"]);
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "accounts", filter },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["accounts"] });
-          queryClient.invalidateQueries({ queryKey: ["transactions", "net-worth"] });
-          queryClient.invalidateQueries({ queryKey: ["health-score"] });
-          queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-          queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
+          schedule(
+            ["accounts"],
+            ["transactions", "net-worth"],
+            ["health-score"],
+            ["safe-to-spend"],
+            ["emergency-fund"]
+          );
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles", filter },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["profile"] });
+          schedule(["profile"]);
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "bug_reports", filter },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["bug-reports", "mine"] });
+          schedule(["bug-reports", "mine"]);
         }
       )
       .subscribe();
@@ -121,5 +152,5 @@ export function useRealtimeSync() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, userId]);
+  }, [userId, schedule]);
 }

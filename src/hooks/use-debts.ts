@@ -6,7 +6,7 @@ import type { Debt, DebtInsert } from "@/lib/types/database";
 export function useDebts() {
   return useQuery({
     queryKey: ["debts"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<Debt[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -23,16 +23,16 @@ export function useDebts() {
 export function useDebtSummary() {
   return useQuery({
     queryKey: ["debts", "summary"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("debts")
-        .select("*")
+        .select("id, name, current_balance, interest_rate, minimum_payment")
         .eq("is_paid_off", false);
       if (error) throw new Error(error.message);
 
-      const debts = data as Debt[];
+      const debts = data;
       const totalDebt = debts.reduce((s, d) => s + d.current_balance, 0);
       const totalMinimum = debts.reduce((s, d) => s + d.minimum_payment, 0);
       const highestRate = debts.reduce((max, d) => Math.max(max, d.interest_rate), 0);

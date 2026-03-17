@@ -15,9 +15,6 @@ export interface SafeToSpendData {
 export function useSafeToSpend() {
   return useQuery({
     queryKey: ["safe-to-spend"],
-    staleTime: 10 * 60 * 1000,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
     queryFn: async (): Promise<SafeToSpendData> => {
       const supabase = createClient();
       const now = new Date();

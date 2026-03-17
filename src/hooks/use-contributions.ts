@@ -6,7 +6,7 @@ import type { Contribution, ContributionInsert } from "@/lib/types/database";
 export function useContributions(period?: string) {
   return useQuery({
     queryKey: ["contributions", period ?? "all"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<Contribution[]> => {
       const supabase = createClient();
       let query = supabase
@@ -29,17 +29,17 @@ export function useContributions(period?: string) {
 export function useContributionSummary() {
   return useQuery({
     queryKey: ["contributions", "summary"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("contributions")
-        .select("*")
+        .select("id, type, period, employee_share, is_paid")
         .order("period", { ascending: false });
 
       if (error) throw new Error(error.message);
 
-      const contributions = data as Contribution[];
+      const contributions = data;
       const totalPaid = contributions.filter((c) => c.is_paid).reduce((sum, c) => sum + c.employee_share, 0);
       const totalUnpaid = contributions.filter((c) => !c.is_paid).reduce((sum, c) => sum + c.employee_share, 0);
       const byType = {

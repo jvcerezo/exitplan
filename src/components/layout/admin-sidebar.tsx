@@ -8,12 +8,14 @@ import {
   ArrowLeft,
   Shield,
   Bug,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNavItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/adulting", label: "Adulting Hub", icon: GraduationCap },
   { href: "/admin/bug-reports", label: "Bug Reports", icon: Bug },
 ];
 

@@ -6,7 +6,7 @@ import type { Bill, BillInsert } from "@/lib/types/database";
 export function useBills() {
   return useQuery({
     queryKey: ["bills"],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<Bill[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -23,18 +23,20 @@ export function useBills() {
 export function useBillsSummary() {
   return useQuery({
     queryKey: ["bills", "summary"],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
-        .from("bills").select("*").eq("is_active", true);
+        .from("bills")
+        .select("id, name, category, amount, billing_cycle, due_day")
+        .eq("is_active", true);
       if (error) throw new Error(error.message);
 
       const FREQ_MONTHLY: Record<string, number> = {
         monthly: 1, quarterly: 1 / 3, semi_annual: 1 / 6, annual: 1 / 12,
       };
 
-      const bills = data as Bill[];
+      const bills = data;
       const totalMonthly = bills.reduce((sum, b) => {
         const factor = FREQ_MONTHLY[b.billing_cycle] ?? 1;
         return sum + b.amount * factor;
