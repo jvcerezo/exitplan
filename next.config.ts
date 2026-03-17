@@ -75,6 +75,25 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/adulting/checklist",
+        destination: "/guide/checklist",
+        permanent: true,
+      },
+      {
+        source: "/adulting",
+        destination: "/tools",
+        permanent: true,
+      },
+      {
+        source: "/adulting/:path*",
+        destination: "/tools/:path*",
+        permanent: true,
+      },
+    ];
+  },
   ...(isCapacitorBuild
     ? {
         output: "export",

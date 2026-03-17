@@ -32,7 +32,7 @@ export function FAB() {
   const existingBudgetCategories = budgetData?.budgets.map((b) => b.category) ?? [];
 
   // Hide on pages where FAB has no action
-  if (isSettings || pathname.startsWith("/adulting")) return null;
+  if (isSettings || pathname.startsWith("/adulting") || pathname.startsWith("/guide") || pathname.startsWith("/tools")) return null;
 
   // Always show a single FAB that opens a minimal action sheet/modal
   return (

@@ -9,7 +9,8 @@ import {
   Calculator,
   Wallet,
   Settings,
-  GraduationCap,
+  BookOpen,
+  Wrench,
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,15 +18,16 @@ import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const primaryNav = [
+  { href: "/guide", label: "Guide", icon: BookOpen, tourId: "sidebar-guide" },
   { href: "/dashboard", label: "Home", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { href: "/transactions", label: "Activity", icon: ArrowLeftRight, tourId: "sidebar-transactions" },
-  { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
   { href: "/budgets", label: "Budgets", icon: Calculator, tourId: "sidebar-budgets" },
-  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
 ];
 
 const moreNav = [
-  { href: "/adulting", label: "Adulting Hub", icon: GraduationCap, tourId: "sidebar-adulting" },
+  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
+  { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
+  { href: "/tools", label: "Tools", icon: Wrench, tourId: "sidebar-tools" },
   { href: "/settings", label: "Settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
@@ -34,6 +36,11 @@ export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const isMoreActive = moreNav.some((item) => pathname.startsWith(item.href));
+
+  // Hide bottom nav on immersive guide article pages (3+ path segments under /guide)
+  const guideSegments = pathname.startsWith("/guide") ? pathname.split("/").filter(Boolean) : [];
+  const isImmersiveGuide = guideSegments.length >= 3;
+  if (isImmersiveGuide) return null;
 
   return (
     <>

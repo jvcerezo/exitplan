@@ -12,7 +12,8 @@ import {
   LogOut,
   Search,
   Map,
-  GraduationCap,
+  BookOpen,
+  Wrench,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
@@ -22,12 +23,13 @@ import { useTourContext } from "@/providers/tour-provider";
 import { useProfile } from "@/hooks/use-profile";
 
 const navItems = [
+  { href: "/guide", label: "Guide", icon: BookOpen, tourId: "sidebar-guide" },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, tourId: "sidebar-transactions" },
-  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
   { href: "/budgets", label: "Budgets", icon: Calculator, tourId: "sidebar-budgets" },
+  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
   { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
-  { href: "/adulting", label: "Adulting Hub", icon: GraduationCap, tourId: "sidebar-adulting" },
+  { href: "/tools", label: "Tools", icon: Wrench, tourId: "sidebar-tools" },
   { href: "/settings", label: "Settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 

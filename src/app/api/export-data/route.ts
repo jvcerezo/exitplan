@@ -19,6 +19,11 @@ export async function GET() {
     { data: goals },
     { data: debts },
     { data: contributions },
+    { data: taxRecords },
+    { data: insurancePolicies },
+    { data: bills },
+    { data: recurringTransactions },
+    { data: checklistProgress },
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("accounts").select("*").eq("user_id", user.id),
@@ -27,10 +32,16 @@ export async function GET() {
     supabase.from("goals").select("*").eq("user_id", user.id),
     supabase.from("debts").select("*").eq("user_id", user.id),
     supabase.from("contributions").select("*").eq("user_id", user.id),
+    supabase.from("tax_records").select("*").eq("user_id", user.id),
+    supabase.from("insurance_policies").select("*").eq("user_id", user.id),
+    supabase.from("bills").select("*").eq("user_id", user.id),
+    supabase.from("recurring_transactions").select("*").eq("user_id", user.id),
+    supabase.from("adulting_checklist_progress").select("*").eq("user_id", user.id),
   ]);
 
   const exportPayload = {
     exported_at: new Date().toISOString(),
+    privacy_notice: "This export contains all your personal data stored in ExitPlan, in compliance with Republic Act 10173 (Data Privacy Act of 2012). No government ID numbers are stored.",
     user: {
       id: user.id,
       email: profile?.email ?? user.email,
@@ -43,6 +54,11 @@ export async function GET() {
     goals: goals ?? [],
     debts: debts ?? [],
     government_contributions: contributions ?? [],
+    tax_records: taxRecords ?? [],
+    insurance_policies: insurancePolicies ?? [],
+    bills: bills ?? [],
+    recurring_transactions: recurringTransactions ?? [],
+    checklist_progress: checklistProgress ?? [],
   };
 
   return new NextResponse(JSON.stringify(exportPayload, null, 2), {

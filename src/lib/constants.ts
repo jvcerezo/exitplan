@@ -8,6 +8,7 @@ export const CATEGORIES = [
   "Entertainment",
   "Healthcare",
   "Education",
+  "Family Support",
   "Transfer",
   "Other",
 ] as const;
@@ -19,6 +20,7 @@ export const EXPENSE_CATEGORIES = [
   "Entertainment",
   "Healthcare",
   "Education",
+  "Family Support",
   "Other",
 ] as const;
 

@@ -179,7 +179,7 @@ export default function OnboardingPage() {
       await completeOnboarding();
       localStorage.setItem("exitplan_tour_required", "1");
       localStorage.setItem("exitplan_tour_pending", "1");
-      router.push("/dashboard?tour=1");
+      router.push("/guide");
     } catch (error) {
       console.error("Onboarding error:", error);
       setSaving(false);
@@ -200,15 +200,15 @@ export default function OnboardingPage() {
               {firstName ? `Hey ${firstName}!` : "Welcome!"}
             </h1>
             <p className="text-muted-foreground text-balance">
-              Let&apos;s set up your personal finance dashboard in under 2 minutes.
+              Your adulting journey starts here. We&apos;ll guide you from your first payslip to retirement.
             </p>
           </div>
 
           <div className="w-full space-y-2.5 text-left">
             {[
-              { icon: Wallet, text: "See all your money in one place" },
-              { icon: Target, text: "Set goals and track progress" },
-              { icon: Banknote, text: "Know exactly where your money goes" },
+              { icon: Wallet, text: "Track your finances in one place" },
+              { icon: Target, text: "Step-by-step guides for every life stage" },
+              { icon: Banknote, text: "Tools for IDs, taxes, insurance & more" },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">

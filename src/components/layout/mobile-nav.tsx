@@ -10,7 +10,8 @@ import {
   Calculator,
   Wallet,
   Settings,
-  GraduationCap,
+  BookOpen,
+  Wrench,
   Menu,
   Search,
   LogOut,
@@ -30,12 +31,13 @@ import { useProfile } from "@/hooks/use-profile";
 import { useTourContext } from "@/providers/tour-provider";
 
 const navItems = [
+  { href: "/guide", label: "Guide", icon: BookOpen, tourId: "sidebar-guide" },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, tourId: "sidebar-transactions" },
-  { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
-  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
   { href: "/budgets", label: "Budgets", icon: Calculator, tourId: "sidebar-budgets" },
-  { href: "/adulting", label: "Adulting Hub", icon: GraduationCap, tourId: "sidebar-adulting" },
+  { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
+  { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
+  { href: "/tools", label: "Tools", icon: Wrench, tourId: "sidebar-tools" },
   { href: "/settings", label: "Settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
@@ -52,11 +54,18 @@ export function MobileNav() {
     .toUpperCase()
     .slice(0, 2);
 
+  // Hide header on immersive guide article pages
+  const guideSegments = pathname.startsWith("/guide") ? pathname.split("/").filter(Boolean) : [];
+  const isImmersiveGuide = guideSegments.length >= 3;
+
   return (
     <>
       {/* Mobile top header bar */}
       <header
-        className="md:hidden fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        className={cn(
+          "md:hidden fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80",
+          isImmersiveGuide && "hidden"
+        )}
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="flex h-14 items-center justify-between px-3">

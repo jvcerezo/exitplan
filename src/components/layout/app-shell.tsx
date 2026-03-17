@@ -9,10 +9,12 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { TourProvider } from "@/providers/tour-provider";
 import { TourOverlay } from "@/components/layout/tour-overlay";
 import { RecurringProcessor } from "@/components/transactions/recurring-processor";
+import { useAchievements } from "@/hooks/use-achievements";
 
 function AppShellInner({ children }: { children: ReactNode }) {
   useKeyboardShortcuts();
   usePrefetchAll();
+  useAchievements();
 
   const queryClient = useQueryClient();
   const { isOnline } = useOfflineStatus();
