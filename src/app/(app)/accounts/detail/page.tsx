@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -34,7 +34,15 @@ const TYPE_LABELS: Record<string, string> = {
   "credit-card": "Credit Card",
 };
 
-export default function AccountDetailPage() {
+export default function AccountDetailPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+      <AccountDetailPage />
+    </Suspense>
+  );
+}
+
+function AccountDetailPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id") ?? "";
   const [currentPage, setCurrentPage] = useState(1);
