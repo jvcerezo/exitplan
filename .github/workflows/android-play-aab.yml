@@ -56,6 +56,9 @@ jobs:
           mkdir -p android/keystore
           echo "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" | base64 --decode > android/keystore/upload.jks
 
+      - name: Ensure Android assets directory exists
+        run: mkdir -p android/app/src/main/assets/public
+
       - name: Sync Android project (hosted mode)
         run: npm run mobile:android:hosted
 
