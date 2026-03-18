@@ -244,28 +244,34 @@ export function AddTransactionDialog({
       return;
     }
 
+    const rawAmount = parseFloat(amount);
+    if (!rawAmount || rawAmount <= 0 || rawAmount > 999_999_999) {
+      toast.error("Amount must be between ₱0.01 and ₱999,999,999");
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const date = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
-    const description = (formData.get("description") as string) || "";
+    const description = ((formData.get("description") as string) || "").slice(0, 500);
     const finalCategory =
       category === "Other" && customCategory.trim()
         ? customCategory.trim().toLowerCase()
         : category.toLowerCase();
 
-    // Validate account balances for expenses
+    // Validate account balances for expenses (skip for credit card accounts)
     if (type === "expense") {
       if (splitMode) {
         for (const part of splitParts) {
           const partAcc = activeAccounts.find((a) => a.id === part.accountId);
           const partAmount = parseFloat(part.amount) || 0;
-          if (partAcc && partAcc.balance - partAmount < 0) {
+          if (partAcc && partAcc.type !== "credit-card" && partAcc.balance - partAmount < 0) {
             toast.error(`Insufficient balance in ${partAcc.name}`);
             return;
           }
         }
       } else {
         const rawAmount = parseFloat(amount);
-        if (selectedAccount && selectedAccount.balance - rawAmount < 0) {
+        if (selectedAccount && selectedAccount.type !== "credit-card" && selectedAccount.balance - rawAmount < 0) {
           toast.error(`Insufficient balance in ${selectedAccount.name}`);
           return;
         }
@@ -393,12 +399,14 @@ export function AddTransactionDialog({
         <input
           name="description"
           placeholder="Add a note..."
+          maxLength={500}
           className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
         />
         <input
           name="date"
           type="date"
           defaultValue={new Date().toISOString().split("T")[0]}
+          min="2000-01-01"
           required
           className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
         />

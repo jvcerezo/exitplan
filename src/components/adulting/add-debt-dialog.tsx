@@ -84,7 +84,7 @@ export function AddDebtDialog() {
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="BPI Credit Card" className="h-9" required />
+                placeholder="BPI Credit Card" className="h-9" required maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Type</Label>
@@ -100,26 +100,26 @@ export function AddDebtDialog() {
             <div className="space-y-1.5">
               <Label className="text-xs">Lender / Bank</Label>
               <Input value={lender} onChange={(e) => setLender(e.target.value)}
-                placeholder="BPI" className="h-9" />
+                placeholder="BPI" className="h-9" maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Current Balance (₱)</Label>
-              <Input type="number" min="0" value={balance} onChange={(e) => setBalance(e.target.value)}
+              <Input type="number" min="0" max="999999999" value={balance} onChange={(e) => setBalance(e.target.value)}
                 placeholder="50000" className="h-9" required />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Original Amount (₱)</Label>
-              <Input type="number" min="0" value={originalAmount} onChange={(e) => setOriginalAmount(e.target.value)}
+              <Input type="number" min="0" max="999999999" value={originalAmount} onChange={(e) => setOriginalAmount(e.target.value)}
                 placeholder="Same as balance" className="h-9" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Annual Interest Rate (%)</Label>
-              <Input type="number" min="0" max="300" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)}
+              <Input type="number" min="0" max="100" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)}
                 placeholder="24" className="h-9" required />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Minimum Monthly Payment (₱)</Label>
-              <Input type="number" min="0" value={minPayment} onChange={(e) => setMinPayment(e.target.value)}
+              <Input type="number" min="0" max="999999999" value={minPayment} onChange={(e) => setMinPayment(e.target.value)}
                 placeholder="2000" className="h-9" required />
             </div>
             <div className="space-y-1.5">

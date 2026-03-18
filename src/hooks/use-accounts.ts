@@ -118,8 +118,9 @@ export function useAddAccount() {
 
       const normalizedName = account.name.trim();
       const incomingBalance = Number(account.balance ?? 0);
+      // Credit cards can have negative balances (outstanding balance)
       const normalizedIncomingBalance = Number.isFinite(incomingBalance)
-        ? Math.max(0, incomingBalance)
+        ? account.type === "credit-card" ? incomingBalance : Math.max(0, incomingBalance)
         : 0;
       const transactionDate = new Date().toISOString().split("T")[0];
 

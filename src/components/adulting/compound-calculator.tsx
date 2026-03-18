@@ -30,22 +30,22 @@ export function CompoundCalculator() {
     };
   }, [p, m, r, n]);
 
-  const multiplier = p > 0 ? futureValue / totalContributions : 0;
+  const multiplier = totalContributions > 0 ? futureValue / totalContributions : 0;
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1.5">
           <Label className="text-xs">Initial Amount (₱)</Label>
-          <Input type="number" min="0" value={principal} onChange={(e) => setPrincipal(e.target.value)} className="h-9" />
+          <Input type="number" min="0" max="999999999" value={principal} onChange={(e) => setPrincipal(e.target.value)} className="h-9" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Monthly Contribution (₱)</Label>
-          <Input type="number" min="0" value={monthly} onChange={(e) => setMonthly(e.target.value)} className="h-9" />
+          <Input type="number" min="0" max="9999999" value={monthly} onChange={(e) => setMonthly(e.target.value)} className="h-9" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Annual Return (%)</Label>
-          <Input type="number" min="0" step="0.5" value={rate} onChange={(e) => setRate(e.target.value)} className="h-9" />
+          <Input type="number" min="0" max="100" step="0.5" value={rate} onChange={(e) => setRate(e.target.value)} className="h-9" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Years</Label>

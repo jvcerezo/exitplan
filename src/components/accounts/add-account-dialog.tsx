@@ -137,6 +137,7 @@ export function AddAccountDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. BDO Savings"
               required
+              maxLength={100}
               className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
             />
           </div>
@@ -185,6 +186,7 @@ export function AddAccountDialog({
                 value={customType}
                 onChange={(e) => setCustomType(e.target.value)}
                 placeholder="e.g. Cooperative, Crypto Wallet"
+                maxLength={50}
                 className="mt-2 w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
               />
             )}

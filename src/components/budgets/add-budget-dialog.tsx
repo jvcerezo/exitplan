@@ -141,9 +141,12 @@ export function AddBudgetDialog({ month, existingCategories, period: defaultPeri
       return;
     }
 
+    const parsedAmount = Math.min(parseFloat(amount) || 0, 999_999_999);
+    if (parsedAmount <= 0) return;
+
     await addBudget.mutateAsync({
       category: normalizedCategory,
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       month,
       period,
     });

@@ -81,7 +81,7 @@ export function AddInsuranceDialog() {
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Policy Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Sun Life VUL" className="h-9" required />
+                placeholder="Sun Life VUL" className="h-9" required maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Type</Label>
@@ -97,11 +97,11 @@ export function AddInsuranceDialog() {
             <div className="space-y-1.5">
               <Label className="text-xs">Provider</Label>
               <Input value={provider} onChange={(e) => setProvider(e.target.value)}
-                placeholder="Sun Life" className="h-9" />
+                placeholder="Sun Life" className="h-9" maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Premium (₱)</Label>
-              <Input type="number" min="0" value={premium} onChange={(e) => setPremium(e.target.value)}
+              <Input type="number" min="0" max="999999999" value={premium} onChange={(e) => setPremium(e.target.value)}
                 placeholder="2000" className="h-9" required />
             </div>
             <div className="space-y-1.5">
@@ -117,18 +117,18 @@ export function AddInsuranceDialog() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Coverage Amount (₱)</Label>
-              <Input type="number" min="0" value={coverage} onChange={(e) => setCoverage(e.target.value)}
+              <Input type="number" min="0" max="999999999" value={coverage} onChange={(e) => setCoverage(e.target.value)}
                 placeholder="1000000" className="h-9" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Renewal Date</Label>
               <Input type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)}
-                className="h-9 text-xs" />
+                min="2000-01-01" className="h-9 text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Policy Number</Label>
               <Input value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)}
-                placeholder="Optional" className="h-9" />
+                placeholder="Optional" className="h-9" maxLength={50} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Pay From Account <span className="text-muted-foreground">(optional)</span></Label>

@@ -26,11 +26,11 @@ export function LoanCalculator() {
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Loan Amount (₱)</Label>
-          <Input type="number" min="0" value={principal} onChange={(e) => setPrincipal(e.target.value)} className="h-9" />
+          <Input type="number" min="0" max="999999999" value={principal} onChange={(e) => setPrincipal(e.target.value)} className="h-9" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Annual Interest Rate (%)</Label>
-          <Input type="number" min="0" step="0.1" value={rate} onChange={(e) => setRate(e.target.value)} className="h-9" />
+          <Input type="number" min="0" max="100" step="0.1" value={rate} onChange={(e) => setRate(e.target.value)} className="h-9" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Loan Term (years)</Label>
@@ -52,11 +52,11 @@ export function LoanCalculator() {
           <p className="text-xl font-bold mt-0.5">{formatCurrency(totalPaid)}</p>
         </div>
       </div>
-      {p > 0 && (
+      {p > 0 && totalPaid > 0 && (
         <div className="rounded-xl bg-muted/30 p-3">
           <div className="flex justify-between text-[11px] text-muted-foreground mb-1.5">
-            <span>Principal ({((p / totalPaid) * 100).toFixed(0)}%)</span>
-            <span>Interest ({((totalInterest / totalPaid) * 100).toFixed(0)}%)</span>
+            <span>Principal ({Math.round((p / totalPaid) * 100)}%)</span>
+            <span>Interest ({Math.round((totalInterest / totalPaid) * 100)}%)</span>
           </div>
           <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden flex">
             <div className="h-full bg-primary rounded-l-full" style={{ width: `${(p / totalPaid) * 100}%` }} />

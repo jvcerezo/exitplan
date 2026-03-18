@@ -133,6 +133,7 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
               <Input
                 type="number"
                 min="0"
+                max="9999999"
                 value={salary}
                 onChange={(e) => setSalary(e.target.value)}
                 placeholder="e.g. 25000"

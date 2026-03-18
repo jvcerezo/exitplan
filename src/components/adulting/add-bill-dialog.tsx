@@ -79,7 +79,7 @@ export function AddBillDialog() {
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Netflix, Meralco…" className="h-9" required />
+                placeholder="Netflix, Meralco…" className="h-9" required maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Category</Label>
@@ -95,11 +95,11 @@ export function AddBillDialog() {
             <div className="space-y-1.5">
               <Label className="text-xs">Provider</Label>
               <Input value={provider} onChange={(e) => setProvider(e.target.value)}
-                placeholder="PLDT, Globe…" className="h-9" />
+                placeholder="PLDT, Globe…" className="h-9" maxLength={100} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Amount (₱)</Label>
-              <Input type="number" min="0" value={amount} onChange={(e) => setAmount(e.target.value)}
+              <Input type="number" min="0" max="999999999" value={amount} onChange={(e) => setAmount(e.target.value)}
                 placeholder="1500" className="h-9" required />
             </div>
             <div className="space-y-1.5">
