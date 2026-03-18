@@ -5,10 +5,6 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-/**
- * Detects if running inside a Capacitor native app.
- * Uses dynamic import to avoid breaking on web.
- */
 async function isNativeApp(): Promise<boolean> {
   try {
     const { Capacitor } = await import("@capacitor/core");
@@ -19,69 +15,39 @@ async function isNativeApp(): Promise<boolean> {
 }
 
 /**
- * On native: opens the OAuth URL in an in-app browser,
- * listens for the redirect back, then extracts the session.
+ * On native: use the native Google Sign-In SDK via @capgo/capacitor-social-login,
+ * then exchange the ID token with Supabase.
  */
-async function handleNativeOAuth(authUrl: string, redirectUrl: string): Promise<boolean> {
+async function handleNativeGoogleSignIn(): Promise<boolean> {
   try {
-    const { Browser } = await import("@capacitor/browser");
-    const { App } = await import("@capacitor/app");
-    const supabase = createClient();
+    const { SocialLogin } = await import("@capgo/capacitor-social-login");
 
-    return new Promise<boolean>(async (resolve) => {
-      let resolved = false;
-
-      // Listen for the app being resumed via deep link or URL change
-      const cleanup = await App.addListener("appUrlOpen", async ({ url }) => {
-        if (resolved) return;
-        if (url.includes("auth/callback") || url.includes("code=")) {
-          resolved = true;
-          await Browser.close();
-          cleanup.remove();
-          browserCleanup.remove();
-
-          // Extract the code from the URL and exchange it
-          const urlObj = new URL(url);
-          const code = urlObj.searchParams.get("code");
-
-          if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            resolve(!error);
-          } else {
-            // Try hash-based token (implicit flow)
-            const hashParams = new URLSearchParams(url.split("#")[1] ?? "");
-            const accessToken = hashParams.get("access_token");
-            const refreshToken = hashParams.get("refresh_token");
-
-            if (accessToken) {
-              const { error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken ?? "",
-              });
-              resolve(!error);
-            } else {
-              resolve(false);
-            }
-          }
-        }
-      });
-
-      // Also listen for browser finished (user cancelled)
-      const browserCleanup = await Browser.addListener("browserFinished", () => {
-        if (resolved) return;
-        resolved = true;
-        browserCleanup.remove();
-        cleanup.remove();
-        resolve(false);
-      });
-
-      // Open the OAuth URL in the in-app browser
-      Browser.open({
-        url: authUrl,
-        presentationStyle: "popover",
-        windowName: "_self",
-      });
+    // Initialize the plugin with the Google Web Client ID
+    await SocialLogin.initialize({
+      google: {
+        webClientId: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!,
+      },
     });
+
+    const result = await SocialLogin.login({
+      provider: "google",
+      options: {
+        scopes: ["email", "profile"],
+      },
+    });
+
+    const loginResult = result?.result;
+    if (!loginResult || loginResult.responseType !== "online") return false;
+    const idToken = loginResult.idToken;
+    if (!idToken) return false;
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: idToken,
+    });
+
+    return !error;
   } catch {
     return false;
   }
@@ -94,36 +60,20 @@ export function GoogleSignInButton({ next }: { next: string }) {
     setLoading(true);
 
     const isNative = await isNativeApp();
-    const supabase = createClient();
-
-    // Determine the redirect URL
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`;
 
     if (isNative) {
-      // Native: use skipBrowserRedirect, then open in in-app browser
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
-      });
-
-      if (error || !data.url) {
-        setLoading(false);
-        return;
-      }
-
-      const success = await handleNativeOAuth(data.url, redirectTo);
+      const success = await handleNativeGoogleSignIn();
       if (success) {
-        // Auth succeeded — navigate to the next page
         window.location.href = next;
       } else {
         setLoading(false);
       }
     } else {
-      // Web: normal redirect flow
+      // Web: normal OAuth redirect flow
+      const supabase = createClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },
