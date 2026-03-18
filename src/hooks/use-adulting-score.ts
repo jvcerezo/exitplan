@@ -27,7 +27,7 @@ function getLevel(score: number): string {
 }
 
 export function useAdultingScore(): AdultingScoreResult & { isLoading: boolean } {
-  const { data: completedIds = [], isLoading: checklistLoading } = useChecklistProgress();
+  const { data: progressMap = {}, isLoading: checklistLoading } = useChecklistProgress();
   const { data: efData, isLoading: efLoading } = useEmergencyFund(3);
   const { data: accounts, isLoading: accLoading } = useAccounts();
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-01`;
@@ -37,13 +37,11 @@ export function useAdultingScore(): AdultingScoreResult & { isLoading: boolean }
   const isLoading = checklistLoading || efLoading || accLoading || budgetLoading || insLoading;
 
   const result = useMemo(() => {
-    const completedSet = new Set(completedIds);
-
     const subScores = CHECKLIST_PHASES.map((phase) => {
       const config = PHASE_WEIGHTS[phase.id];
       if (!config) return null;
 
-      const completed = phase.items.filter((item) => completedSet.has(item.id)).length;
+      const completed = phase.items.filter((item) => progressMap[item.id] != null).length;
       const total = phase.items.length;
       let phaseScore = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -79,7 +77,7 @@ export function useAdultingScore(): AdultingScoreResult & { isLoading: boolean }
       level: getLevel(total),
       subScores: subScores.map(({ label, score, detail }) => ({ label, score, detail })),
     };
-  }, [completedIds, efData, accounts, budgetData, insurance]);
+  }, [progressMap, efData, accounts, budgetData, insurance]);
 
   return { ...result, isLoading };
 }

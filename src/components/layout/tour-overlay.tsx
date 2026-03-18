@@ -337,6 +337,43 @@ function DoneMockup() {
   );
 }
 
+function JourneyMockup() {
+  const stages = [
+    { name: "Unang Hakbang", sub: "First Steps", pct: "0/12", active: true },
+    { name: "Pundasyon", sub: "Building Foundation", pct: "0/11", active: false },
+    { name: "Tahanan", sub: "Establishing Home", pct: "0/5", active: false },
+  ];
+
+  return (
+    <div className="flex h-full flex-col gap-2 p-3 select-none pointer-events-none">
+      <div className="mb-1 text-[10px] font-bold">Your Adulting Journey</div>
+      <div className="flex items-center justify-between rounded-lg border bg-card px-3 py-2">
+        <span className="text-[9px] font-medium">Overall Progress</span>
+        <span className="text-[9px] text-muted-foreground">0/58</span>
+      </div>
+      <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
+        <div className="h-full w-[3%] rounded-full bg-primary" />
+      </div>
+      <div className="flex-1 flex flex-col items-center gap-3 py-2">
+        {stages.map((stage, i) => (
+          <div key={stage.name} className="flex items-center gap-2.5 w-full" style={{ paddingLeft: i === 1 ? "40%" : i === 2 ? "10%" : "20%" }}>
+            <div className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2",
+              stage.active ? "border-primary bg-primary/10" : "border-muted-foreground/20 bg-muted/40"
+            )}>
+              <span className="text-[8px] font-bold">{i + 1}</span>
+            </div>
+            <div>
+              <div className="text-[9px] font-semibold">{stage.name}</div>
+              <div className="text-[7px] text-muted-foreground">{stage.sub} · {stage.pct}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const SCREENSHOT_COMPONENTS: Record<NonNullable<TourStep["screenshot"]>, React.ComponentType> = {
   dashboard: DashboardMockup,
   transactions: TransactionsMockup,
@@ -344,6 +381,7 @@ const SCREENSHOT_COMPONENTS: Record<NonNullable<TourStep["screenshot"]>, React.C
   budgets: BudgetsMockup,
   accounts: AccountsMockup,
   adulting: AdultingMockup,
+  journey: JourneyMockup,
   fab: FabMockup,
   search: SearchMockup,
   settings: SettingsMockup,
@@ -356,11 +394,12 @@ const SCREENSHOT_URLS: Record<NonNullable<TourStep["screenshot"]>, string> = {
   goals: "exitplan.app/goals",
   budgets: "exitplan.app/budgets",
   accounts: "exitplan.app/accounts",
-  adulting: "exitplan.app/adulting",
-  fab: "exitplan.app/dashboard",
+  adulting: "exitplan.app/tools",
+  journey: "exitplan.app/guide",
+  fab: "exitplan.app/home",
   search: "exitplan.app/search",
   settings: "exitplan.app/settings",
-  done: "exitplan.app",
+  done: "exitplan.app/home",
 };
 
 function TourCard({

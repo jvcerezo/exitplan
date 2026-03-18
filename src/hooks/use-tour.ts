@@ -19,6 +19,7 @@ export interface TourStep {
     | "budgets"
     | "accounts"
     | "adulting"
+    | "journey"
     | "fab"
     | "search"
     | "settings"
@@ -28,57 +29,49 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     target: null,
-    title: "Welcome to ExitPlan! 🎉",
+    title: "Welcome to ExitPlan!",
     description:
-      "You're in! This quick tour shows the core actions you'll use daily so you can start tracking confidently in under a minute.",
+      "Your companion for every stage of Filipino adult life. This quick tour walks you through everything you need to get started.",
     placement: "center",
     screenshot: "dashboard",
   },
   {
     target: null,
-    title: "Dashboard",
+    title: "Your Adulting Journey",
     description:
-      "Your home base. See your net worth, health score, budget alerts, goals, and spending trends — all at a glance.",
+      "The Journey Map is your roadmap through Filipino adulting — from getting your first IDs to retirement. Each stage has step-by-step guides and checklists you can mark as done or skip.",
+    placement: "center",
+    screenshot: "journey",
+  },
+  {
+    target: null,
+    title: "Financial Dashboard",
+    description:
+      "See your net worth, financial health score, spending trends, and budget alerts — all in one place. This is your financial overview.",
     placement: "center",
     screenshot: "dashboard",
   },
   {
     target: null,
-    title: "Transactions",
+    title: "Track Transactions",
     description:
-      "Log every peso coming in or going out. You can add income, expenses, or transfers between accounts.",
+      "Log every peso — income, expenses, and transfers between accounts. Your balances and insights update automatically.",
     placement: "center",
     screenshot: "transactions",
   },
   {
     target: null,
-    title: "Goals",
+    title: "Goals & Budgets",
     description:
-      "Set savings targets — emergency fund, travel, education, or anything custom. Track progress with visual progress bars.",
+      "Set savings targets and monthly spending limits. Track your progress with visual bars and get alerts when you're near a limit.",
     placement: "center",
     screenshot: "goals",
   },
   {
     target: null,
-    title: "Budgets",
+    title: "Adulting Tools",
     description:
-      "Define monthly spending limits per category. The dashboard will alert you when you're approaching a limit.",
-    placement: "center",
-    screenshot: "budgets",
-  },
-  {
-    target: null,
-    title: "Accounts",
-    description:
-      "Manage all your cash, bank, and e-wallet accounts in one place. Balances update automatically as you log transactions.",
-    placement: "center",
-    screenshot: "accounts",
-  },
-  {
-    target: null,
-    title: "Adulting Hub",
-    description:
-      "Your all-in-one Filipino adulting toolkit. Track SSS, PhilHealth, and Pag-IBIG contributions, compute BIR taxes, manage debts and bills, and explore insurance and calculators — all in one place.",
+      "Track SSS, PhilHealth, and Pag-IBIG contributions. Compute your BIR taxes. Manage debts, bills, and insurance — built for Filipino needs.",
     placement: "center",
     screenshot: "adulting",
   },
@@ -86,31 +79,15 @@ export const TOUR_STEPS: TourStep[] = [
     target: null,
     title: "Quick Add",
     description:
-      "Use this + button anytime to instantly add Expense or Income. It's the fastest way to keep your records updated in real time.",
+      "Tap the + button anytime to instantly log an expense or income. It's the fastest way to keep your records up to date.",
     placement: "center",
     screenshot: "fab",
   },
   {
     target: null,
-    title: "Search",
+    title: "You're all set!",
     description:
-      "Press ⌘K (or Ctrl+K) to search transactions, accounts, and goals instantly from anywhere in the app.",
-    placement: "center",
-    screenshot: "search",
-  },
-  {
-    target: null,
-    title: "Settings",
-    description:
-      "Change your display name, primary currency, exchange rates, and app theme here.",
-    placement: "center",
-    screenshot: "settings",
-  },
-  {
-    target: null,
-    title: "You're all set! 🚀",
-    description:
-      "That's it — you're ready. Start with Quick Add, then check Dashboard insights. Replay this tour anytime from Settings on mobile or Sidebar on desktop.",
+      "Start by exploring your Journey Map, then try Quick Add to log your first transaction. You can replay this tour anytime from Settings.",
     placement: "center",
     screenshot: "done",
   },
@@ -130,7 +107,7 @@ export function useTour() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hasTourQuery = new URLSearchParams(window.location.search).get("tour") === "1";
-    const isDashboard = window.location.pathname === "/dashboard";
+    const isDashboard = window.location.pathname === "/home";
     const pending = localStorage.getItem(PENDING_KEY);
     const required = localStorage.getItem(REQUIRED_KEY) === "1";
     const forced = sessionStorage.getItem(FORCE_START_KEY) === "1";

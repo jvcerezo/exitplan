@@ -14,28 +14,35 @@ import {
   ExternalLink,
   ListChecks,
   ArrowRight,
+  SkipForward,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ALL_ITEMS, PRIORITY_META, type ChecklistItem } from "@/lib/adulting-checklist-data";
+import { ALL_ITEMS, PRIORITY_META } from "@/lib/adulting-checklist-data";
 import { LIFE_STAGES } from "@/lib/guide";
-import { useChecklistProgress, useToggleChecklistItem } from "@/hooks/use-adulting-checklist";
+import { useChecklistProgress, useToggleChecklistItem, type ChecklistItemStatus } from "@/hooks/use-adulting-checklist";
 import { cn } from "@/lib/utils";
 
 export default function ChecklistItemPage({ params }: { params: Promise<{ itemId: string }> }) {
   const { itemId } = use(params);
-  const item = ALL_ITEMS.find((i) => i.id === itemId);
+  const item = ALL_ITEMS.find((i) => i.id === itemId)!;
   if (!item) notFound();
 
-  const { data: completedIds = [] } = useChecklistProgress();
+  const { data: progressMap = {} } = useChecklistProgress();
   const toggleItem = useToggleChecklistItem();
-  const isCompleted = completedIds.includes(item.id);
+  const currentStatus: ChecklistItemStatus = progressMap[item.id] ?? null;
   const priority = PRIORITY_META[item.priority];
 
   // Find which life stage this item belongs to
   const parentStage = LIFE_STAGES.find((s) => s.checklistItemIds.includes(itemId));
   const backHref = parentStage ? `/guide/${parentStage.slug}` : "/guide";
   const backLabel = parentStage ? parentStage.title : "Journey";
+
+  function handleToggle(newStatus: ChecklistItemStatus) {
+    // If already this status, toggle off
+    const status = currentStatus === newStatus ? null : newStatus;
+    toggleItem.mutate({ itemId: item.id, status });
+  }
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -53,17 +60,19 @@ export default function ChecklistItemPage({ params }: { params: Promise<{ itemId
         <div className="flex items-start gap-3">
           <button
             type="button"
-            onClick={() => toggleItem.mutate({ itemId: item.id, completed: !isCompleted })}
+            onClick={() => handleToggle("done")}
             className="mt-1 shrink-0"
           >
-            {isCompleted ? (
+            {currentStatus === "done" ? (
               <CheckCircle2 className="h-6 w-6 text-primary" />
+            ) : currentStatus === "skipped" ? (
+              <SkipForward className="h-6 w-6 text-muted-foreground" />
             ) : (
               <Circle className="h-6 w-6 text-muted-foreground/40" />
             )}
           </button>
           <div className="space-y-1.5">
-            <h1 className={cn("text-2xl font-bold tracking-tight", isCompleted && "line-through text-muted-foreground")}>
+            <h1 className={cn("text-2xl font-bold tracking-tight", currentStatus != null && "line-through text-muted-foreground")}>
               {item.title}
             </h1>
             <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full", priority.bg, priority.color)}>
@@ -129,7 +138,6 @@ export default function ChecklistItemPage({ params }: { params: Promise<{ itemId
           </CardContent>
         </Card>
       ) : (
-        /* Fallback: show the "how" field if no steps array */
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -234,15 +242,24 @@ export default function ChecklistItemPage({ params }: { params: Promise<{ itemId
         </Card>
       )}
 
-      {/* Mark as done */}
-      <div className="sticky bottom-4 pt-4">
+      {/* Action buttons */}
+      <div className="sticky bottom-4 pt-4 flex gap-2">
         <Button
-          onClick={() => toggleItem.mutate({ itemId: item.id, completed: !isCompleted })}
-          className="w-full"
+          onClick={() => handleToggle("skipped")}
+          className="shrink-0"
           size="lg"
-          variant={isCompleted ? "outline" : "default"}
+          variant={currentStatus === "skipped" ? "secondary" : "outline"}
         >
-          {isCompleted ? (
+          <SkipForward className="h-4 w-4 mr-1.5" />
+          {currentStatus === "skipped" ? "Skipped" : "Skip"}
+        </Button>
+        <Button
+          onClick={() => handleToggle("done")}
+          className="flex-1"
+          size="lg"
+          variant={currentStatus === "done" ? "outline" : "default"}
+        >
+          {currentStatus === "done" ? (
             <>
               <CheckCircle2 className="h-4 w-4 mr-2" />
               Completed — Tap to Undo

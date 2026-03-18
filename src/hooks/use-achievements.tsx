@@ -6,29 +6,31 @@ import { checkNewAchievements, type Achievement } from "@/lib/guide/achievements
 import { toast } from "sonner";
 
 export function useAchievements() {
-  const { data: completedIds = [] } = useChecklistProgress();
-  const prevIdsRef = useRef<string[]>([]);
+  const { data: progressMap = {} } = useChecklistProgress();
+  const prevCountRef = useRef<number>(0);
 
   useEffect(() => {
+    const completedIds = Object.keys(progressMap);
+    const count = completedIds.length;
+
     // Skip on initial load (no previous state to compare against)
-    if (prevIdsRef.current.length === 0 && completedIds.length > 0) {
-      prevIdsRef.current = completedIds;
-      // Still check for any unclaimed achievements on initial load
+    if (prevCountRef.current === 0 && count > 0) {
+      prevCountRef.current = count;
       checkNewAchievements(completedIds);
       return;
     }
 
-    // Only check if the list actually changed
-    if (completedIds.length !== prevIdsRef.current.length) {
+    // Only check if the count actually changed
+    if (count !== prevCountRef.current) {
       const newlyUnlocked = checkNewAchievements(completedIds);
 
       for (const achievement of newlyUnlocked) {
         showAchievementToast(achievement);
       }
 
-      prevIdsRef.current = completedIds;
+      prevCountRef.current = count;
     }
-  }, [completedIds]);
+  }, [progressMap]);
 }
 
 function showAchievementToast(achievement: Achievement) {

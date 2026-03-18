@@ -131,7 +131,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SessionRedirectGuard to="/dashboard" />
+      <SessionRedirectGuard to="/home" />
       <Script
         id="landing-structured-data"
         type="application/ld+json"

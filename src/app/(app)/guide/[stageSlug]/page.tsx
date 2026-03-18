@@ -3,7 +3,7 @@
 import { use } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, CheckCircle2, ChevronRight } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronRight, SkipForward } from "lucide-react";
 import { StageCoverBanner } from "@/components/guide/stage-cover-banner";
 import { GuideListItem } from "@/components/guide/guide-list-item";
 import { StageProgressBar } from "@/components/guide/stage-progress-bar";
@@ -20,8 +20,7 @@ export default function StageDetailPage({ params }: { params: Promise<{ stageSlu
 
   const { stages } = useGuideProgress();
   const stageProgress = stages.find((s) => s.slug === stageSlug);
-  const { data: completedIds = [] } = useChecklistProgress();
-  const completedSet = new Set(completedIds);
+  const { data: progressMap = {} } = useChecklistProgress();
 
   const checklistItems = stage.checklistItemIds
     .map((id) => ALL_ITEMS.find((item) => item.id === id))
@@ -69,7 +68,9 @@ export default function StageDetailPage({ params }: { params: Promise<{ stageSlu
           </p>
           <div className="space-y-2">
             {checklistItems.map((item) => {
-              const completed = completedSet.has(item.id);
+              const status = progressMap[item.id] ?? null;
+              const isDone = status === "done";
+              const isSkipped = status === "skipped";
               const priority = PRIORITY_META[item.priority];
               return (
                 <Link
@@ -77,19 +78,21 @@ export default function StageDetailPage({ params }: { params: Promise<{ stageSlu
                   href={`/guide/checklist/${item.id}`}
                   className={cn(
                     "flex items-start gap-3 rounded-xl border p-3.5 transition-all group hover:border-primary/30",
-                    completed ? "border-border/40 bg-muted/20" : "border-border bg-card"
+                    status != null ? "border-border/40 bg-muted/20" : "border-border bg-card"
                   )}
                 >
                   <div className="mt-0.5 shrink-0">
-                    {completed ? (
+                    {isDone ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : isSkipped ? (
+                      <SkipForward className="h-5 w-5 text-muted-foreground" />
                     ) : (
                       <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary/50 transition-colors" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className={cn("text-sm font-medium group-hover:text-primary transition-colors", completed && "line-through text-muted-foreground")}>
+                      <p className={cn("text-sm font-medium group-hover:text-primary transition-colors", status != null && "line-through text-muted-foreground")}>
                         {item.title}
                       </p>
                       <span className={cn("text-[9px] font-bold uppercase px-1.5 py-0.5 rounded", priority.bg, priority.color)}>

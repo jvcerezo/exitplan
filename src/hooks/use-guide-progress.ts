@@ -38,14 +38,13 @@ export interface StageProgress {
 }
 
 export function useGuideProgress() {
-  const { data: completedIds = [], isLoading } = useChecklistProgress();
+  const { data: progressMap = {}, isLoading } = useChecklistProgress();
 
   const progress = useMemo(() => {
     const readGuides = getReadGuides();
-    const completedSet = new Set(completedIds);
 
     const stages: StageProgress[] = LIFE_STAGES.map((stage) => {
-      const completedChecklist = stage.checklistItemIds.filter((id) => completedSet.has(id)).length;
+      const completedChecklist = stage.checklistItemIds.filter((id) => progressMap[id] != null).length;
       const totalChecklist = stage.checklistItemIds.length;
       const stageReadGuides = stage.guides.filter((g) => readGuides.has(g.slug)).length;
       const totalGuides = stage.guides.length;
@@ -82,7 +81,7 @@ export function useGuideProgress() {
       currentStage,
       currentStageIndex: currentStageIndex >= 0 ? currentStageIndex : LIFE_STAGES.length - 1,
     };
-  }, [completedIds]);
+  }, [progressMap]);
 
   return { ...progress, isLoading };
 }

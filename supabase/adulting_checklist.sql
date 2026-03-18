@@ -3,9 +3,13 @@
 -- Run this in the Supabase SQL Editor
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS public.adulting_checklist_progress (
-  user_id      uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+-- Drop and recreate to add status column and default user_id
+DROP TABLE IF EXISTS public.adulting_checklist_progress;
+
+CREATE TABLE public.adulting_checklist_progress (
+  user_id      uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
   item_id      text NOT NULL,
+  status       text NOT NULL DEFAULT 'done' CHECK (status IN ('done', 'skipped')),
   completed_at timestamptz DEFAULT now() NOT NULL,
   PRIMARY KEY (user_id, item_id)
 );

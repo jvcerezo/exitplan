@@ -156,7 +156,7 @@ export default function TermsPage() {
           </p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link href="/dashboard" className="hover:text-foreground transition-colors">Back to App</Link>
+            <Link href="/home" className="hover:text-foreground transition-colors">Back to App</Link>
           </div>
         </div>
       </div>

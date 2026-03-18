@@ -13,29 +13,32 @@ const config: CapacitorConfig = {
   appId: "com.jvcerezo.exitplan",
   appName: "ExitPlan",
   webDir: "out",
-  ...(useHostedServer && serverUrl
-    ? {
-        server: {
+  server: {
+    // Keep ALL navigation inside the WebView — prevents links from
+    // opening in the system browser on redirects, auth flows, etc.
+    allowNavigation: [
+      "exitplan.app",
+      "*.exitplan.app",
+      "*.supabase.co",
+      ...(supabaseHost ? [supabaseHost] : []),
+      "accounts.google.com",
+      "*.google.com",
+    ],
+    ...(useHostedServer && serverUrl
+      ? {
           url: serverUrl,
           cleartext: serverUrl.startsWith("http://"),
-          // Keep all navigation inside the WebView — prevents links from
-          // opening in the system browser.  The Supabase + Google domains
-          // are required so the OAuth flow stays in the WebView instead of
-          // bouncing to the system browser.
-          allowNavigation: [
-            new URL(serverUrl).hostname,
-            ...(supabaseHost ? [supabaseHost] : []),
-            "accounts.google.com",
-            "*.google.com",
-          ],
-        },
-      }
-    : {}),
+        }
+      : {}),
+  },
   plugins: {
     Keyboard: {
       resize: "none",
       style: "dark",
     },
+  },
+  android: {
+    allowMixedContent: true,
   },
 };
 

@@ -120,7 +120,7 @@ export async function updateSession(request: NextRequest) {
 
   // Authenticated user on auth page (not onboarding) — redirect to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    return NextResponse.redirect(withTourParam(request, "/dashboard"));
+    return NextResponse.redirect(withTourParam(request, "/home"));
   }
 
   // Admin route protection (also checks onboarding)
@@ -133,7 +133,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (!profile || !isAdmin) {
-      return NextResponse.redirect(withTourParam(request, "/dashboard"));
+      return NextResponse.redirect(withTourParam(request, "/home"));
     }
   }
 
@@ -153,7 +153,7 @@ export async function updateSession(request: NextRequest) {
     const profile = await getProfile();
 
     if (profile?.has_completed_onboarding) {
-      return NextResponse.redirect(withTourParam(request, "/dashboard"));
+      return NextResponse.redirect(withTourParam(request, "/home"));
     }
   }
 

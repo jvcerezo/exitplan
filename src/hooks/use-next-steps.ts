@@ -10,18 +10,17 @@ import type { NextStepCard } from "@/lib/guide/types";
 const PRIORITY_ORDER: Record<string, number> = { critical: 0, important: 1, "good-to-have": 2 };
 
 export function useNextSteps(maxCards = 5) {
-  const { data: completedIds = [] } = useChecklistProgress();
+  const { data: progressMap = {} } = useChecklistProgress();
   const { currentStage, currentStageIndex } = useGuideProgress();
 
   const cards = useMemo(() => {
-    const completedSet = new Set(completedIds);
     const result: NextStepCard[] = [];
 
     // 1. Next priority checklist items from current stage
     if (currentStage) {
       const stageItems = currentStage.checklistItemIds
         .map((id) => ALL_ITEMS.find((item) => item.id === id))
-        .filter((item): item is ChecklistItem => item != null && !completedSet.has(item.id))
+        .filter((item): item is ChecklistItem => item != null && progressMap[item.id] == null)
         .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2));
 
       for (const item of stageItems.slice(0, 2)) {
@@ -60,7 +59,7 @@ export function useNextSteps(maxCards = 5) {
     if (currentStageIndex < LIFE_STAGES.length - 1) {
       const nextStage = LIFE_STAGES[currentStageIndex + 1];
       const nextStageHasItems = nextStage.checklistItemIds.length > 0 || nextStage.guides.length > 0;
-      const currentDone = currentStage.checklistItemIds.every((id) => completedSet.has(id));
+      const currentDone = currentStage.checklistItemIds.every((id) => progressMap[id] != null);
 
       if (currentDone && nextStageHasItems) {
         result.push({
@@ -80,7 +79,7 @@ export function useNextSteps(maxCards = 5) {
     return result
       .sort((a, b) => a.priority - b.priority)
       .slice(0, maxCards);
-  }, [completedIds, currentStage, currentStageIndex, maxCards]);
+  }, [progressMap, currentStage, currentStageIndex, maxCards]);
 
   return cards;
 }

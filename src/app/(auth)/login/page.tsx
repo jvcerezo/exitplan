@@ -36,7 +36,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-2">
-      <SessionRedirectGuard to="/dashboard" />
+      <SessionRedirectGuard to="/home" />
       {/* ── Left brand panel (desktop only) ── */}
       <div className="hidden lg:flex flex-col justify-between bg-primary p-12 text-primary-foreground">
         <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">
@@ -88,7 +88,7 @@ export default function LoginPage() {
 
           {/* Google */}
           <div className="space-y-4 mb-6">
-            <GoogleSignInButton next="/dashboard" />
+            <GoogleSignInButton next="/home" />
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border" />
