@@ -1,5 +1,6 @@
 import { ContributionCalculator } from "@/components/adulting/contribution-calculator";
 import { ContributionHistory } from "@/components/adulting/contribution-history";
+import { AutomationCard } from "@/components/adulting/automation-card";
 import { Landmark, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -45,6 +46,19 @@ export default function ContributionsPage() {
           </div>
         ))}
       </div>
+
+      {/* Automation */}
+      <AutomationCard
+        storageKey="exitplan_auto_contributions"
+        title="Auto-Generate Monthly Entries"
+        description="Automatically create SSS, PhilHealth, and Pag-IBIG entries each month based on your last salary."
+        features={[
+          "New entries created on the 1st of each month as unpaid",
+          "Uses your most recent salary and employment type",
+          "You still mark each as paid when you actually pay",
+          "Reminder notifications sent 3 days before month-end",
+        ]}
+      />
 
       {/* Calculator */}
       <ContributionCalculator />

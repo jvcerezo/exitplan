@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useInsuranceSummary } from "@/hooks/use-insurance";
 import { AddInsuranceDialog } from "@/components/adulting/add-insurance-dialog";
 import { InsuranceList } from "@/components/adulting/insurance-list";
+import { AutomationCard } from "@/components/adulting/automation-card";
 
 const INCOME_MULTIPLE = 10;
 
@@ -72,6 +73,19 @@ export default function InsurancePage() {
           </div>
         </div>
       )}
+
+      {/* Automation */}
+      <AutomationCard
+        storageKey="exitplan_auto_insurance"
+        title="Premium Reminders"
+        description="Get notified before your insurance premiums are due."
+        features={[
+          "Policies with a renewal date appear in Upcoming Payments on your Home page",
+          "Push notifications sent before your next premium is due",
+          "Pay premium to record a transaction from your linked account",
+          "Set a renewal date on each policy to enable reminders",
+        ]}
+      />
 
       <div className="sm:hidden"><AddInsuranceDialog /></div>
       <InsuranceList />

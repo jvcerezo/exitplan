@@ -8,6 +8,7 @@ import { useDebtSummary } from "@/hooks/use-debts";
 import { AddDebtDialog } from "@/components/adulting/add-debt-dialog";
 import { DebtList } from "@/components/adulting/debt-list";
 import { PayoffStrategy } from "@/components/adulting/payoff-strategy";
+import { AutomationCard } from "@/components/adulting/automation-card";
 
 export default function DebtsPage() {
   const { data: summary } = useDebtSummary();
@@ -55,6 +56,19 @@ export default function DebtsPage() {
           </Card>
         </div>
       )}
+
+      {/* Automation */}
+      <AutomationCard
+        storageKey="exitplan_auto_debts"
+        title="Payment Reminders"
+        description="Get notified before your debt payments are due."
+        features={[
+          "Debts with a due day appear in Upcoming Payments on your Home page",
+          "Push notifications sent 3 days before due date",
+          "Record a payment to create a transaction and reduce your balance",
+          "Set a due day on each debt to enable reminders",
+        ]}
+      />
 
       <div className="sm:hidden"><AddDebtDialog /></div>
       <DebtList />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Wallet, TrendingUp, TrendingDown, BookOpen, Wrench, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { NextStepsCarousel } from "@/components/dashboard/next-steps-carousel";
+import { UpcomingPayments } from "@/components/dashboard/upcoming-payments";
 import { useProfile } from "@/hooks/use-profile";
 import { useGuideProgress } from "@/hooks/use-guide-progress";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
@@ -71,6 +72,9 @@ export default function HomePage() {
           <FinStat icon={TrendingDown} label="Expenses" value={formatCurrency(Math.abs(summary.expenses))} iconColor="text-muted-foreground" />
         </div>
       )}
+
+      {/* Upcoming Payments */}
+      <UpcomingPayments />
 
       {/* Next Steps */}
       <NextStepsCarousel />

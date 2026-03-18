@@ -5,8 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
-import { useContributions, useUpdateContribution, useDeleteContribution } from "@/hooks/use-contributions";
+import { useContributions, useUpdateContribution, useDeleteContribution, useMarkContributionPaid } from "@/hooks/use-contributions";
+import { useAccounts } from "@/hooks/use-accounts";
 import { CheckCircle2, Circle, Trash2, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import type { Contribution } from "@/lib/types/database";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
@@ -31,14 +45,20 @@ function groupByPeriod(contributions: Contribution[]) {
 function PeriodGroup({
   period,
   items,
+  accounts,
 }: {
   period: string;
   items: Contribution[];
+  accounts: { id: string; name: string }[];
 }) {
   const [open, setOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [payingContribution, setPayingContribution] = useState<Contribution | null>(null);
+  const [pickedAccountId, setPickedAccountId] = useState<string>("none");
+
   const updateContribution = useUpdateContribution();
   const deleteContribution = useDeleteContribution();
+  const markPaid = useMarkContributionPaid();
 
   const allPaid = items.every((c) => c.is_paid);
   const employeeTotal = items.reduce((sum, c) => sum + c.employee_share, 0);
@@ -48,6 +68,27 @@ function PeriodGroup({
     month: "long",
     year: "numeric",
   });
+
+  function handleTogglePaid(c: Contribution) {
+    if (c.is_paid) {
+      // Un-mark as paid (no transaction reversal, just toggle)
+      updateContribution.mutate({ id: c.id, is_paid: false });
+    } else {
+      // Mark as paid — prompt for account first
+      setPickedAccountId("none");
+      setPayingContribution(c);
+    }
+  }
+
+  function confirmPay() {
+    if (!payingContribution) return;
+    markPaid.mutate({
+      contribution: payingContribution,
+      accountId: pickedAccountId !== "none" ? pickedAccountId : undefined,
+    }, {
+      onSuccess: () => setPayingContribution(null),
+    });
+  }
 
   return (
     <div className="border border-border/60 rounded-xl overflow-hidden">
@@ -105,9 +146,7 @@ function PeriodGroup({
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2 text-xs"
-                      onClick={() =>
-                        updateContribution.mutate({ id: c.id, is_paid: !c.is_paid })
-                      }
+                      onClick={() => handleTogglePaid(c)}
                     >
                       {c.is_paid ? (
                         <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
@@ -145,13 +184,50 @@ function PeriodGroup({
           }
         }}
       />
+
+      {/* Account picker for marking as paid */}
+      <Dialog open={payingContribution !== null} onOpenChange={(o) => { if (!o) setPayingContribution(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm">
+              Mark {payingContribution ? TYPE_LABELS[payingContribution.type]?.label : ""} as Paid
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                Select which account to deduct {payingContribution ? formatCurrency(payingContribution.employee_share) : ""} from.
+              </p>
+              <Select value={pickedAccountId} onValueChange={setPickedAccountId}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select an account…" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => setPayingContribution(null)}>
+                Cancel
+              </Button>
+              <Button size="sm" className="flex-1" onClick={confirmPay} disabled={markPaid.isPending || pickedAccountId === "none"}>
+                {markPaid.isPending ? "Saving…" : "Pay & Record"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 export function ContributionHistory() {
   const { data, isLoading } = useContributions();
+  const { data: accounts } = useAccounts();
   const [logOpen, setLogOpen] = useState(false);
+
+  const accountList = accounts ?? [];
 
   if (isLoading) {
     return (
@@ -201,7 +277,7 @@ export function ContributionHistory() {
         </CardHeader>
         <CardContent className="space-y-3">
           {grouped.map(([period, items]) => (
-            <PeriodGroup key={period} period={period} items={items} />
+            <PeriodGroup key={period} period={period} items={items} accounts={accountList} />
           ))}
         </CardContent>
       </Card>

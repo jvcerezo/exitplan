@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useBillsSummary } from "@/hooks/use-bills";
 import { AddBillDialog } from "@/components/adulting/add-bill-dialog";
 import { BillsList } from "@/components/adulting/bills-list";
+import { AutomationCard } from "@/components/adulting/automation-card";
 
 export default function BillsPage() {
   const { data: summary } = useBillsSummary();
@@ -83,6 +84,19 @@ export default function BillsPage() {
             ))}
         </div>
       )}
+
+      {/* Automation */}
+      <AutomationCard
+        storageKey="exitplan_auto_bills"
+        title="Bill Reminders"
+        description="Get notified before your bills are due so you never miss a payment."
+        features={[
+          "Bills with a due day appear in Upcoming Payments on your Home page",
+          "Push notifications sent 3 days before due date",
+          "Mark as paid to record a transaction from your linked account",
+          "Set a due day on each bill to enable reminders",
+        ]}
+      />
 
       <div className="sm:hidden"><AddBillDialog /></div>
       <BillsList />

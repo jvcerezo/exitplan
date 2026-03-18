@@ -10,11 +10,15 @@ import { TourProvider } from "@/providers/tour-provider";
 import { TourOverlay } from "@/components/layout/tour-overlay";
 import { RecurringProcessor } from "@/components/transactions/recurring-processor";
 import { useAchievements } from "@/hooks/use-achievements";
+import { useAutoContributions } from "@/hooks/use-auto-contributions";
+import { usePaymentNotifications } from "@/hooks/use-payment-notifications";
 
 function AppShellInner({ children }: { children: ReactNode }) {
   useKeyboardShortcuts();
   usePrefetchAll();
   useAchievements();
+  useAutoContributions();
+  usePaymentNotifications();
 
   const queryClient = useQueryClient();
   const { isOnline } = useOfflineStatus();

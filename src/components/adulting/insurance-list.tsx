@@ -175,12 +175,11 @@ function PolicyRow({
           <div className="space-y-4">
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground">
-                Deduct {formatCurrency(policy.premium_amount)} from which account?
+                Select which account to deduct {formatCurrency(policy.premium_amount)} from.
               </p>
               <Select value={pickedAccountId} onValueChange={setPickedAccountId}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select an account…" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="text-xs">Skip — no transaction</SelectItem>
                   {accounts.map((a) => (
                     <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
                   ))}
@@ -191,8 +190,8 @@ function PolicyRow({
               <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowPayDialog(false)}>
                 Cancel
               </Button>
-              <Button size="sm" className="flex-1" onClick={confirmPayPremium} disabled={payPremium.isPending}>
-                {payPremium.isPending ? "Saving…" : pickedAccountId !== "none" ? "Pay & Record" : "Skip"}
+              <Button size="sm" className="flex-1" onClick={confirmPayPremium} disabled={payPremium.isPending || pickedAccountId === "none"}>
+                {payPremium.isPending ? "Saving…" : "Pay & Record"}
               </Button>
             </div>
           </div>
