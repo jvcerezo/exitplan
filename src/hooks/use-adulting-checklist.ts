@@ -11,7 +11,6 @@ interface ChecklistProgressRow {
 export function useChecklistProgress() {
   return useQuery({
     queryKey: ["adulting-checklist"],
-    staleTime: 0,
     queryFn: async (): Promise<Record<string, ChecklistItemStatus>> => {
       const supabase = createClient();
       const { data, error } = await supabase

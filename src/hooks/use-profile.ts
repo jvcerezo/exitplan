@@ -12,7 +12,6 @@ type ProfileUpdates = {
 export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<Profile> => {
       const supabase = createClient();
       const {

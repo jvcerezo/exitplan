@@ -15,7 +15,6 @@ import type { Goal, GoalInsert } from "@/lib/types/database";
 export function useGoals() {
   return useQuery({
     queryKey: ["goals"],
-    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Goal[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -33,7 +32,6 @@ export function useGoals() {
 export function useGoalsSummary() {
   return useQuery({
     queryKey: ["goals", "summary"],
-    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("goals").select("*");

@@ -23,7 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <MobileNav />
         <main className="md:pl-64">
-          <div className="mx-auto max-w-5xl px-4 pt-[calc(env(safe-area-inset-top)+4.25rem)] sm:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pt-6 md:pb-6">
+          <div className="mx-auto max-w-5xl px-4 pt-[calc(env(safe-area-inset-top)+3.75rem)] sm:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pt-6 md:pb-6">
             <PageTransition>{children}</PageTransition>
           </div>
         </main>
