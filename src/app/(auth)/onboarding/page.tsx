@@ -14,9 +14,15 @@ import {
   Landmark,
   Plus,
   Wallet,
-  Banknote,
   Target,
   Loader2,
+  GraduationCap,
+  Blocks,
+  Home,
+  Mountain,
+  Clock,
+  Gem,
+  CheckCircle2,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -24,7 +30,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProfile } from "@/hooks/use-profile";
 import { useAddAccount } from "@/hooks/use-accounts";
-import { useAddGoal } from "@/hooks/use-goals";
 import { completeOnboarding } from "@/app/(auth)/actions";
 import { COMMON_ACCOUNTS, ACCOUNT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -37,13 +42,60 @@ interface AddedAccount {
   balance: string;
 }
 
-const MONEY_GOALS = [
+const LIFE_STAGE_OPTIONS = [
+  {
+    id: "unang-hakbang",
+    title: "Unang Hakbang",
+    subtitle: "Fresh grad / First job",
+    description: "Getting IDs, first payslip, learning the basics",
+    icon: GraduationCap,
+  },
+  {
+    id: "pundasyon",
+    title: "Pundasyon",
+    subtitle: "Building foundations",
+    description: "Saving, budgeting, building credit",
+    icon: Blocks,
+  },
+  {
+    id: "tahanan",
+    title: "Tahanan",
+    subtitle: "Establishing a home",
+    description: "Renting, buying property, starting a family",
+    icon: Home,
+  },
+  {
+    id: "tugatog",
+    title: "Tugatog",
+    subtitle: "Career peak",
+    description: "Growing wealth, investments, insurance",
+    icon: Mountain,
+  },
+  {
+    id: "paghahanda",
+    title: "Paghahanda",
+    subtitle: "Pre-retirement",
+    description: "Estate planning, retirement prep",
+    icon: Clock,
+  },
+  {
+    id: "gintong-taon",
+    title: "Gintong Taon",
+    subtitle: "Golden years",
+    description: "Enjoying retirement, legacy planning",
+    icon: Gem,
+  },
+] as const;
+
+const FOCUS_AREAS = [
   { id: "track-expenses", label: "Track my daily expenses", icon: Receipt, goalCategory: "savings", goalName: "Build Savings" },
   { id: "budget-salary", label: "Budget my salary", icon: Wallet, goalCategory: "savings", goalName: "Monthly Budget" },
   { id: "pay-off-debt", label: "Pay off debt", icon: CreditCard, goalCategory: "debt payoff", goalName: "Debt Payoff" },
   { id: "build-emergency", label: "Build an emergency fund", icon: Shield, goalCategory: "emergency fund", goalName: "Emergency Fund" },
   { id: "save-for-goal", label: "Save for a big purchase", icon: Target, goalCategory: "savings", goalName: "Savings Goal" },
   { id: "grow-wealth", label: "Grow my wealth", icon: TrendingUp, goalCategory: "investment", goalName: "Wealth Growth" },
+  { id: "get-ids", label: "Get my government IDs", icon: Landmark, goalCategory: "adulting", goalName: "Government IDs" },
+  { id: "understand-benefits", label: "Understand my benefits & contributions", icon: PiggyBank, goalCategory: "adulting", goalName: "Benefits Setup" },
 ] as const;
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
@@ -53,8 +105,7 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   "credit-card": "Credit Card",
 };
 
-// Steps: 0 = welcome, 1 = money goal, 2 = accounts
-const STEP_COUNT = 3;
+const STEP_COUNT = 4;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -99,22 +150,30 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { data: profile } = useProfile();
   const addAccount = useAddAccount();
-  const addGoal = useAddGoal();
-
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  // Step 1: Money goal
-  const [selectedGoal, setSelectedGoal] = useState("");
-  const [goalAmount, setGoalAmount] = useState("");
+  // Step 1: Life stage
+  const [selectedStage, setSelectedStage] = useState("");
 
-  // Step 2: Accounts
+  // Step 2: Focus areas (multi-select)
+  const [selectedFocusAreas, setSelectedFocusAreas] = useState<string[]>([]);
+
+  // Step 3: Accounts
   const [addedAccounts, setAddedAccounts] = useState<AddedAccount[]>([]);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customType, setCustomType] = useState("bank");
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
+
+  // ── Focus area helpers ─────────────────────────────────────────────
+
+  function toggleFocusArea(id: string) {
+    setSelectedFocusAreas((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
+  }
 
   // ── Account helpers ──────────────────────────────────────────────────
 
@@ -163,23 +222,12 @@ export default function OnboardingPage() {
         });
       }
 
-      // Create goal based on selected money goal
-      const goalInfo = MONEY_GOALS.find((g) => g.id === selectedGoal);
-      const parsedGoalAmount = parseFloat(goalAmount) || 0;
-      if (goalInfo && parsedGoalAmount > 0) {
-        await addGoal.mutateAsync({
-          name: goalInfo.goalName,
-          target_amount: parsedGoalAmount,
-          current_amount: 0,
-          deadline: null,
-          category: goalInfo.goalCategory,
-        });
-      }
-
       await completeOnboarding();
       localStorage.setItem("exitplan_tour_required", "1");
       localStorage.setItem("exitplan_tour_pending", "1");
-      router.push("/dashboard?tour=1");
+      // Navigate to the selected stage or home
+      const targetPath = selectedStage ? `/guide/${selectedStage}` : "/home";
+      router.push(targetPath);
     } catch (error) {
       console.error("Onboarding error:", error);
       setSaving(false);
@@ -200,15 +248,15 @@ export default function OnboardingPage() {
               {firstName ? `Hey ${firstName}!` : "Welcome!"}
             </h1>
             <p className="text-muted-foreground text-balance">
-              Let&apos;s set up your personal finance dashboard in under 2 minutes.
+              ExitPlan is your companion for every stage of Filipino adult life — from your first ID to retirement.
             </p>
           </div>
 
           <div className="w-full space-y-2.5 text-left">
             {[
-              { icon: Wallet, text: "See all your money in one place" },
-              { icon: Target, text: "Set goals and track progress" },
-              { icon: Banknote, text: "Know exactly where your money goes" },
+              { icon: Target, text: "Step-by-step guides for every life stage" },
+              { icon: Wallet, text: "Track finances across all your accounts" },
+              { icon: Landmark, text: "Government IDs, taxes, contributions & more" },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -226,7 +274,7 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* ── Steps 1-2 ──────────────────────────────────────────────── */}
+      {/* ── Steps 1-3 ──────────────────────────────────────────────── */}
       {step >= 1 && (
         <div className="flex flex-1 flex-col w-full max-w-lg px-5 py-8 sm:py-12">
           {/* Header with progress */}
@@ -244,26 +292,26 @@ export default function OnboardingPage() {
             </span>
           </div>
 
-          {/* ── Step 1: Money Goal ──────────────────────────────────── */}
+          {/* ── Step 1: Life Stage ───────────────────────────────────── */}
           {step === 1 && (
-            <div className="flex flex-1 flex-col space-y-6">
+            <div className="flex flex-1 flex-col space-y-5">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">
-                  What&apos;s your #1 money goal?
+                  Where are you in your adulting journey?
                 </h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  This helps us personalize your dashboard. You can change it anytime.
+                  This helps us show you the most relevant guides and checklists.
                 </p>
               </div>
 
               <div className="space-y-2">
-                {MONEY_GOALS.map((goal) => {
-                  const isSelected = selectedGoal === goal.id;
+                {LIFE_STAGE_OPTIONS.map((stage) => {
+                  const isSelected = selectedStage === stage.id;
                   return (
                     <button
-                      key={goal.id}
+                      key={stage.id}
                       type="button"
-                      onClick={() => setSelectedGoal(goal.id)}
+                      onClick={() => setSelectedStage(stage.id)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all",
                         isSelected
@@ -272,40 +320,23 @@ export default function OnboardingPage() {
                       )}
                     >
                       <div className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
                         isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
                       )}>
-                        <goal.icon className="h-4 w-4" />
+                        <stage.icon className="h-5 w-5" />
                       </div>
-                      <span className="text-sm font-medium">{goal.label}</span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold">{stage.title}</span>
+                          <span className="text-xs text-muted-foreground">· {stage.subtitle}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{stage.description}</p>
+                      </div>
+                      {isSelected && <CheckCircle2 className="h-5 w-5 text-primary shrink-0 ml-auto" />}
                     </button>
                   );
                 })}
               </div>
-
-              {selectedGoal && (
-                <div className="space-y-2 rounded-xl border bg-card p-4">
-                  <Label htmlFor="goalAmount" className="text-sm font-medium">
-                    How much are you aiming for?
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">₱</span>
-                    <input
-                      id="goalAmount"
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="e.g. 50,000"
-                      value={formatAmount(goalAmount)}
-                      onChange={(e) => setGoalAmount(parseAmountInput(e.target.value))}
-                      className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground/50"
-                      autoFocus
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    A rough estimate is fine — you can adjust this anytime.
-                  </p>
-                </div>
-              )}
 
               <div className="mt-auto pt-4 flex gap-3">
                 <Button
@@ -318,7 +349,7 @@ export default function OnboardingPage() {
                 <Button
                   className="flex-1"
                   onClick={() => setStep(2)}
-                  disabled={!selectedGoal || !goalAmount || parseFloat(goalAmount) <= 0}
+                  disabled={!selectedStage}
                 >
                   Continue
                   <ArrowRight className="h-4 w-4 ml-1.5" />
@@ -327,8 +358,68 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Step 2: Add Accounts ───────────────────────────────── */}
+          {/* ── Step 2: Focus Areas ──────────────────────────────────── */}
           {step === 2 && (
+            <div className="flex flex-1 flex-col space-y-5">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  What do you want to focus on?
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Pick as many as you like. We&apos;ll personalize your experience.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {FOCUS_AREAS.map((focus) => {
+                  const isSelected = selectedFocusAreas.includes(focus.id);
+                  return (
+                    <button
+                      key={focus.id}
+                      type="button"
+                      onClick={() => toggleFocusArea(focus.id)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "hover:border-foreground/20 hover:bg-muted/50"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
+                        isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+                      )}>
+                        <focus.icon className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-medium flex-1">{focus.label}</span>
+                      {isSelected && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-auto pt-4 flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() => setStep(3)}
+                >
+                  Skip
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => setStep(3)}
+                  disabled={selectedFocusAreas.length === 0}
+                >
+                  Continue
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3: Add Accounts ───────────────────────────────── */}
+          {step === 3 && (
             <div className="flex flex-1 flex-col space-y-5">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">

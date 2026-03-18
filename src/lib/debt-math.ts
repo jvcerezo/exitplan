@@ -132,9 +132,13 @@ export function calculateMonthlyPayment(
   annualRate: number,
   months: number
 ): number {
+  if (months <= 0) return 0;
   if (annualRate === 0) return principal / months;
   const r = Math.pow(1 + annualRate, 1 / 12) - 1; // compound monthly rate
-  return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+  if (r <= -1) return 0;
+  const factor = Math.pow(1 + r, months);
+  if (factor === 1) return principal / months;
+  return (principal * r * factor) / (factor - 1);
 }
 
 /** Months needed to pay off a debt given a fixed monthly payment (compound monthly rate). */

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X, Bug, Send, Download, ShieldAlert, ExternalLink } from "lucide-react";
+import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X, Bug, Send, Download, ShieldAlert, ExternalLink, Bell, Zap, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { useProfile, useUpdateProfile, useUploadAvatar, useRemoveAvatar } from "@/hooks/use-profile";
 import { useExchangeRates, useUpsertExchangeRate } from "@/hooks/use-exchange-rates";
 import { useMarketRates } from "@/hooks/use-market-rates";
@@ -30,6 +30,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CURRENCIES, DEFAULT_RATES_TO_PHP } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { useTourContext } from "@/providers/tour-provider";
 import { OfflineSyncCenter } from "@/components/offline/offline-sync-center";
 import type { BugReportSeverity } from "@/lib/types/database";
@@ -60,6 +61,22 @@ export default function SettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState("profile");
+
+  // Automation & notification toggles (localStorage-backed)
+  const automationKeys = [
+    { key: "exitplan_auto_contributions", label: "Auto-generate monthly contributions", description: "Create SSS, PhilHealth, and Pag-IBIG entries each month from your last salary" },
+    { key: "exitplan_auto_bills", label: "Bill reminders", description: "Show upcoming bills on your Home page and send push notifications before due dates" },
+    { key: "exitplan_auto_debts", label: "Debt payment reminders", description: "Show upcoming debt payments on your Home page and send push notifications" },
+    { key: "exitplan_auto_insurance", label: "Insurance premium reminders", description: "Show upcoming insurance premiums and send push notifications before renewal dates" },
+  ];
+
+  const homePageKeys = [
+    { key: "exitplan_home_upcoming", label: "Upcoming Payments", description: "Show bills, contributions, debts, and insurance due soon" },
+    { key: "exitplan_home_nextsteps", label: "Next Steps", description: "Show suggested next actions from your adulting journey" },
+    { key: "exitplan_home_finances", label: "Financial Summary", description: "Show balance, income, and expenses at a glance" },
+    { key: "exitplan_home_stage", label: "Current Life Stage", description: "Show your current adulting journey stage and progress" },
+  ];
 
   useEffect(() => setMounted(true), []);
 
@@ -163,19 +180,79 @@ export default function SettingsPage() {
     }
   }
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account and preferences
-          </p>
-        </div>
-      </div>
+  const SECTIONS = [
+    { id: "profile", label: "Profile", icon: Camera, desc: "Name, avatar, email" },
+    { id: "appearance", label: "Appearance", icon: Sun, desc: "Theme preferences" },
+    { id: "automation", label: "Automation", icon: Zap, desc: "Reminders & auto-generation" },
+    { id: "notifications", label: "Notifications", icon: Bell, desc: "Push notification settings" },
+    { id: "home", label: "Home Page", icon: LayoutDashboard, desc: "Customize your Home" },
+    { id: "currency", label: "Currency", icon: RefreshCw, desc: "Rates & primary currency" },
+    { id: "privacy", label: "Privacy & Data", icon: ShieldAlert, desc: "Export, delete, legal" },
+    { id: "bugs", label: "Report Bug", icon: Bug, desc: "Report issues" },
+    { id: "account", label: "Account", icon: LogOut, desc: "Sign out, tour, sync" },
+  ] as const;
 
-      {/* Profile Section */}
+  // On mobile: show the menu list OR the active section (drill-in)
+  // On desktop: always show sidebar + content side by side
+  const showingContent = activeSection !== "";
+
+  return (
+    <div>
+      {/* Desktop: sidebar + content */}
+      <div className="sm:flex sm:gap-6">
+        {/* Sidebar — always visible on desktop, hidden on mobile when drilling in */}
+        <div className={cn(
+          "sm:w-56 sm:shrink-0 sm:block",
+          showingContent ? "hidden" : "block"
+        )}>
+          <h1 className="text-2xl font-bold tracking-tight mb-1">Settings</h1>
+          <p className="text-sm text-muted-foreground mb-4">Manage your account and preferences</p>
+
+          <nav className="space-y-0.5">
+            {SECTIONS.map(({ id, label, icon: Icon, desc }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveSection(id)}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
+                  activeSection === id
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground hover:bg-muted/50"
+                )}
+              >
+                <div className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+                  activeSection === id ? "bg-primary/10" : "bg-muted"
+                )}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{label}</p>
+                  <p className="text-[11px] text-muted-foreground sm:hidden">{desc}</p>
+                </div>
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Content — always visible on desktop, shown on mobile only when a section is selected */}
+        <div className={cn(
+          "sm:flex-1 sm:min-w-0 sm:block",
+          showingContent ? "block" : "hidden"
+        )}>
+          {/* Mobile back button */}
+          <button
+            type="button"
+            onClick={() => setActiveSection("")}
+            className="sm:hidden flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Settings
+          </button>
+
+      {/* ── Profile ── */}
+      {activeSection === "profile" && (
       <Card>
         <CardHeader>
           <CardTitle>Profile</CardTitle>
@@ -317,8 +394,10 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
-      {/* Currency Section */}
+      {/* ── Currency ── */}
+      {activeSection === "currency" && (
       <Card>
         <CardHeader>
           <CardTitle>Currency</CardTitle>
@@ -439,8 +518,10 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Bug Reports Section */}
+      {/* ── Bug Reports ── */}
+      {activeSection === "bugs" && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -541,8 +622,10 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Appearance Section */}
+      {/* ── Appearance ── */}
+      {activeSection === "appearance" && (
       <Card>
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
@@ -582,10 +665,79 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
+      {/* ── Automation ── */}
+      {activeSection === "automation" && (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-muted-foreground" />
+            Automation & Reminders
+          </CardTitle>
+          <CardDescription>
+            Control which features run automatically and send you reminders
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {automationKeys.map((item) => (
+            <SettingsToggleRow key={item.key} storageKey={item.key} label={item.label} description={item.description} />
+          ))}
+        </CardContent>
+      </Card>
+      )}
+
+      {/* ── Notifications ── */}
+      {activeSection === "notifications" && (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-muted-foreground" />
+            Notifications
+          </CardTitle>
+          <CardDescription>
+            Push notification preferences (mobile app only)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <SettingsToggleRow
+            storageKey="exitplan_notif_enabled"
+            label="Push notifications"
+            description="Receive notifications on your phone for upcoming payments and reminders"
+          />
+          <SettingsToggleRow
+            storageKey="exitplan_notif_morning"
+            label="Morning summary"
+            description="Get a daily summary of what's due today at 9:00 AM"
+          />
+        </CardContent>
+      </Card>
+      )}
+
+      {/* ── Home Page ── */}
+      {activeSection === "home" && (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
+            Home Page
+          </CardTitle>
+          <CardDescription>
+            Choose which sections appear on your Home page
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {homePageKeys.map((item) => (
+            <SettingsToggleRow key={item.key} storageKey={item.key} label={item.label} description={item.description} />
+          ))}
+        </CardContent>
+      </Card>
+      )}
+
+      {/* ── Account ── */}
+      {activeSection === "account" && (
+      <>
       <OfflineSyncCenter />
-
-      {/* Account Section */}
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
@@ -614,8 +766,12 @@ export default function SettingsPage() {
           </form>
         </CardContent>
       </Card>
+      </>
+      )}
 
-      {/* Privacy Section */}
+      {/* ── Privacy & Data ── */}
+      {activeSection === "privacy" && (
+      <>
       <Card>
         <CardHeader>
           <CardTitle>Privacy</CardTitle>
@@ -729,6 +885,63 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Toggle Row Component ────────────────────────────────────────────────────
+
+function SettingsToggleRow({
+  storageKey,
+  label,
+  description,
+}: {
+  storageKey: string;
+  label: string;
+  description: string;
+}) {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(storageKey);
+    // Default to enabled if never set
+    setEnabled(stored !== null ? stored === "1" : true);
+  }, [storageKey]);
+
+  if (enabled === null) return null;
+
+  function toggle() {
+    const next = !enabled;
+    setEnabled(next);
+    localStorage.setItem(storageKey, next ? "1" : "0");
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        onClick={toggle}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+          enabled ? "bg-primary" : "bg-muted"
+        }`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform ${
+            enabled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
     </div>
   );
 }

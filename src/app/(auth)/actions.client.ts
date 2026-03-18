@@ -63,7 +63,7 @@ export async function signIn(formData: FormData) {
     return { error: msg };
   }
 
-  return { redirect: "/dashboard" } as any;
+  return { redirect: "/home" } as any;
 }
 
 export async function signOut() {

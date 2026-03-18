@@ -115,7 +115,7 @@ export async function signIn(formData: FormData) {
     return { error: msg };
   }
 
-  redirect("/dashboard");
+  redirect("/home");
 }
 
 export async function signOut() {

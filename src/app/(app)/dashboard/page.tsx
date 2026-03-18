@@ -19,7 +19,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Your path to financial freedom
+            Your finances at a glance
           </p>
         </div>
         <div className="hidden sm:flex gap-2">
@@ -29,7 +29,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex flex-col gap-6">
-        {/* Mobile-first: balance + charts first */}
+        {/* Balance overview */}
         <section className="order-1 space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Overview
@@ -41,18 +41,18 @@ export default function DashboardPage() {
           <MobileDashboardSections />
         </div>
 
-        <section className="hidden md:block order-2 md:order-5 space-y-2">
+        <section className="hidden md:block order-3 md:order-5 space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Trends
           </p>
           <TrendsSection />
         </section>
 
-        <section className="hidden md:block order-3 md:order-2">
+        <section className="hidden md:block order-4 md:order-2">
           <HealthScoreCard />
         </section>
 
-        <section className="hidden md:block order-4 md:order-3 space-y-6">
+        <section className="hidden md:block order-5 md:order-3 space-y-6">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Planning
           </p>
@@ -62,7 +62,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="hidden md:block order-5 md:order-4 space-y-6">
+        <section className="hidden md:block order-6 md:order-4 space-y-6">
           <SafeToSpendCard />
           <div className="grid gap-6 lg:grid-cols-2">
             <SavingsRateIndicator />
@@ -70,11 +70,11 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="hidden md:block order-6 md:order-6">
+        <section className="hidden md:block order-7 md:order-6">
           <SpendingInsights />
         </section>
 
-        <section className="hidden md:block order-7 md:order-7">
+        <section className="hidden md:block order-8 md:order-7">
           <RecentTransactions />
         </section>
       </div>

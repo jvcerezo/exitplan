@@ -1,0 +1,105 @@
+"use client";
+
+import Link from "next/link";
+import { Receipt, ArrowLeft, AlertCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
+import { useBillsSummary } from "@/hooks/use-bills";
+import { AddBillDialog } from "@/components/adulting/add-bill-dialog";
+import { BillsList } from "@/components/adulting/bills-list";
+import { AutomationCard } from "@/components/adulting/automation-card";
+
+export default function BillsPage() {
+  const { data: summary } = useBillsSummary();
+
+  return (
+    <div className="space-y-6 sm:space-y-8">
+      <div>
+        <Link href="/tools" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
+          <ArrowLeft className="h-4 w-4" />
+          Tools
+        </Link>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10">
+              <Receipt className="h-5 w-5 text-indigo-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Bills &amp; Subscriptions</h1>
+              <p className="text-sm text-muted-foreground">Track recurring expenses and due dates</p>
+            </div>
+          </div>
+          <div className="hidden sm:block"><AddBillDialog /></div>
+        </div>
+      </div>
+
+      {summary && summary.count > 0 && (
+        <div className="grid gap-2.5 grid-cols-3">
+          <Card className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5">
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Monthly Total</p>
+              <p className="text-sm sm:text-xl font-bold text-indigo-600 mt-0.5 truncate">{formatCurrency(summary.totalMonthly)}</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border border-border/60">
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Annual Cost</p>
+              <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">{formatCurrency(summary.totalMonthly * 12)}</p>
+            </CardContent>
+          </Card>
+          <Card className={`rounded-2xl border ${summary.dueSoon.length > 0 ? "border-orange-500/20 bg-orange-500/5" : "border-border/60"}`}>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Due This Week</p>
+              <p className={`text-sm sm:text-xl font-bold mt-0.5 ${summary.dueSoon.length > 0 ? "text-orange-500" : ""}`}>{summary.dueSoon.length}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {summary && summary.dueSoon.length > 0 && (
+        <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 flex items-start gap-3">
+          <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-xs font-semibold text-orange-600">Due within 7 days</p>
+            <ul className="mt-1 space-y-0.5">
+              {summary.dueSoon.map((b) => (
+                <li key={b.id} className="text-[11px] text-muted-foreground">
+                  {b.name} — Day {b.due_day} · {formatCurrency(b.amount)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {summary && Object.keys(summary.byCategory).length > 0 && (
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          {Object.entries(summary.byCategory)
+            .sort(([, a], [, b]) => b - a)
+            .map(([cat, amount]) => (
+              <div key={cat} className="rounded-xl border border-border/60 bg-card/80 p-3">
+                <p className="text-[10px] font-medium text-muted-foreground capitalize">{cat.replace(/_/g, " ")}</p>
+                <p className="text-sm font-bold mt-0.5">{formatCurrency(amount)}/mo</p>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {/* Automation */}
+      <AutomationCard
+        storageKey="exitplan_auto_bills"
+        title="Bill Reminders"
+        description="Get notified before your bills are due so you never miss a payment."
+        features={[
+          "Bills with a due day appear in Upcoming Payments on your Home page",
+          "Push notifications sent 3 days before due date",
+          "Mark as paid to record a transaction from your linked account",
+          "Set a due day on each bill to enable reminders",
+        ]}
+      />
+
+      <div className="sm:hidden"><AddBillDialog /></div>
+      <BillsList />
+    </div>
+  );
+}

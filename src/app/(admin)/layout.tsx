@@ -31,7 +31,7 @@ export default async function AdminLayout({
     p_user_id: user.id,
   });
 
-  if (error || !isAdmin) redirect("/dashboard");
+  if (error || !isAdmin) redirect("/home");
 
   return (
     <div className="min-h-screen bg-background">

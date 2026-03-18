@@ -23,7 +23,8 @@ export function FAB() {
   const isAccounts = pathname.startsWith("/accounts");
   const isSettings = pathname.startsWith("/settings");
   const isBudgets = pathname.startsWith("/budgets");
-  const isDashboard = pathname === "/" || pathname.startsWith("/dashboard");
+  const isHome = pathname === "/" || pathname === "/home";
+  const isDashboard = pathname.startsWith("/dashboard") || isHome;
 
   // Budget data for budgets page
   const today = new Date();
@@ -32,7 +33,7 @@ export function FAB() {
   const existingBudgetCategories = budgetData?.budgets.map((b) => b.category) ?? [];
 
   // Hide on pages where FAB has no action
-  if (isSettings || pathname.startsWith("/adulting")) return null;
+  if (isSettings || pathname.startsWith("/guide") || pathname.startsWith("/tools")) return null;
 
   // Always show a single FAB that opens a minimal action sheet/modal
   return (

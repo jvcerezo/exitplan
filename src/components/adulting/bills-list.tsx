@@ -159,12 +159,11 @@ function BillRow({ bill, accounts }: { bill: Bill; accounts: { id: string; name:
           <div className="space-y-4">
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground">
-                Select which account to deduct {formatCurrency(bill.amount)} from, or skip to just record the date.
+                Select which account to deduct {formatCurrency(bill.amount)} from.
               </p>
               <Select value={pickedAccountId} onValueChange={setPickedAccountId}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select an account…" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="text-xs">Skip — no transaction</SelectItem>
                   {accounts.map((a) => (
                     <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
                   ))}
@@ -175,8 +174,8 @@ function BillRow({ bill, accounts }: { bill: Bill; accounts: { id: string; name:
               <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowAccountPicker(false)}>
                 Cancel
               </Button>
-              <Button size="sm" className="flex-1" onClick={confirmMarkPaid} disabled={markPaid.isPending}>
-                {markPaid.isPending ? "Saving…" : pickedAccountId !== "none" ? "Pay & Record" : "Mark Paid"}
+              <Button size="sm" className="flex-1" onClick={confirmMarkPaid} disabled={markPaid.isPending || pickedAccountId === "none"}>
+                {markPaid.isPending ? "Saving…" : "Pay & Record"}
               </Button>
             </div>
           </div>

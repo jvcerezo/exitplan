@@ -101,10 +101,13 @@ export function AddGoalDialog({
         ? customCategory.trim().toLowerCase()
         : category;
 
+    const parsedTarget = Math.min(parseFloat(targetAmount) || 0, 999_999_999);
+    const parsedCurrent = Math.min(parseFloat(currentAmount || "0") || 0, 999_999_999);
+
     await addGoal.mutateAsync({
-      name,
-      target_amount: parseFloat(targetAmount),
-      current_amount: parseFloat(currentAmount || "0"),
+      name: name.slice(0, 100),
+      target_amount: parsedTarget,
+      current_amount: parsedCurrent,
       deadline: deadline || null,
       category: finalCategory,
     });
@@ -165,6 +168,7 @@ export function AddGoalDialog({
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Emergency Fund"
             required
+            maxLength={100}
             className="w-full bg-transparent text-sm font-medium outline-none border-b border-border pb-2 placeholder:text-muted-foreground/40 focus:border-primary transition-colors"
           />
         </div>
@@ -211,6 +215,7 @@ export function AddGoalDialog({
               type="date"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
+              min={new Date().toISOString().slice(0, 10)}
               className="w-full rounded-lg border border-border px-2 py-1.5 text-sm font-medium bg-transparent outline-none focus:border-primary transition-colors"
             />
           </div>

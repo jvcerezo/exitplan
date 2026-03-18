@@ -282,7 +282,7 @@ export function SplitTransactionDialog({ transaction }: SplitTransactionDialogPr
             <Button
               type="submit"
               className="flex-1"
-              disabled={!isBalanced || addTransaction.isPending || parts.some((p) => !p.category) || hasMissingPartAccount}
+              disabled={!isBalanced || addTransaction.isPending || deleteTransaction.isPending || parts.some((p) => !p.category) || hasMissingPartAccount}
             >
               {addTransaction.isPending ? "Splitting..." : "Create Split"}
             </Button>

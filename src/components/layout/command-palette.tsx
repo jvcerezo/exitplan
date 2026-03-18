@@ -2,19 +2,41 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ArrowLeftRight, Target, Calculator, Wallet } from "lucide-react";
+import { Search, ArrowLeftRight, Target, Calculator, Wallet, Navigation } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useGlobalSearch, type SearchResult } from "@/hooks/use-global-search";
 import { cn } from "@/lib/utils";
 
-const typeIcons = {
+const NAV_PAGES = [
+  { title: "Home", subtitle: "Your adulting overview", href: "/home" },
+  { title: "Guide", subtitle: "Your adulting journey map", href: "/guide" },
+  { title: "Dashboard", subtitle: "Financial dashboard", href: "/dashboard" },
+  { title: "Transactions", subtitle: "Income and expenses", href: "/transactions" },
+  { title: "Accounts", subtitle: "Bank accounts and wallets", href: "/accounts" },
+  { title: "Budgets", subtitle: "Monthly budget tracking", href: "/budgets" },
+  { title: "Goals", subtitle: "Savings goals", href: "/goals" },
+  { title: "Govt Contributions", subtitle: "SSS, PhilHealth, Pag-IBIG", href: "/tools/contributions" },
+  { title: "Bills & Subscriptions", subtitle: "Recurring bills tracker", href: "/tools/bills" },
+  { title: "Debts", subtitle: "Debt payoff strategies", href: "/tools/debts" },
+  { title: "Insurance", subtitle: "Policy tracker", href: "/tools/insurance" },
+  { title: "Taxes", subtitle: "BIR tax tracker", href: "/tools/taxes" },
+  { title: "Calculators", subtitle: "Loan, compound interest, FIRE", href: "/tools/calculators" },
+  { title: "Panganay Mode", subtitle: "Family support budgeting", href: "/tools/panganay-mode" },
+  { title: "Retirement Projection", subtitle: "SSS pension calculator", href: "/tools/retirement-projection" },
+  { title: "Rent vs Buy", subtitle: "Housing comparison", href: "/tools/rent-vs-buy" },
+  { title: "Settings", subtitle: "Profile and preferences", href: "/settings" },
+];
+
+const typeIcons: Record<string, typeof ArrowLeftRight> = {
+  navigation: Navigation,
   transaction: ArrowLeftRight,
   goal: Target,
   budget: Calculator,
   account: Wallet,
 };
 
-const typeLabels = {
+const typeLabels: Record<string, string> = {
+  navigation: "Navigation",
   transaction: "Transactions",
   goal: "Goals",
   budget: "Budgets",
@@ -28,7 +50,27 @@ export function CommandPalette() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: results = [] } = useGlobalSearch(query);
+  const { data: dbResults = [] } = useGlobalSearch(query);
+
+  // Add navigation results that match the query
+  const navResults: SearchResult[] = query.length >= 2
+    ? NAV_PAGES
+        .filter(
+          (p) =>
+            p.title.toLowerCase().includes(query.toLowerCase()) ||
+            p.subtitle.toLowerCase().includes(query.toLowerCase())
+        )
+        .slice(0, 5)
+        .map((p) => ({
+          id: `nav-${p.href}`,
+          type: "navigation",
+          title: p.title,
+          subtitle: p.subtitle,
+          href: p.href,
+        }))
+    : [];
+
+  const results = [...navResults, ...dbResults];
 
   // Listen for Cmd+K / Ctrl+K
   useEffect(() => {

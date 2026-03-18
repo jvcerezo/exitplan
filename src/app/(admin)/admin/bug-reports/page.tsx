@@ -102,7 +102,7 @@ async function assertAdmin() {
     p_user_id: user.id,
   });
 
-  if (error || !isAdmin) redirect("/dashboard");
+  if (error || !isAdmin) redirect("/home");
 
   return user.id;
 }

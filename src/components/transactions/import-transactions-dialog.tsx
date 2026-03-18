@@ -414,8 +414,21 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
     setParseError(false);
     setFileName(file.name);
 
+    // File size guard — 10MB for CSV, 5MB for PDF
+    const MAX_CSV_SIZE = 10 * 1024 * 1024;
+    const MAX_PDF_SIZE = 5 * 1024 * 1024;
+    const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const maxSize = isPDF ? MAX_PDF_SIZE : MAX_CSV_SIZE;
+
+    if (file.size > maxSize) {
+      toast.error(`File too large`, {
+        description: `Maximum ${isPDF ? "5 MB" : "10 MB"} for ${isPDF ? "PDF" : "CSV"} files.`,
+      });
+      setParseError(true);
+      return;
+    }
+
     try {
-      const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
       let parsed: ParsedRow[] = [];
 
       if (isPDF) {
@@ -429,6 +442,12 @@ export function ImportTransactionsDialog({ open, onOpenChange }: ImportTransacti
       if (parsed.length === 0) {
         setParseError(true);
         return;
+      }
+
+      // Cap at 5000 rows to prevent UI freezing
+      if (parsed.length > 5000) {
+        toast.warning(`Only the first 5,000 transactions will be imported (${parsed.length.toLocaleString()} found).`);
+        parsed = parsed.slice(0, 5000);
       }
 
       setRows(parsed);

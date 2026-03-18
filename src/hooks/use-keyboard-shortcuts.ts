@@ -25,6 +25,9 @@ export function useKeyboardShortcuts() {
         const handleNext = (e2: KeyboardEvent) => {
           window.removeEventListener("keydown", handleNext);
           switch (e2.key) {
+            case "h":
+              router.push("/home");
+              break;
             case "d":
               router.push("/dashboard");
               break;
@@ -36,6 +39,9 @@ export function useKeyboardShortcuts() {
               break;
             case "b":
               router.push("/budgets");
+              break;
+            case "u":
+              router.push("/guide");
               break;
             case "s":
               router.push("/settings");

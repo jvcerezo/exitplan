@@ -13,7 +13,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 const supportedRoutes = [
-  "/dashboard",
+  "/home",
   "/accounts",
   "/transactions",
   "/goals",
@@ -63,7 +63,7 @@ export default function OfflinePage() {
 
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild>
-            <Link href="/dashboard">Open cached dashboard</Link>
+            <Link href="/home">Open cached dashboard</Link>
           </Button>
           <Button variant="outline" asChild>
             <Link href="/">

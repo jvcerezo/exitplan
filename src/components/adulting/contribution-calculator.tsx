@@ -133,6 +133,7 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
               <Input
                 type="number"
                 min="0"
+                max="9999999"
                 value={salary}
                 onChange={(e) => setSalary(e.target.value)}
                 placeholder="e.g. 25000"
@@ -180,53 +181,53 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {/* Table header */}
-          <div className="grid grid-cols-4 px-6 pb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="grid grid-cols-4 px-4 sm:px-6 pb-2 text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             <span>Fund</span>
-            <span className="text-right">Your Share</span>
+            <span className="text-right">You</span>
             <span className="text-right">Employer</span>
             <span className="text-right">Total</span>
           </div>
 
           {rows.map((row, i) => (
             <div key={row.label}>
-              {i > 0 && <Separator className="mx-6" />}
-              <div className="grid grid-cols-4 items-center px-6 py-3">
+              {i > 0 && <Separator className="mx-4 sm:mx-6" />}
+              <div className="grid grid-cols-4 items-center px-4 sm:px-6 py-3">
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${row.bg} ${row.color}`}>
+                  <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full ${row.bg} ${row.color}`}>
                     {row.label}
                   </span>
                 </div>
-                <span className="text-right text-sm font-semibold">
+                <span className="text-right text-xs sm:text-sm font-semibold truncate">
                   {formatCurrency(row.employee)}
                 </span>
-                <span className="text-right text-sm text-muted-foreground">
+                <span className="text-right text-xs sm:text-sm text-muted-foreground truncate">
                   {employmentType === "employed" ? formatCurrency(row.employer) : "—"}
                 </span>
-                <span className="text-right text-sm font-bold">
+                <span className="text-right text-xs sm:text-sm font-bold truncate">
                   {formatCurrency(employmentType === "employed" ? row.total : row.employee)}
                 </span>
               </div>
               {row.note && (
-                <p className="px-6 pb-2 -mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Info className="h-3 w-3" />
-                  {row.note}
+                <p className="px-4 sm:px-6 pb-2 -mt-1 text-[9px] sm:text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{row.note}</span>
                 </p>
               )}
             </div>
           ))}
 
-          <Separator className="mx-6" />
+          <Separator className="mx-4 sm:mx-6" />
 
           {/* Totals */}
-          <div className="grid grid-cols-4 items-center px-6 py-4 bg-muted/30 rounded-b-2xl">
+          <div className="grid grid-cols-4 items-center px-4 sm:px-6 py-4 bg-muted/30 rounded-b-2xl">
             <span className="text-xs font-semibold">Total</span>
-            <span className="text-right text-sm font-bold text-destructive">
-              − {formatCurrency(deductions.total_employee)}
+            <span className="text-right text-xs sm:text-sm font-bold truncate">
+              {formatCurrency(deductions.total_employee)}
             </span>
-            <span className="text-right text-sm text-muted-foreground">
+            <span className="text-right text-xs sm:text-sm text-muted-foreground truncate">
               {employmentType === "employed" ? formatCurrency(deductions.total_employer) : "—"}
             </span>
-            <span className="text-right text-sm font-bold">
+            <span className="text-right text-xs sm:text-sm font-bold truncate">
               {formatCurrency(
                 employmentType === "employed"
                   ? deductions.total_employee + deductions.total_employer
@@ -238,25 +239,25 @@ export function ContributionCalculator({ defaultSalary = 25000 }: Props) {
       </Card>
 
       {/* Net take-home summary */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-2.5 grid-cols-3">
         <Card className="rounded-2xl border border-border/60 bg-card/95">
-          <CardContent className="p-4">
-            <p className="text-[11px] text-muted-foreground">Gross Monthly</p>
-            <p className="text-xl font-bold mt-0.5">{formatCurrency(monthlySalary)}</p>
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">Gross Monthly</p>
+            <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">{formatCurrency(monthlySalary)}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-2xl border border-destructive/20 bg-destructive/5">
-          <CardContent className="p-4">
-            <p className="text-[11px] text-muted-foreground">Your Deductions</p>
-            <p className="text-xl font-bold mt-0.5 text-destructive">
-              − {formatCurrency(deductions.total_employee)}
+        <Card className="rounded-2xl border border-border/60">
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">Deductions</p>
+            <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">
+              {formatCurrency(deductions.total_employee)}
             </p>
           </CardContent>
         </Card>
         <Card className="rounded-2xl border border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <p className="text-[11px] text-muted-foreground">Net Take-Home</p>
-            <p className="text-xl font-bold mt-0.5 text-primary">
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">Net Take-Home</p>
+            <p className="text-sm sm:text-xl font-bold mt-0.5 text-primary truncate">
               {formatCurrency(deductions.net_take_home)}
             </p>
           </CardContent>

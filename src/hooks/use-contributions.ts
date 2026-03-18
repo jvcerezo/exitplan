@@ -134,6 +134,70 @@ export function useBulkAddContributions() {
   });
 }
 
+/** Mark a contribution as paid and optionally create an expense transaction. */
+export function useMarkContributionPaid() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      contribution,
+      accountId,
+    }: {
+      contribution: Contribution;
+      accountId?: string;
+    }) => {
+      const supabase = createClient();
+
+      // Mark as paid
+      const { error: updateError } = await supabase
+        .from("contributions")
+        .update({ is_paid: true })
+        .eq("id", contribution.id);
+      if (updateError) throw new Error(updateError.message);
+
+      // Create expense transaction if account provided
+      if (accountId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const TYPE_LABELS: Record<string, string> = {
+          sss: "SSS",
+          philhealth: "PhilHealth",
+          pagibig: "Pag-IBIG",
+        };
+
+        const { error } = await supabase.rpc("create_user_transaction", {
+          p_amount: -Math.abs(contribution.employee_share),
+          p_category: "government",
+          p_description: `${TYPE_LABELS[contribution.type] ?? contribution.type} contribution (${contribution.period})`,
+          p_date: new Date().toISOString().slice(0, 10),
+          p_currency: "PHP",
+          p_account_id: accountId,
+          p_transfer_id: null,
+          p_tags: null,
+          p_attachment_path: null,
+          p_split_group_id: null,
+        });
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: (_, { accountId }) => {
+      queryClient.invalidateQueries({ queryKey: ["contributions"] });
+      if (accountId) {
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
+        queryClient.invalidateQueries({ queryKey: ["health-score"] });
+        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      }
+      toast.success(accountId ? "Contribution paid — transaction recorded" : "Contribution marked as paid");
+    },
+    onError: (error) => {
+      toast.error("Failed to mark contribution as paid", { description: error.message });
+    },
+  });
+}
+
 export function useDeleteContribution() {
   const queryClient = useQueryClient();
 
