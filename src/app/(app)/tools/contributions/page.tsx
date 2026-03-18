@@ -30,7 +30,7 @@ export default function ContributionsPage() {
       </div>
 
       {/* Quick info cards */}
-      <div className="grid gap-3 grid-cols-3">
+      <div className="grid gap-2.5 grid-cols-3">
         {[
           { name: "SSS", rate: "13%", note: "MSC ₱3k–₱30k", color: "text-blue-500", bg: "bg-blue-500/10" },
           { name: "PhilHealth", rate: "5%", note: "₱10k–₱100k", color: "text-green-500", bg: "bg-green-500/10" },
@@ -38,11 +38,11 @@ export default function ContributionsPage() {
         ].map((f) => (
           <div
             key={f.name}
-            className={`rounded-xl border border-border/60 p-3 ${f.bg}`}
+            className={`rounded-xl border border-border/60 p-2.5 sm:p-3 ${f.bg}`}
           >
-            <p className={`text-xs font-semibold ${f.color}`}>{f.name}</p>
-            <p className="text-lg font-bold mt-0.5">{f.rate}</p>
-            <p className="text-[10px] text-muted-foreground">{f.note}</p>
+            <p className={`text-[10px] sm:text-xs font-semibold ${f.color}`}>{f.name}</p>
+            <p className="text-base sm:text-lg font-bold mt-0.5">{f.rate}</p>
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">{f.note}</p>
           </div>
         ))}
       </div>

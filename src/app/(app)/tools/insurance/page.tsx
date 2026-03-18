@@ -36,23 +36,23 @@ export default function InsurancePage() {
       </div>
 
       {summary && summary.count > 0 && (
-        <div className="grid gap-3 grid-cols-3">
+        <div className="grid gap-2.5 grid-cols-3">
           <Card className="rounded-2xl border border-border/60">
-            <CardContent className="p-4">
-              <p className="text-[11px] text-muted-foreground">Annual Premium</p>
-              <p className="text-xl font-bold mt-0.5">{formatCurrency(summary.totalAnnualPremium)}</p>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Annual Premium</p>
+              <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">{formatCurrency(summary.totalAnnualPremium)}</p>
             </CardContent>
           </Card>
           <Card className="rounded-2xl border border-teal-500/20 bg-teal-500/5">
-            <CardContent className="p-4">
-              <p className="text-[11px] text-muted-foreground">Total Coverage</p>
-              <p className="text-xl font-bold text-teal-600 mt-0.5">{formatCurrency(summary.totalCoverage)}</p>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Total Coverage</p>
+              <p className="text-sm sm:text-xl font-bold text-teal-600 mt-0.5 truncate">{formatCurrency(summary.totalCoverage)}</p>
             </CardContent>
           </Card>
           <Card className={`rounded-2xl border ${summary.renewingSoon.length > 0 ? "border-orange-500/20 bg-orange-500/5" : "border-border/60"}`}>
-            <CardContent className="p-4">
-              <p className="text-[11px] text-muted-foreground">Renewing Soon</p>
-              <p className={`text-xl font-bold mt-0.5 ${summary.renewingSoon.length > 0 ? "text-orange-500" : ""}`}>{summary.renewingSoon.length}</p>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Renewing Soon</p>
+              <p className={`text-sm sm:text-xl font-bold mt-0.5 ${summary.renewingSoon.length > 0 ? "text-orange-500" : ""}`}>{summary.renewingSoon.length}</p>
             </CardContent>
           </Card>
         </div>

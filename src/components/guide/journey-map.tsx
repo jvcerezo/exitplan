@@ -120,7 +120,7 @@ function ConnectorCurve({
   const cpY2 = 32;
 
   return (
-    <div className="w-full h-12 sm:h-14 relative">
+    <div className="w-full h-14 sm:h-16 relative">
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox="0 0 100 50"
@@ -129,15 +129,16 @@ function ConnectorCurve({
       >
         <path
           d={`M ${x1} 0 C ${x1} ${cpY1}, ${x2} ${cpY2}, ${x2} 50`}
-          strokeWidth="0.7"
+          strokeWidth="2.5"
           vectorEffect="non-scaling-stroke"
           strokeDasharray={isCompleted ? "none" : "6 5"}
+          strokeLinecap="round"
           className={cn(
             isCompleted
               ? "stroke-primary"
               : isCurrent
-                ? "stroke-primary/50"
-                : "stroke-muted-foreground/20"
+                ? "stroke-primary/40"
+                : "stroke-muted-foreground/25"
           )}
         />
       </svg>

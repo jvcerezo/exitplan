@@ -35,23 +35,23 @@ export default function DebtsPage() {
       </div>
 
       {summary && summary.count > 0 && (
-        <div className="grid gap-3 grid-cols-3">
+        <div className="grid gap-2.5 grid-cols-3">
           <Card className="rounded-2xl border border-border/60">
-            <CardContent className="p-4">
-              <p className="text-[11px] text-muted-foreground">Total Debt</p>
-              <p className="text-xl font-bold mt-0.5">{formatCurrency(summary.totalDebt)}</p>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Total Debt</p>
+              <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">{formatCurrency(summary.totalDebt)}</p>
             </CardContent>
           </Card>
           <Card className="rounded-2xl border border-border/60">
-            <CardContent className="p-4">
-              <p className="text-[11px] text-muted-foreground">Min. Monthly</p>
-              <p className="text-xl font-bold mt-0.5">{formatCurrency(summary.totalMinimum)}</p>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Min. Monthly</p>
+              <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">{formatCurrency(summary.totalMinimum)}</p>
             </CardContent>
           </Card>
           <Card className="rounded-2xl border border-orange-500/20 bg-orange-500/5">
-            <CardContent className="p-4">
-              <p className="text-[11px] text-muted-foreground">Highest Rate</p>
-              <p className="text-xl font-bold text-orange-500 mt-0.5">{(summary.highestRate * 100).toFixed(1)}%</p>
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground">Highest Rate</p>
+              <p className="text-sm sm:text-xl font-bold text-orange-500 mt-0.5">{(summary.highestRate * 100).toFixed(1)}%</p>
             </CardContent>
           </Card>
         </div>
