@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { invalidateFinancialQueries } from "@/lib/query-utils";
 import { toast } from "sonner";
 import type { InsurancePolicy, InsurancePolicyInsert } from "@/lib/types/database";
 
 export function useInsurancePolicies() {
   return useQuery({
     queryKey: ["insurance"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<InsurancePolicy[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -23,7 +23,6 @@ export function useInsurancePolicies() {
 export function useInsuranceSummary() {
   return useQuery({
     queryKey: ["insurance", "summary"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -149,11 +148,7 @@ export function usePayInsurancePremium() {
     onSuccess: (_, { policy, accountId }) => {
       const linked = accountId ?? policy.account_id;
       if (linked) {
-        queryClient.invalidateQueries({ queryKey: ["accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+        invalidateFinancialQueries(queryClient);
       }
       toast.success(linked ? "Premium paid — transaction recorded" : "Premium recorded");
     },

@@ -8,7 +8,6 @@ import type { ExchangeRate } from "@/lib/types/database";
 export function useExchangeRates() {
   return useQuery({
     queryKey: ["exchange-rates"],
-    staleTime: 60 * 60 * 1000, // 1 hour — rates change very infrequently
     queryFn: async (): Promise<ExchangeRate[]> => {
       const supabase = createClient();
       const { data, error } = await supabase

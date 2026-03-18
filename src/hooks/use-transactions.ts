@@ -8,6 +8,7 @@ import {
   updateOfflineAccountBalance,
 } from "@/lib/offline/query-cache";
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
+import { invalidateFinancialQueries } from "@/lib/query-utils";
 import { toast } from "sonner";
 import type { Transaction, TransactionInsert } from "@/lib/types/database";
 
@@ -337,14 +338,7 @@ export function useAddTransaction() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-      queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-      queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-      queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+      invalidateFinancialQueries(queryClient);
       toast.success(isBrowserOffline() ? "Transaction saved offline" : "Transaction added");
     },
     onError: (error) => {

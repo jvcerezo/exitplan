@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { invalidateFinancialQueries } from "@/lib/query-utils";
 import { toast } from "sonner";
 import type { Bill, BillInsert } from "@/lib/types/database";
 
 export function useBills() {
   return useQuery({
     queryKey: ["bills"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<Bill[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -23,7 +23,6 @@ export function useBills() {
 export function useBillsSummary() {
   return useQuery({
     queryKey: ["bills", "summary"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -158,12 +157,7 @@ export function useMarkBillPaid() {
       queryClient.invalidateQueries({ queryKey: ["bills"] });
       const linkedAccount = accountId ?? bill.account_id;
       if (linkedAccount) {
-        queryClient.invalidateQueries({ queryKey: ["accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-        queryClient.invalidateQueries({ queryKey: ["health-score"] });
-        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+        invalidateFinancialQueries(queryClient);
       }
       toast.success(linkedAccount ? "Bill paid — transaction recorded" : "Bill marked as paid");
     },

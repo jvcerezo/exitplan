@@ -69,10 +69,11 @@ export function GoogleSignInButton({ next }: { next: string }) {
         setLoading(false);
       }
     } else {
-      // Web: normal OAuth redirect flow
+      // Web: use the configured site URL so the redirect works in both
+      // web browsers and the Capacitor WebView (which loads the hosted site).
       const supabase = createClient();
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-      const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`;
+      const origin = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -83,6 +84,7 @@ export function GoogleSignInButton({ next }: { next: string }) {
         setLoading(false);
       }
     }
+    // On success the browser is redirected — no need to reset loading
   }
 
   return (
