@@ -5,25 +5,84 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
+async function isNativeApp(): Promise<boolean> {
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * On native: use the native Google Sign-In SDK via @capgo/capacitor-social-login,
+ * then exchange the ID token with Supabase.
+ */
+async function handleNativeGoogleSignIn(): Promise<boolean> {
+  try {
+    const { SocialLogin } = await import("@capgo/capacitor-social-login");
+
+    // Initialize the plugin with the Google Web Client ID
+    await SocialLogin.initialize({
+      google: {
+        webClientId: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!,
+      },
+    });
+
+    const result = await SocialLogin.login({
+      provider: "google",
+      options: {
+        scopes: ["email", "profile"],
+      },
+    });
+
+    const loginResult = result?.result;
+    if (!loginResult || loginResult.responseType !== "online") return false;
+    const idToken = loginResult.idToken;
+    if (!idToken) return false;
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: idToken,
+    });
+
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export function GoogleSignInButton({ next }: { next: string }) {
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
     setLoading(true);
-    const supabase = createClient();
 
-    // Use the configured site URL so the redirect works in both
-    // web browsers and the Capacitor WebView (which loads the hosted site).
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    const isNative = await isNativeApp();
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo },
-    });
+    if (isNative) {
+      const success = await handleNativeGoogleSignIn();
+      if (success) {
+        window.location.href = next;
+      } else {
+        setLoading(false);
+      }
+    } else {
+      // Web: use the configured site URL so the redirect works in both
+      // web browsers and the Capacitor WebView (which loads the hosted site).
+      const supabase = createClient();
+      const origin = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
-    if (error) {
-      setLoading(false);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+
+      if (error) {
+        setLoading(false);
+      }
     }
     // On success the browser is redirected — no need to reset loading
   }
