@@ -33,6 +33,9 @@ export function usePaymentNotifications() {
     });
     if (enabledItems.length === 0) return;
 
+    // Check if notifications are globally disabled
+    if (localStorage.getItem("exitplan_notif_enabled") === "0") return;
+
     // Only schedule once per day
     const today = new Date().toISOString().slice(0, 10);
     const lastScheduled = localStorage.getItem(NOTIF_SCHEDULED_KEY);

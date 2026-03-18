@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Wallet, TrendingUp, TrendingDown, BookOpen, Wrench, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,12 +9,26 @@ import { UpcomingPayments } from "@/components/dashboard/upcoming-payments";
 import { useProfile } from "@/hooks/use-profile";
 import { useGuideProgress } from "@/hooks/use-guide-progress";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
+
+function useHomePreference(key: string, defaultValue = true): boolean {
+  const [enabled, setEnabled] = useState(defaultValue);
+  useEffect(() => {
+    const stored = localStorage.getItem(key);
+    if (stored !== null) setEnabled(stored === "1");
+  }, [key]);
+  return enabled;
+}
 import { formatCurrency, cn } from "@/lib/utils";
 
 export default function HomePage() {
   const { data: profile } = useProfile();
   const { currentStage, currentStageIndex, overallPercentage, totalCompleted, totalItems, isLoading: guideLoading } = useGuideProgress();
   const { data: summary, isLoading: txLoading } = useTransactionsSummary();
+
+  const showUpcoming = useHomePreference("exitplan_home_upcoming");
+  const showNextSteps = useHomePreference("exitplan_home_nextsteps");
+  const showFinances = useHomePreference("exitplan_home_finances");
+  const showStage = useHomePreference("exitplan_home_stage");
 
   const firstName = profile?.full_name?.split(" ")[0];
   const hour = new Date().getHours();
@@ -32,7 +47,7 @@ export default function HomePage() {
       </div>
 
       {/* Current stage + Journey progress — inline card */}
-      {!guideLoading && currentStage && (
+      {showStage && !guideLoading && currentStage && (
         <Link href={`/guide/${currentStage.slug}`} className="block">
           <div className="rounded-2xl border border-border/60 bg-card overflow-hidden group">
             <div className="flex items-center gap-4 p-4">
@@ -65,7 +80,7 @@ export default function HomePage() {
       )}
 
       {/* Financial summary row */}
-      {!txLoading && summary && (
+      {showFinances && !txLoading && summary && (
         <div className="grid grid-cols-3 gap-2.5">
           <FinStat icon={Wallet} label="Balance" value={formatCurrency(summary.balance)} />
           <FinStat icon={TrendingUp} label="Income" value={formatCurrency(summary.income)} color="text-green-600 dark:text-green-400" iconColor="text-green-500" />
@@ -74,10 +89,10 @@ export default function HomePage() {
       )}
 
       {/* Upcoming Payments */}
-      <UpcomingPayments />
+      {showUpcoming && <UpcomingPayments />}
 
       {/* Next Steps */}
-      <NextStepsCarousel />
+      {showNextSteps && <NextStepsCarousel />}
 
       {/* Quick nav — Guide + Tools */}
       <div className="space-y-2">

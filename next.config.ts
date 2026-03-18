@@ -78,11 +78,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/home",
-        permanent: false,
-      },
-      {
         source: "/adulting/checklist",
         destination: "/guide",
         permanent: true,
