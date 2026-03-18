@@ -6,7 +6,6 @@ import type { TaxRecord, TaxRecordInsert } from "@/lib/types/database";
 export function useTaxRecords(year?: number) {
   return useQuery({
     queryKey: ["tax-records", year ?? "all"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<TaxRecord[]> => {
       const supabase = createClient();
       let query = supabase
@@ -29,7 +28,6 @@ export function useTaxRecords(year?: number) {
 export function useTaxSummary() {
   return useQuery({
     queryKey: ["tax-records", "summary"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const currentYear = new Date().getFullYear();

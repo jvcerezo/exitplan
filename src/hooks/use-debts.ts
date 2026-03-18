@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { invalidateFinancialQueries } from "@/lib/query-utils";
 import { toast } from "sonner";
 import type { Debt, DebtInsert } from "@/lib/types/database";
 
 export function useDebts() {
   return useQuery({
     queryKey: ["debts"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<Debt[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -23,7 +23,6 @@ export function useDebts() {
 export function useDebtSummary() {
   return useQuery({
     queryKey: ["debts", "summary"],
-    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -148,14 +147,9 @@ export function useRecordDebtPayment() {
     },
     onSuccess: (result, { accountId, debt }) => {
       queryClient.invalidateQueries({ queryKey: ["debts"] });
-      queryClient.invalidateQueries({ queryKey: ["health-score"] });
       const linked = accountId ?? debt.account_id;
       if (linked) {
-        queryClient.invalidateQueries({ queryKey: ["accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+        invalidateFinancialQueries(queryClient);
       }
       toast.success(result.isPaidOff ? "Debt paid off! 🎉" : "Payment recorded");
     },

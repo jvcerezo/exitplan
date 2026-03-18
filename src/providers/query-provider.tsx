@@ -18,8 +18,8 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Serve cached data immediately; treat it as fresh for 10 min
-            staleTime: 10 * 60 * 1000,
+            // Data only changes when the user makes a mutation — never auto-refetch
+            staleTime: Infinity,
             // Keep in memory for 24 h (matches persister maxAge)
             gcTime: 24 * 60 * 60 * 1000,
             // Don't refetch just because the window was focused

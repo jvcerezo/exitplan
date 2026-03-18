@@ -44,7 +44,6 @@ function normalizeBudgetCategory(category: string): string {
 export function useBudgets(month: string, period: BudgetPeriod = "monthly") {
   return useQuery({
     queryKey: ["budgets", month, period],
-    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Budget[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -63,7 +62,6 @@ export function useBudgets(month: string, period: BudgetPeriod = "monthly") {
 export function useBudgetSummary(month: string, period: BudgetPeriod = "monthly") {
   return useQuery({
     queryKey: ["budgets", "summary", month, period],
-    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
 

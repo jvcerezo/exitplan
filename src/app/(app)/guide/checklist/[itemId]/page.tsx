@@ -243,7 +243,7 @@ export default function ChecklistItemPage({ params }: { params: Promise<{ itemId
       )}
 
       {/* Action buttons */}
-      <div className="sticky bottom-4 pt-4 flex gap-2">
+      <div className="sticky bottom-0 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex gap-2 bg-background">
         <Button
           onClick={() => handleToggle("skipped")}
           className="shrink-0"

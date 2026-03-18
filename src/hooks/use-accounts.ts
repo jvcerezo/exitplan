@@ -13,7 +13,6 @@ import type { Account, AccountInsert } from "@/lib/types/database";
 export function useAccounts() {
   return useQuery({
     queryKey: ["accounts"],
-    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Account[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -31,7 +30,6 @@ export function useAccounts() {
 export function useArchivedAccounts() {
   return useQuery({
     queryKey: ["accounts", "archived"],
-    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Account[]> => {
       const supabase = createClient();
       const { data, error } = await supabase
