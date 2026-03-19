@@ -373,5 +373,12 @@ const en = {
   },
 } as const;
 
-export type TranslationKeys = typeof en;
+/** Recursively widen literal string types to `string` so translations can differ. */
+type Widen<T> = T extends string
+  ? string
+  : T extends Record<string, unknown>
+    ? { [K in keyof T]: Widen<T[K]> }
+    : T;
+
+export type TranslationKeys = Widen<typeof en>;
 export default en;
