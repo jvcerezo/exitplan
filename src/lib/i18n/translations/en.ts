@@ -6,7 +6,7 @@ const en = {
     title: "Sandalan — Your Filipino Adulting Companion",
     description:
       "Sandalan guides you through every stage of Filipino adult life — from getting your first IDs to retirement. Track finances, manage contributions, and follow step-by-step adulting guides.",
-    footer: "Built for your freedom.",
+    footer: "Built for Filipinos.",
   },
 
   // ── Common ──
@@ -224,7 +224,7 @@ const en = {
   // ── Landing page ──
   landing: {
     hero: {
-      badge: "100% free · Built for Filipinos",
+      badge: "Built for Filipinos",
       headline: "Your companion for every stage of Filipino adult life",
       headlineHighlight: "every stage",
       subheadline: "From your first government ID to retirement — step-by-step guides, financial tracking, and smart reminders in one app.",
@@ -317,7 +317,7 @@ const en = {
       button: "Start Your Journey",
     },
     footer: {
-      copyright: "Sandalan. Built for your freedom.",
+      copyright: "Sandalan. Built for Filipinos.",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       signIn: "Sign In",

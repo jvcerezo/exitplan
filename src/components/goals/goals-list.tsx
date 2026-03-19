@@ -72,7 +72,7 @@ export function GoalsList() {
       <EmptyState
         icon={Target}
         title="No goals yet"
-        description="Set your first financial goal and start building towards freedom."
+        description="Set your first financial goal and start building towards your goals."
       />
     );
   }

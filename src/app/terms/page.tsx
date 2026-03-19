@@ -118,10 +118,10 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">9. Pricing and Free Service</h2>
+            <h2 className="text-lg font-semibold">9. Pricing</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Sandalan is currently offered free of charge. We reserve the right to introduce paid features,
-              subscription plans, or pricing changes in the future. If we do, existing free features at the
+              Sandalan reserves the right to introduce paid features,
+              subscription plans, or pricing changes in the future. If we do, existing features at the
               time of any pricing change will remain accessible, and we will provide advance notice before
               any changes take effect.
             </p>

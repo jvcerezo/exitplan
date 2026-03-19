@@ -122,18 +122,25 @@ export function TransactionsTable() {
   const { data: accounts } = useAccounts();
   const accountMap = new Map((accounts ?? []).map((a) => [a.id, a.name]));
 
-  // Merge transfer pairs into a single display row
+  // Merge transfer pairs into a single display row (only in "all" tab)
+  // In income/expense tabs, transfers are excluded entirely
   const visibleTransactions = (() => {
     const raw = (transactions ?? []).slice(0, PAGE_SIZE);
+
+    // When filtering by income or expense, strip out any transfers that may have leaked through
+    if (type === "income" || type === "expense") {
+      return raw.filter((tx) => tx.category !== "transfer");
+    }
+
+    // "all" tab — merge transfer pairs
     const seenTransferIds = new Set<string>();
     const merged: typeof raw = [];
 
     for (const tx of raw) {
       if (tx.category === "transfer" && tx.transfer_id) {
-        if (seenTransferIds.has(tx.transfer_id)) continue; // skip the second half
+        if (seenTransferIds.has(tx.transfer_id)) continue;
         seenTransferIds.add(tx.transfer_id);
 
-        // Find the pair: outgoing (negative) and incoming (positive)
         const pair = raw.filter((t) => t.transfer_id === tx.transfer_id);
         const outgoing = pair.find((t) => t.amount < 0);
         const incoming = pair.find((t) => t.amount > 0);
@@ -142,13 +149,11 @@ export function TransactionsTable() {
         const toName = incoming?.account_id ? accountMap.get(incoming.account_id) ?? "Account" : "Account";
         const transferAmount = Math.abs(outgoing?.amount ?? incoming?.amount ?? 0);
 
-        // Create a merged transfer row using the outgoing tx as base
         merged.push({
           ...(outgoing ?? tx),
           description: `Transfer from ${fromName} to ${toName}`,
-          amount: transferAmount, // positive, unsigned
+          amount: transferAmount,
           category: "transfer",
-          // Tag with a marker so the render knows this is a merged transfer
           _mergedTransfer: true,
         } as typeof tx & { _mergedTransfer?: boolean });
       } else {
@@ -157,19 +162,6 @@ export function TransactionsTable() {
     }
     return merged;
   })();
-
-  // Count how many transfer rows were merged (each merge removes 1 from the count)
-  const mergedTransferCount = (() => {
-    const raw = transactions ?? [];
-    const transferIds = new Set<string>();
-    for (const tx of raw) {
-      if (tx.category === "transfer" && tx.transfer_id) {
-        transferIds.add(tx.transfer_id);
-      }
-    }
-    return transferIds.size; // each ID had 2 rows, now has 1
-  })();
-  const adjustedTotal = Math.max(0, (totalMatchingTransactions ?? 0) - mergedTransferCount);
 
   const hasPreviousPage = currentPage > 1;
   const hasNextPage = (transactions?.length ?? 0) > PAGE_SIZE;
@@ -450,12 +442,6 @@ export function TransactionsTable() {
           </div>
         )}
 
-        {/* Results count */}
-        <div className="px-3 pt-3 pb-1 sm:px-4">
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {adjustedTotal.toLocaleString("en-PH")} total match{adjustedTotal === 1 ? "" : "es"} • {visibleTransactions.length} on this page
-          </p>
-        </div>
 
         <CardContent className="px-3 pt-2 sm:px-6">
           {isLoading ? (

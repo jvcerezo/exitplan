@@ -11,7 +11,7 @@ import { signUp } from "../actions";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 const BRAND_BULLETS = [
-  "Free forever — no subscriptions, no paywalls",
+  "Track your finances. Navigate adult life.",
   "Private & secure with row-level data isolation",
   "Import from GCash, BDO, BPI, and more",
 ];
@@ -149,7 +149,7 @@ export default function SignupPage() {
           <div className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Free forever. No credit card required.
+              No credit card required.
             </p>
           </div>
 
