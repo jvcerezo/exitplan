@@ -48,6 +48,19 @@
 }
 
 /*
+ * Prevent Radix Dialog scroll-lock from breaking mobile layout.
+ * When a Dialog opens, react-remove-scroll adds overflow:hidden and
+ * sometimes position:fixed to <body>, which causes the viewport to
+ * resize and responsive breakpoints to recalculate on mobile/webview.
+ */
+body[data-scroll-locked] {
+  position: static !important;
+  overflow: hidden !important;
+  /* Keep the page in place without position:fixed */
+  touch-action: none;
+}
+
+/*
  * ExitPlan — "Financial Freedom" Theme
  * Clean whites, soft greens, generous whitespace
  * All colors anchored on OKLCH hue ~155 (forest green)

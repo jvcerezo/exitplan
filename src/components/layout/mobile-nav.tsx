@@ -125,7 +125,7 @@ export function MobileNav() {
           <Link href="/home" className="inline-flex items-center gap-2">
             <BrandMark className="h-7 w-7" />
             <span className="text-base font-bold tracking-tight">
-              Exit<span className="text-primary">Plan</span>
+              Sandal<span className="text-primary">an</span>
             </span>
           </Link>
 
@@ -157,7 +157,7 @@ export function MobileNav() {
             >
               <BrandMark className="h-8 w-8" />
               <span className="text-base font-bold tracking-tight">
-                Exit<span className="text-primary">Plan</span>
+                Sandal<span className="text-primary">an</span>
               </span>
             </Link>
           </div>

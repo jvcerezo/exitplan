@@ -3,12 +3,46 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRecentTransactions } from "@/hooks/use-transactions";
+import { useAccounts } from "@/hooks/use-accounts";
 import { ArrowUpRight, ArrowDownRight, ArrowRight, AlertCircle, Wallet, ArrowLeftRight } from "lucide-react";
-import { formatSignedCurrency, getTransactionLabel, getTransactionCategory } from "@/lib/utils";
+import { formatSignedCurrency, formatCurrency, getTransactionLabel, getTransactionCategory } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export function RecentTransactions() {
   const { data: transactions, isLoading, error } = useRecentTransactions();
+  const { data: accounts } = useAccounts();
+  const accountMap = new Map((accounts ?? []).map((a) => [a.id, a.name]));
+
+  // Merge transfer pairs into single display rows
+  const displayTransactions = (() => {
+    if (!transactions) return [];
+    const seenTransferIds = new Set<string>();
+    const merged: typeof transactions = [];
+
+    for (const tx of transactions) {
+      if (tx.category === "transfer" && tx.transfer_id) {
+        if (seenTransferIds.has(tx.transfer_id)) continue;
+        seenTransferIds.add(tx.transfer_id);
+
+        const pair = transactions.filter((t) => t.transfer_id === tx.transfer_id);
+        const outgoing = pair.find((t) => t.amount < 0);
+        const incoming = pair.find((t) => t.amount > 0);
+        const fromName = outgoing?.account_id ? accountMap.get(outgoing.account_id) ?? "Account" : "Account";
+        const toName = incoming?.account_id ? accountMap.get(incoming.account_id) ?? "Account" : "Account";
+        const transferAmount = Math.abs(outgoing?.amount ?? incoming?.amount ?? 0);
+
+        merged.push({
+          ...(outgoing ?? tx),
+          description: `Transfer from ${fromName} to ${toName}`,
+          amount: transferAmount,
+          category: "transfer",
+        });
+      } else {
+        merged.push(tx);
+      }
+    }
+    return merged;
+  })();
 
   return (
     <Card>
@@ -39,7 +73,7 @@ export function RecentTransactions() {
               </p>
             </div>
           </div>
-        ) : transactions?.length === 0 ? (
+        ) : displayTransactions.length === 0 ? (
           <EmptyState
             icon={Wallet}
             title="No transactions yet"
@@ -47,7 +81,7 @@ export function RecentTransactions() {
           />
         ) : (
           <div className="space-y-4">
-            {transactions?.map((tx) => (
+            {displayTransactions.map((tx) => (
               <div key={tx.id} className="flex items-center gap-4">
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
@@ -71,7 +105,7 @@ export function RecentTransactions() {
                     {getTransactionLabel(tx)}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {getTransactionCategory(tx)}
+                    {tx.category === "transfer" ? "Transfer" : getTransactionCategory(tx)}
                   </p>
                 </div>
                 <div
@@ -83,7 +117,9 @@ export function RecentTransactions() {
                       : "text-foreground"
                   }`}
                 >
-                  {formatSignedCurrency(tx.amount)}
+                  {tx.category === "transfer"
+                    ? formatCurrency(tx.amount)
+                    : formatSignedCurrency(tx.amount)}
                 </div>
               </div>
             ))}

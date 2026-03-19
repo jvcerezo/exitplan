@@ -7,7 +7,7 @@ import { AdminBottomNav } from "@/components/layout/admin-bottom-nav";
 export const metadata: Metadata = {
   title: {
     default: "Admin",
-    template: "%s | ExitPlan Admin",
+    template: "%s | Sandalan Admin",
   },
   robots: {
     index: false,

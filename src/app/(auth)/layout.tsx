@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: {
     default: "Login",
-    template: "%s | ExitPlan",
+    template: "%s | Sandalan",
   },
   robots: {
     index: false,

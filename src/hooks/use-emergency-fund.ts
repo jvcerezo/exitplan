@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchMonthlyObligations } from "./use-monthly-obligations";
 
 export interface EmergencyFundData {
   currentAmount: number;
@@ -27,10 +28,10 @@ export function useEmergencyFund(targetMonths: number = 3) {
         .toISOString()
         .split("T")[0];
 
-      const [txResult, accountResult, goalResult] = await Promise.all([
+      const [txResult, accountResult, goalResult, obligations] = await Promise.all([
         supabase
           .from("transactions")
-          .select("amount")
+          .select("amount, category")
           .gte("date", currentMonthStart)
           .lte("date", currentMonthEnd)
           .lt("amount", 0),
@@ -42,16 +43,24 @@ export function useEmergencyFund(targetMonths: number = 3) {
           .select("name, category, current_amount, target_amount, is_completed, created_at")
           .eq("is_completed", false)
           .order("created_at", { ascending: false }),
+        fetchMonthlyObligations(currentMonthStart, currentMonthEnd),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
       if (accountResult.error) throw new Error(accountResult.error.message);
       if (goalResult.error) throw new Error(goalResult.error.message);
 
-      const monthlyExpenses = (txResult.data || []).reduce(
-        (sum, t) => sum + Math.abs(t.amount),
-        0
-      );
+      // Transaction-based expenses (excluding transfers)
+      const txExpenses = (txResult.data || [])
+        .filter((t) => t.category !== "transfer")
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+      // Total monthly expenses = transactions + unpaid contributions
+      const monthlyExpenses = txExpenses + obligations.contributionsTotal - obligations.contributionsPaid;
+
+      // For the emergency fund target, use the full obligation picture
+      // (what you'd need to cover each month if income stopped)
+      const fullMonthlyBurn = txExpenses + obligations.total - obligations.contributionsPaid;
 
       const activeGoals = goalResult.data ?? [];
       const goal = activeGoals.find((goal) => {
@@ -67,21 +76,19 @@ export function useEmergencyFund(targetMonths: number = 3) {
       const goalTargetAmount = goal ? Number(goal.target_amount) : null;
 
       if (goal) {
-        // Use the goal's saved amount and target as source of truth
         currentAmount = Number(goal.current_amount);
         targetAmount = Number(goal.target_amount);
       } else {
-        // Fall back to total account balances vs expense-based target
         currentAmount = (accountResult.data || []).reduce(
           (sum, a) => sum + Number(a.balance),
           0
         );
-        targetAmount = monthlyExpenses * targetMonths;
+        targetAmount = fullMonthlyBurn * targetMonths;
       }
 
       const monthsCovered =
-        monthlyExpenses > 0
-          ? Math.round((currentAmount / monthlyExpenses) * 10) / 10
+        fullMonthlyBurn > 0
+          ? Math.round((currentAmount / fullMonthlyBurn) * 10) / 10
           : 0;
 
       const progressPercent =
@@ -91,7 +98,7 @@ export function useEmergencyFund(targetMonths: number = 3) {
 
       return {
         currentAmount: Math.round(currentAmount * 100) / 100,
-        monthlyExpenses: Math.round(monthlyExpenses * 100) / 100,
+        monthlyExpenses: Math.round(fullMonthlyBurn * 100) / 100,
         targetMonths,
         targetAmount: Math.round(targetAmount * 100) / 100,
         monthsCovered,

@@ -29,7 +29,7 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     target: null,
-    title: "Welcome to ExitPlan!",
+    title: "Welcome to Sandalan!",
     description:
       "Your companion for every stage of Filipino adult life. This quick tour walks you through everything you need to get started.",
     placement: "center",

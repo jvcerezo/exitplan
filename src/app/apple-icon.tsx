@@ -17,26 +17,29 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#FFFFFF",
+          background: "#14213D",
+          borderRadius: "32px",
         }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="132" height="132" aria-label="ExitPlan Logo">
-          <defs>
-            <mask id="apple-arrow-gap">
-              <rect width="200" height="200" fill="white" />
-              <path
-                d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z"
-                fill="black"
-                stroke="black"
-                strokeWidth="12"
-                strokeLinejoin="round"
-              />
-            </mask>
-          </defs>
-          <g transform="translate(8 0)">
-            <path d="M 40 30 H 140 V 60 H 70 V 140 H 140 V 170 H 40 Z" fill="#14213D" mask="url(#apple-arrow-gap)" />
-            <path d="M 40 170 C 40 125, 60 100, 100 90 L 95 81 L 145 75 L 115 115 L 110 107 C 70 120, 45 150, 40 170 Z" fill="#55C48A" />
-          </g>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="132" height="132" aria-label="Sandalan Logo">
+          {/* Vertical pillar */}
+          <path
+            d="M 62 25 Q 60 100, 62 175"
+            stroke="#F7FBF8"
+            strokeWidth="24"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Baybayin "sa" curve */}
+          <path
+            d="M 62 28 C 140 28, 170 78, 155 118 C 140 155, 98 178, 62 178"
+            fill="none"
+            stroke="#55C48A"
+            strokeWidth="20"
+            strokeLinecap="round"
+          />
+          {/* Kudlit dot */}
+          <circle cx="150" cy="44" r="10" fill="#55C48A" />
         </svg>
       </div>
     ),

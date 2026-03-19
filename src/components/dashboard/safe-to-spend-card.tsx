@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Wallet, TrendingDown, Target, Zap } from "lucide-react";
+import { AlertCircle, Wallet, TrendingDown, Target, Zap, Receipt } from "lucide-react";
 import { useSafeToSpend } from "@/hooks/use-safe-to-spend";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -72,6 +72,13 @@ export function SafeToSpendCard() {
       label: "Goal Contributions",
       value: data.goalContributions,
       icon: Target,
+      sign: "−",
+      color: "text-muted-foreground",
+    },
+    {
+      label: "Bills, Debts & More",
+      value: data.obligations,
+      icon: Receipt,
       sign: "−",
       color: "text-muted-foreground",
     },

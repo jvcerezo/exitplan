@@ -33,6 +33,7 @@ import { signOut } from "@/app/(auth)/actions";
 import { ThemeToggle } from "./theme-toggle";
 import { useTourContext } from "@/providers/tour-provider";
 import { useProfile } from "@/hooks/use-profile";
+import { useTranslation } from "@/lib/i18n";
 
 interface NavItem {
   href: string;
@@ -48,46 +49,47 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const navGroups: NavGroup[] = [
-  {
-    label: null,
-    items: [
-      { href: "/home", label: "Home", icon: Home, tourId: "sidebar-home" },
-      { href: "/guide", label: "Guide", icon: BookOpen, tourId: "sidebar-guide" },
-    ],
-  },
-  {
-    label: "Money",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, tourId: "sidebar-transactions" },
-      { href: "/accounts", label: "Accounts", icon: Wallet, tourId: "sidebar-accounts" },
-      { href: "/budgets", label: "Budgets", icon: Calculator, tourId: "sidebar-budgets" },
-      { href: "/goals", label: "Goals", icon: Target, tourId: "sidebar-goals" },
-    ],
-  },
-  {
-    label: "Tools",
-    collapsible: true,
-    storageKey: "sidebar-tools-collapsed",
-    items: [
-      { href: "/tools/contributions", label: "Contributions", icon: Landmark },
-      { href: "/tools/bills", label: "Bills", icon: Receipt },
-      { href: "/tools/debts", label: "Debts", icon: CreditCard },
-      { href: "/tools/insurance", label: "Insurance", icon: Shield },
-      { href: "/tools/taxes", label: "Taxes", icon: ReceiptText },
-      { href: "/tools/calculators", label: "Calculators", icon: Calculator },
-      { href: "/tools/panganay-mode", label: "Panganay Mode", icon: Heart },
-      { href: "/tools/retirement-projection", label: "Retirement", icon: PiggyBank },
-      { href: "/tools/rent-vs-buy", label: "Rent vs Buy", icon: HomeIcon },
-    ],
-  },
-];
-
 export function Sidebar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const { start } = useTourContext();
   const { data: profile } = useProfile();
+
+  const navGroups: NavGroup[] = [
+    {
+      label: null,
+      items: [
+        { href: "/home", label: t.nav.home, icon: Home, tourId: "sidebar-home" },
+        { href: "/guide", label: t.nav.guide, icon: BookOpen, tourId: "sidebar-guide" },
+      ],
+    },
+    {
+      label: t.nav.money,
+      items: [
+        { href: "/dashboard", label: t.nav.dashboard, icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+        { href: "/transactions", label: t.nav.transactions, icon: ArrowLeftRight, tourId: "sidebar-transactions" },
+        { href: "/accounts", label: t.nav.accounts, icon: Wallet, tourId: "sidebar-accounts" },
+        { href: "/budgets", label: t.nav.budgets, icon: Calculator, tourId: "sidebar-budgets" },
+        { href: "/goals", label: t.nav.goals, icon: Target, tourId: "sidebar-goals" },
+      ],
+    },
+    {
+      label: t.nav.tools,
+      collapsible: true,
+      storageKey: "sidebar-tools-collapsed",
+      items: [
+        { href: "/tools/contributions", label: t.nav.contributions, icon: Landmark },
+        { href: "/tools/bills", label: t.nav.bills, icon: Receipt },
+        { href: "/tools/debts", label: t.nav.debts, icon: CreditCard },
+        { href: "/tools/insurance", label: t.nav.insurance, icon: Shield },
+        { href: "/tools/taxes", label: t.nav.taxes, icon: ReceiptText },
+        { href: "/tools/calculators", label: t.nav.calculators, icon: Calculator },
+        { href: "/tools/panganay-mode", label: t.nav.panganayMode, icon: Heart },
+        { href: "/tools/retirement-projection", label: t.nav.retirement, icon: PiggyBank },
+        { href: "/tools/rent-vs-buy", label: t.nav.rentVsBuy, icon: HomeIcon },
+      ],
+    },
+  ];
   const [toolsCollapsed, setToolsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -116,7 +118,7 @@ export function Sidebar() {
         <Link href="/home" className="inline-flex items-center gap-3">
           <BrandMark className="h-10 w-10" />
           <h1 className="text-xl font-bold tracking-tight text-sidebar-foreground">
-            Exit<span className="text-primary">Plan</span>
+            Sandal<span className="text-primary">an</span>
           </h1>
         </Link>
       </div>
@@ -129,7 +131,7 @@ export function Sidebar() {
           className="flex w-full items-center gap-3 rounded-lg border border-sidebar-border bg-sidebar px-3 py-2 text-sm text-sidebar-foreground/50 hover:bg-sidebar-accent transition-colors"
         >
           <Search className="h-4 w-4" />
-          <span className="flex-1 text-left">Search...</span>
+          <span className="flex-1 text-left">{t.common.search}</span>
           <kbd className="hidden lg:inline-flex h-5 items-center gap-0.5 rounded border px-1.5 text-[10px]">
             ⌘K
           </kbd>
@@ -220,7 +222,7 @@ export function Sidebar() {
           </Link>
         )}
         <div className="flex items-center justify-between px-3 py-1">
-          <span className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider">Theme</span>
+          <span className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider">{t.nav.theme}</span>
           <ThemeToggle />
         </div>
         <button
@@ -229,14 +231,14 @@ export function Sidebar() {
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors"
         >
           <Map className="h-4 w-4" />
-          Take a Tour
+          {t.nav.takeTour}
         </button>
         <Link
           href="/settings"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors"
         >
           <Settings className="h-4 w-4" />
-          Settings
+          {t.nav.settings}
         </Link>
         <form action={signOut}>
           <button
@@ -244,7 +246,7 @@ export function Sidebar() {
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors"
           >
             <LogOut className="h-4 w-4" />
-            Sign Out
+            {t.common.signOut}
           </button>
         </form>
       </div>

@@ -9,10 +9,10 @@ function normalizeSiteUrl(value: string) {
 }
 
 export const siteConfig = {
-  name: "ExitPlan",
-  title: "ExitPlan — Financial Freedom Tracker for Filipinos",
+  name: "Sandalan",
+  title: "Sandalan — Your Filipino Adulting Companion",
   description:
-    "Track expenses, set budgets, build savings goals, and monitor your path to financial freedom with ExitPlan.",
+    "Track expenses, set budgets, build savings goals, and navigate adulting with confidence using Sandalan.",
   shortDescription: "Track your finances. Plan your freedom.",
   url: normalizeSiteUrl(
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -22,7 +22,7 @@ export const siteConfig = {
   ),
   locale: "en_PH",
   language: "en-PH",
-  creator: "ExitPlan",
+  creator: "Sandalan",
   keywords: [
     "personal finance app philippines",
     "budget tracker philippines",

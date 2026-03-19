@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Wallet, AlertCircle, Target, DollarSign } from "lucide-react";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
@@ -47,18 +48,21 @@ export function BalanceCard() {
       value: summary?.balance ?? 0,
       icon: Wallet,
       color: "text-foreground",
+      href: "/accounts",
     },
     {
       title: "Income",
       value: summary?.income ?? 0,
       icon: TrendingUp,
       color: "text-green-600",
+      href: "/transactions",
     },
     {
       title: "Expenses",
       value: summary?.expenses ?? 0,
       icon: TrendingDown,
       color: "text-foreground",
+      href: "/transactions",
     },
   ];
 
@@ -69,26 +73,28 @@ export function BalanceCard() {
       {/* Row 1: Total Balance (full width) + Income + Expenses */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {cards.map((card, index) => (
-          <Card key={card.title} className={cn(index === 0 ? "col-span-2 md:col-span-1" : "col-span-1")}>
-            <CardHeader className="flex flex-row items-center justify-between pb-1.5">
-              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:tracking-normal">
-                {card.title}
-              </CardTitle>
-              <card.icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${card.color}`} />
-            </CardHeader>
-            <CardContent className="pt-1">
-              <div className={`text-lg font-bold sm:text-2xl ${card.color}`}>
-                {formatCurrency(card.value)}
-              </div>
-            </CardContent>
-          </Card>
+          <Link key={card.title} href={card.href} className={cn(index === 0 ? "col-span-2 md:col-span-1" : "col-span-1")}>
+            <Card className="h-full hover:bg-muted/30 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between pb-1.5">
+                <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:tracking-normal">
+                  {card.title}
+                </CardTitle>
+                <card.icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${card.color}`} />
+              </CardHeader>
+              <CardContent className="pt-1">
+                <div className={`text-lg font-bold sm:text-2xl ${card.color}`}>
+                  {formatCurrency(card.value)}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
-      {/* Row 2: Breakdown — always visible, 3 equal columns */}
+      {/* Row 2: Breakdown — clickable links to each section */}
       {breakdown && (
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+          <Link href="/accounts" className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/60 transition-colors">
             <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               <Wallet className="h-3 w-3 shrink-0" />
               <span className="truncate">Accounts</span>
@@ -96,8 +102,8 @@ export function BalanceCard() {
             <p className="text-xs font-semibold tabular-nums sm:text-sm">
               {formatCurrency(breakdown.inAccounts)}
             </p>
-          </div>
-          <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+          </Link>
+          <Link href="/goals" className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/60 transition-colors">
             <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               <Target className="h-3 w-3 shrink-0" />
               <span className="truncate">Goals</span>
@@ -105,8 +111,8 @@ export function BalanceCard() {
             <p className="text-xs font-semibold tabular-nums sm:text-sm">
               {formatCurrency(breakdown.inGoals)}
             </p>
-          </div>
-          <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+          </Link>
+          <Link href="/budgets" className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/60 transition-colors">
             <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               <DollarSign className="h-3 w-3 shrink-0" />
               <span className="truncate">Budgets</span>
@@ -114,7 +120,7 @@ export function BalanceCard() {
             <p className="text-xs font-semibold tabular-nums sm:text-sm">
               {formatCurrency(breakdown.budgetAllocated)}
             </p>
-          </div>
+          </Link>
         </div>
       )}
     </div>

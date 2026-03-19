@@ -61,7 +61,7 @@ export const PUNDASYON_GUIDES: Guide[] = [
       {
         heading: "Track your runway",
         content:
-          "Create an Emergency Fund goal in ExitPlan. Set your target amount (monthly expenses × 3 or 6) and log every deposit. The goal tracker shows your progress and tells you how many months of coverage you have. Watching the bar fill up is genuinely motivating.",
+          "Create an Emergency Fund goal in Sandalan. Set your target amount (monthly expenses × 3 or 6) and log every deposit. The goal tracker shows your progress and tells you how many months of coverage you have. Watching the bar fill up is genuinely motivating.",
       },
     ],
   },

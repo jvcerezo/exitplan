@@ -7,7 +7,7 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Offline",
-  description: "Offline fallback page for ExitPlan cached routes and availability information.",
+  description: "Offline fallback page for Sandalan cached routes and availability information.",
   path: "/offline",
   index: false,
 });
@@ -31,7 +31,7 @@ export default function OfflinePage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">You&apos;re offline</h1>
           <p className="text-muted-foreground">
-            ExitPlan can still show cached screens you&apos;ve already opened,
+            Sandalan can still show cached screens you&apos;ve already opened,
             but this page appears when the requested route is not available offline yet.
           </p>
         </div>

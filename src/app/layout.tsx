@@ -8,6 +8,7 @@ import { OfflineSyncRuntime } from "@/components/layout/offline-sync-runtime";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { LanguageProvider } from "@/lib/i18n";
 import { Toaster } from "sonner";
 import { absoluteUrl, siteConfig } from "@/lib/seo";
 
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.title,
-    template: "%s | ExitPlan",
+    template: "%s | Sandalan",
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
@@ -150,14 +151,16 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
         <ThemeProvider>
-          <BackButtonHandler />
-          <ServiceWorkerRegister />
-          <QueryProvider>
-            <OfflineSyncRuntime />
-            <OfflineStatusBanner />
-            {children}
-          </QueryProvider>
-          <Toaster richColors position="bottom-right" />
+          <LanguageProvider>
+            <BackButtonHandler />
+            <ServiceWorkerRegister />
+            <QueryProvider>
+              <OfflineSyncRuntime />
+              <OfflineStatusBanner />
+              {children}
+            </QueryProvider>
+            <Toaster richColors position="bottom-right" />
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

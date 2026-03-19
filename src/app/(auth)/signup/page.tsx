@@ -109,7 +109,7 @@ export default function SignupPage() {
         <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">
           <BrandMark className="h-11 w-11" />
           <span>
-            Exit<span className="opacity-60">Plan</span>
+            Sandal<span className="opacity-60">an</span>
           </span>
         </Link>
 
@@ -140,7 +140,7 @@ export default function SignupPage() {
         <Link href="/" className="mb-10 inline-flex items-center gap-3 text-2xl font-bold tracking-tight lg:hidden">
           <BrandMark className="h-11 w-11" />
           <span className="text-[#14213D] dark:text-white">
-            Exit<span className="text-primary">Plan</span>
+            Sandal<span className="text-primary">an</span>
           </span>
         </Link>
 
@@ -330,7 +330,7 @@ export default function SignupPage() {
                 <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>
                 {" "}and{" "}
                 <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link>.
-                I consent to ExitPlan collecting and processing my personal data as described.
+                I consent to Sandalan collecting and processing my personal data as described.
               </p>
             </div>
 

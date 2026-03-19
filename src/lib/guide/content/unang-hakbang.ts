@@ -148,7 +148,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
       {
         heading: "What to do right now",
         content:
-          "Don't just look at your payslip — verify it. Check that your SSS, PhilHealth, and Pag-IBIG deductions match the official contribution tables. Some employers make errors or, worse, deduct but fail to remit. Track your contributions monthly using ExitPlan.",
+          "Don't just look at your payslip — verify it. Check that your SSS, PhilHealth, and Pag-IBIG deductions match the official contribution tables. Some employers make errors or, worse, deduct but fail to remit. Track your contributions monthly using Sandalan.",
         items: [
           "Open the Gov't Contributions calculator and enter your gross salary",
           "Compare the calculated deductions with your actual payslip",
@@ -222,7 +222,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
       {
         heading: "Track your progress",
         content:
-          "Use the Adulting Checklist in ExitPlan to track which IDs you've obtained and which are still pending. Each ID is marked with a priority level — start with the 'Must Do' items and work your way down.",
+          "Use the Adulting Checklist in Sandalan to track which IDs you've obtained and which are still pending. Each ID is marked with a priority level — start with the 'Must Do' items and work your way down.",
       },
     ],
   },
@@ -268,7 +268,7 @@ export const UNANG_HAKBANG_GUIDES: Guide[] = [
         content:
           "You don't need a perfect budget on day one. Start by tracking every peso for 30 days — just record what you spend. After one month, you'll know exactly where your money goes. Then set realistic budget limits based on actual data, not guesses.",
         items: [
-          "Log every expense in ExitPlan (even P20 jeepney fares)",
+          "Log every expense in Sandalan (even P20 jeepney fares)",
           "After 30 days, review your spending by category",
           "Set budget limits in the Budgets tab based on your actual patterns",
           "Adjust monthly until you find a rhythm that works for your income",

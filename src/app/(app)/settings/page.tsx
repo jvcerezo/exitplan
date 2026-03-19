@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
+import { useLanguage, LOCALE_LABELS, LOCALES, type Locale } from "@/lib/i18n";
 import { Sun, Moon, Monitor, LogOut, Loader2, RefreshCw, Map, Camera, X, Bug, Send, Download, ShieldAlert, ExternalLink, Bell, Zap, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { useProfile, useUpdateProfile, useUploadAvatar, useRemoveAvatar } from "@/hooks/use-profile";
 import { useExchangeRates, useUpsertExchangeRate } from "@/hooks/use-exchange-rates";
@@ -43,6 +44,7 @@ export default function SettingsPage() {
   const uploadAvatar = useUploadAvatar();
   const removeAvatar = useRemoveAvatar();
   const { theme, setTheme } = useTheme();
+  const { locale, setLocale } = useLanguage();
   const { data: exchangeRates } = useExchangeRates();
   const { data: marketData, isLoading: marketLoading } = useMarketRates();
   const upsertRate = useUpsertExchangeRate();
@@ -630,7 +632,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
           <CardDescription>
-            Customize how ExitPlan looks on your device
+            Customize how Sandalan looks on your device
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -662,6 +664,32 @@ export default function SettingsPage() {
                 System
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+      )}
+
+      {/* ── Language ── */}
+      {activeSection === "appearance" && (
+      <Card>
+        <CardHeader>
+          <CardTitle>Language / Wika</CardTitle>
+          <CardDescription>
+            Choose your preferred language
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            {LOCALES.map((loc) => (
+              <Button
+                key={loc}
+                variant={locale === loc ? "default" : "outline"}
+                onClick={() => setLocale(loc as Locale)}
+                className="flex-1 min-w-[100px]"
+              >
+                {LOCALE_LABELS[loc as Locale]}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>

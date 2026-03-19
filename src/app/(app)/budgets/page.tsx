@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Copy, Wallet, TrendingDown, Scale } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ChevronLeft, ChevronRight, Copy, Wallet, TrendingDown, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AddBudgetDialog } from "@/components/budgets/add-budget-dialog";
@@ -164,6 +165,10 @@ export default function BudgetsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Dashboard
+          </Link>
           <h1 className="text-2xl font-bold tracking-tight">Budgets</h1>
           <p className="text-sm text-muted-foreground sm:text-base">
             Keep it simple with monthly budgets, and use advanced periods only when needed
