@@ -9,6 +9,7 @@ import { UpcomingPayments } from "@/components/dashboard/upcoming-payments";
 import { useProfile } from "@/hooks/use-profile";
 import { useGuideProgress } from "@/hooks/use-guide-progress";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
+import { useTranslation } from "@/lib/i18n";
 
 function useHomePreference(key: string, defaultValue = true): boolean {
   const [enabled, setEnabled] = useState(defaultValue);
@@ -24,6 +25,7 @@ export default function HomePage() {
   const { data: profile } = useProfile();
   const { currentStage, currentStageIndex, overallPercentage, totalCompleted, totalItems, isLoading: guideLoading } = useGuideProgress();
   const { data: summary, isLoading: txLoading } = useTransactionsSummary();
+  const { t } = useTranslation();
 
   const showUpcoming = useHomePreference("exitplan_home_upcoming");
   const showNextSteps = useHomePreference("exitplan_home_nextsteps");
@@ -32,7 +34,7 @@ export default function HomePage() {
 
   const firstName = profile?.full_name?.split(" ")[0];
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? t.home.goodMorning : hour < 18 ? t.home.goodAfternoon : t.home.goodEvening;
 
   return (
     <div className="space-y-5">
@@ -42,7 +44,7 @@ export default function HomePage() {
           {greeting}{firstName ? `, ${firstName}` : ""}
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Here&apos;s your snapshot for today.
+          {t.home.snapshot}
         </p>
       </div>
 
@@ -60,7 +62,7 @@ export default function HomePage() {
               </div>
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Current Stage</p>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t.home.currentStage}</p>
                 <p className="text-sm font-semibold mt-0.5">{currentStage.title}</p>
                 <div className="flex items-center gap-2 mt-1.5">
                   <div className="flex-1 h-1.5 max-w-[140px] overflow-hidden rounded-full bg-muted">
@@ -82,9 +84,9 @@ export default function HomePage() {
       {/* Financial summary row */}
       {showFinances && !txLoading && summary && (
         <div className="grid grid-cols-3 gap-2.5">
-          <FinStat icon={Wallet} label="Balance" value={formatCurrency(summary.balance)} />
-          <FinStat icon={TrendingUp} label="Income" value={formatCurrency(summary.income)} color="text-green-600 dark:text-green-400" iconColor="text-green-500" />
-          <FinStat icon={TrendingDown} label="Expenses" value={formatCurrency(Math.abs(summary.expenses))} iconColor="text-muted-foreground" />
+          <FinStat href="/dashboard" icon={Wallet} label={t.home.balance} value={formatCurrency(summary.balance)} />
+          <FinStat href="/dashboard" icon={TrendingUp} label={t.home.income} value={formatCurrency(summary.income)} color="text-green-600 dark:text-green-400" iconColor="text-green-500" />
+          <FinStat href="/dashboard" icon={TrendingDown} label={t.home.expenses} value={formatCurrency(Math.abs(summary.expenses))} iconColor="text-muted-foreground" />
         </div>
       )}
 
@@ -101,7 +103,7 @@ export default function HomePage() {
           icon={BookOpen}
           iconBg="bg-primary/10"
           iconColor="text-primary"
-          title="Adulting Guide"
+          title={t.home.adultingGuide}
           subtitle={guideLoading ? "Loading..." : `${overallPercentage}% complete · ${totalItems - totalCompleted} steps remaining`}
         />
         <NavRow
@@ -109,7 +111,7 @@ export default function HomePage() {
           icon={Wrench}
           iconBg="bg-amber-500/10"
           iconColor="text-amber-600 dark:text-amber-400"
-          title="Tools"
+          title={t.nav.tools}
           subtitle="Contributions, bills, debts, insurance & more"
         />
         <NavRow
@@ -117,7 +119,7 @@ export default function HomePage() {
           icon={Wallet}
           iconBg="bg-emerald-500/10"
           iconColor="text-emerald-600 dark:text-emerald-400"
-          title="Financial Dashboard"
+          title={t.home.financialDashboard}
           subtitle="Budgets, trends, spending insights"
         />
       </div>
@@ -125,17 +127,17 @@ export default function HomePage() {
   );
 }
 
-function FinStat({ icon: Icon, label, value, color, iconColor }: {
-  icon: React.ElementType; label: string; value: string; color?: string; iconColor?: string;
+function FinStat({ href, icon: Icon, label, value, color, iconColor }: {
+  href: string; icon: React.ElementType; label: string; value: string; color?: string; iconColor?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card px-3 py-3">
+    <Link href={href} className="rounded-xl border border-border/60 bg-card px-3 py-3 hover:border-primary/30 transition-colors">
       <div className="flex items-center gap-1.5 mb-1">
         <Icon className={cn("h-3 w-3", iconColor ?? "text-muted-foreground")} />
         <p className="text-[10px] text-muted-foreground">{label}</p>
       </div>
       <p className={cn("text-sm font-bold tabular-nums truncate", color)}>{value}</p>
-    </div>
+    </Link>
   );
 }
 

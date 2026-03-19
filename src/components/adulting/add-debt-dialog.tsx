@@ -79,69 +79,88 @@ export function AddDebtDialog() {
         <DialogHeader>
           <DialogTitle>Add Debt</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Name</Label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Debt identity */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="BPI Credit Card" className="h-9" required maxLength={100} />
+                placeholder="BPI Credit Card" className="h-11 sm:h-9 text-sm" required maxLength={100} />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as DebtType)}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {DEBT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Lender / Bank</Label>
-              <Input value={lender} onChange={(e) => setLender(e.target.value)}
-                placeholder="BPI" className="h-9" maxLength={100} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Current Balance (₱)</Label>
-              <Input type="number" min="0" max="999999999" value={balance} onChange={(e) => setBalance(e.target.value)}
-                placeholder="50000" className="h-9" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Original Amount (₱)</Label>
-              <Input type="number" min="0" max="999999999" value={originalAmount} onChange={(e) => setOriginalAmount(e.target.value)}
-                placeholder="Same as balance" className="h-9" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Annual Interest Rate (%)</Label>
-              <Input type="number" min="0" max="100" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)}
-                placeholder="24" className="h-9" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Minimum Monthly Payment (₱)</Label>
-              <Input type="number" min="0" max="999999999" value={minPayment} onChange={(e) => setMinPayment(e.target.value)}
-                placeholder="2000" className="h-9" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Due Day (1–31)</Label>
-              <Input type="number" min="1" max="31" value={dueDay} onChange={(e) => setDueDay(e.target.value)}
-                placeholder="25" className="h-9" />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Pay From Account <span className="text-muted-foreground">(optional)</span></Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select account…" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none" className="text-xs">No account linked</SelectItem>
-                  {accounts?.map((a) => (
-                    <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[10px] text-muted-foreground">When you record a payment, a transaction will be created from this account.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Type</Label>
+                <Select value={type} onValueChange={(v) => setType(v as DebtType)}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {DEBT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Lender / Bank</Label>
+                <Input value={lender} onChange={(e) => setLender(e.target.value)}
+                  placeholder="BPI" className="h-11 sm:h-9 text-sm" maxLength={100} />
+              </div>
             </div>
           </div>
-          <Button type="submit" className="w-full" disabled={!isValid || addDebt.isPending}>
+
+          {/* Amounts */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Balance</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Current (₱)</Label>
+                <Input type="number" min="0" max="999999999" value={balance} onChange={(e) => setBalance(e.target.value)}
+                  placeholder="50000" className="h-11 sm:h-9 text-sm" required />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Original (₱)</Label>
+                <Input type="number" min="0" max="999999999" value={originalAmount} onChange={(e) => setOriginalAmount(e.target.value)}
+                  placeholder="Same as current" className="h-11 sm:h-9 text-sm" />
+              </div>
+            </div>
+          </div>
+
+          {/* Payment terms */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Payment Terms</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Interest Rate (%/yr)</Label>
+                <Input type="number" min="0" max="100" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)}
+                  placeholder="24" className="h-11 sm:h-9 text-sm" required />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Min. Payment (₱/mo)</Label>
+                <Input type="number" min="0" max="999999999" value={minPayment} onChange={(e) => setMinPayment(e.target.value)}
+                  placeholder="2000" className="h-11 sm:h-9 text-sm" required />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Due Day (1–31)</Label>
+                <Input type="number" min="1" max="31" value={dueDay} onChange={(e) => setDueDay(e.target.value)}
+                  placeholder="25" className="h-11 sm:h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Pay From Account</Label>
+                <Select value={accountId} onValueChange={setAccountId}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">No account linked</SelectItem>
+                    {accounts?.map((a) => (
+                      <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full h-11 sm:h-9" disabled={!isValid || addDebt.isPending}>
             {addDebt.isPending ? "Adding…" : "Add Debt"}
           </Button>
         </form>

@@ -192,7 +192,7 @@ export function useTransactionsSummary() {
       const supabase = createClient();
 
       const [txResult, accountResult, goalsResult, budgetsResult, contribResult] = await Promise.all([
-        supabase.from("transactions").select("amount, account_id"),
+        supabase.from("transactions").select("amount, account_id, category"),
         supabase.from("accounts").select("balance"),
         supabase.from("goals").select("current_amount"),
         supabase.from("budgets").select("amount"),
@@ -210,11 +210,15 @@ export function useTransactionsSummary() {
       const budgets = budgetsResult.data ?? [];
       const paidContributions = contribResult.data ?? [];
 
-      const income = transactions
+      // Exclude transfers from income/expense totals — transfers move money
+      // between accounts but don't represent actual income or spending
+      const nonTransferTx = transactions.filter((t) => t.category !== "transfer");
+
+      const income = nonTransferTx
         .filter((t) => t.amount > 0)
         .reduce((sum, t) => sum + t.amount, 0);
       const contributionsExpenses = paidContributions.reduce((sum, c) => sum + c.employee_share, 0);
-      const expenses = transactions
+      const expenses = nonTransferTx
         .filter((t) => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0) + contributionsExpenses;
 
@@ -412,14 +416,7 @@ export function useUpdateTransaction() {
     },
     onSuccess: () => {
       if (!isBrowserOffline()) {
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-        queryClient.invalidateQueries({ queryKey: ["health-score"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+        invalidateFinancialQueries(queryClient);
       }
       toast.success(
         isBrowserOffline() ? "Transaction update saved offline" : "Transaction updated"
@@ -505,14 +502,7 @@ export function useImportTransactions() {
     },
     onSuccess: (count) => {
       if (!isBrowserOffline()) {
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-        queryClient.invalidateQueries({ queryKey: ["health-score"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+        invalidateFinancialQueries(queryClient);
       }
       toast.success(
         isBrowserOffline()
@@ -629,14 +619,7 @@ export function useDeleteTransaction() {
     },
     onSettled: () => {
       if (!isBrowserOffline()) {
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["budgets", "summary"] });
-        queryClient.invalidateQueries({ queryKey: ["safe-to-spend"] });
-        queryClient.invalidateQueries({ queryKey: ["emergency-fund"] });
-        queryClient.invalidateQueries({ queryKey: ["savings-rate"] });
-        queryClient.invalidateQueries({ queryKey: ["health-score"] });
-        queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
+        invalidateFinancialQueries(queryClient);
       }
     },
   });

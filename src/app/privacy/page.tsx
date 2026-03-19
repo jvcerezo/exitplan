@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { BrandMark } from "@/components/brand-mark";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | ExitPlan",
-  description: "How ExitPlan collects, uses, and protects your personal information under the Data Privacy Act of 2012.",
+  title: "Privacy Policy | Sandalan",
+  description: "How Sandalan collects, uses, and protects your personal information under the Data Privacy Act of 2012.",
 };
 
-const LAST_UPDATED = "March 17, 2026";
+const LAST_UPDATED = "March 18, 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -17,12 +17,12 @@ export default function PrivacyPolicyPage() {
         <div className="mb-10">
           <Link href="/" className="inline-flex items-center gap-2 text-lg font-bold mb-8 text-foreground">
             <BrandMark className="h-8 w-8" />
-            ExitPlan
+            Sandalan
           </Link>
           <h1 className="text-3xl font-bold tracking-tight mt-6">Privacy Policy</h1>
           <p className="mt-2 text-sm text-muted-foreground">Last updated: {LAST_UPDATED}</p>
           <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-            This Privacy Policy explains how ExitPlan (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) collects, uses, stores, and protects
+            This Privacy Policy explains how Sandalan (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) collects, uses, stores, and protects
             your personal information in accordance with Republic Act No. 10173, also known as the
             <strong> Data Privacy Act of 2012</strong> of the Philippines, and its implementing rules and regulations.
           </p>
@@ -33,7 +33,8 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">1. Who We Are</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              ExitPlan is a personal finance tracking application designed for individuals in the Philippines.
+              Sandalan is a personal finance and adulting guide application designed for individuals in the Philippines,
+              available as a web application and a mobile application distributed through the Google Play Store.
               We act as the <strong>Personal Information Controller</strong> for the data you provide when
               using our services. If you have any privacy-related concerns, you may contact us at{" "}
               <a href="mailto:privacy@exitplan.app" className="text-primary hover:underline">privacy@exitplan.app</a>.
@@ -59,8 +60,12 @@ export default function PrivacyPolicyPage() {
                     ["Financial transactions", "Core app functionality — tracking income and expenses"],
                     ["Account balances", "Net worth and budget calculations"],
                     ["Financial goals and budgets", "Goal tracking and spending management"],
+                    ["Bill records", "Bill tracking and payment reminders"],
                     ["Debt records", "Debt payoff tracking"],
+                    ["Insurance policy records", "Insurance coverage tracking and premium reminders"],
+                    ["Tax records", "Income tax computation and filing history"],
                     ["Government contribution records (SSS, PhilHealth, Pag-IBIG)", "Contribution history tracking"],
+                    ["Adulting checklist progress", "Tracking completion of life milestones and tasks"],
                     ["Browser type (when filing bug reports)", "Diagnosing and fixing technical issues"],
                   ].map(([data, purpose]) => (
                     <tr key={data}>
@@ -110,7 +115,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">5. Third-Party Services</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              ExitPlan uses a limited number of third-party services, each acting as a <strong>Personal Information Processor</strong> on our behalf:
+              Sandalan uses a limited number of third-party services, each acting as a <strong>Personal Information Processor</strong> on our behalf:
             </p>
             <div className="space-y-3">
               {[
@@ -118,6 +123,11 @@ export default function PrivacyPolicyPage() {
                   name: "Supabase (supabase.com)",
                   role: "Database and authentication infrastructure",
                   data: "All user data is stored on Supabase servers hosted on Amazon Web Services (AWS). Supabase is SOC 2 Type II certified and ISO 27001 compliant. Data may be stored in servers outside the Philippines.",
+                },
+                {
+                  name: "Google Sign-In (accounts.google.com)",
+                  role: "Authentication (optional sign-in method)",
+                  data: "If you choose to sign in with Google, we receive your name, email address, and profile photo from your Google account. We do not access your Google Drive, Gmail, contacts, or any other Google service data. On mobile devices, authentication is handled via the native Google Sign-In SDK. Google's privacy policy is available at policies.google.com/privacy.",
                 },
                 {
                   name: "OCR.space (ocr.space)",
@@ -140,7 +150,48 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">6. Data Retention</h2>
+            <h2 className="text-lg font-semibold">6. On-Device Storage</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Sandalan stores a cached copy of your data on your device using browser storage (IndexedDB) to
+              enable offline access and faster load times. This data remains on your device and is not shared
+              with any third party. You can clear this cached data at any time by clearing the app&apos;s data in
+              your device settings or browser.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">7. Device Permissions</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">The mobile app may request the following device permissions:</p>
+            <div className="rounded-lg border border-border/60 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wide text-muted-foreground">Permission</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wide text-muted-foreground">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {[
+                    ["Notifications", "Sending bill payment reminders and recurring transaction alerts"],
+                    ["Internet access", "Syncing your data with our servers"],
+                    ["Camera (optional)", "Scanning receipts for automatic transaction entry"],
+                  ].map(([permission, purpose]) => (
+                    <tr key={permission}>
+                      <td className="px-4 py-2.5 text-xs font-medium">{permission}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{purpose}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              All permissions are optional and can be revoked at any time through your device settings.
+              The app will continue to function with reduced functionality if permissions are denied.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">8. Data Retention</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               We retain your personal data for as long as your account is active. When you delete your account,
               all associated data — including transactions, accounts, goals, debts, budgets, and contributions —
@@ -150,7 +201,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">7. Your Rights Under RA 10173</h2>
+            <h2 className="text-lg font-semibold">9. Your Rights Under RA 10173</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">As a data subject, you have the following rights:</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {[
@@ -175,7 +226,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">8. Security Measures</h2>
+            <h2 className="text-lg font-semibold">10. Security Measures</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">We implement the following security measures to protect your data:</p>
             <ul className="space-y-1.5 text-sm text-muted-foreground">
               {[
@@ -194,7 +245,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">9. Data Breach Notification</h2>
+            <h2 className="text-lg font-semibold">11. Data Breach Notification</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               In the event of a personal data breach that is likely to result in harm to affected individuals,
               we will notify the National Privacy Commission (NPC) within 72 hours of becoming aware of the breach,
@@ -203,25 +254,25 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">10. Children&apos;s Privacy</h2>
+            <h2 className="text-lg font-semibold">12. Children&apos;s Privacy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              ExitPlan is not intended for individuals under 18 years of age. We do not knowingly collect
+              Sandalan is not intended for individuals under 18 years of age. We do not knowingly collect
               personal information from minors. If you believe a minor has created an account, please contact us
               and we will delete the account promptly.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">11. Changes to This Policy</h2>
+            <h2 className="text-lg font-semibold">13. Changes to This Policy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               We may update this Privacy Policy from time to time. We will notify you of material changes
-              by posting a notice within the app or by email. Your continued use of ExitPlan after changes
+              by posting a notice within the app or by email. Your continued use of Sandalan after changes
               take effect constitutes acceptance of the revised policy.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">12. Contact & Complaints</h2>
+            <h2 className="text-lg font-semibold">14. Contact & Complaints</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               For privacy-related concerns, contact our Data Protection Officer at{" "}
               <a href="mailto:privacy@exitplan.app" className="text-primary hover:underline">privacy@exitplan.app</a>.
@@ -236,7 +287,7 @@ export default function PrivacyPolicyPage() {
 
         <div className="mt-12 pt-8 border-t border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} ExitPlan. All rights reserved.
+            © {new Date().getFullYear()} Sandalan. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>

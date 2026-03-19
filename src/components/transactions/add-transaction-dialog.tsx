@@ -43,6 +43,7 @@ import {
   useProcessDueRecurringTransactions,
 } from "@/hooks/use-recurring-transactions";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CURRENCIES } from "@/lib/constants";
+import { useCustomCategories } from "@/hooks/use-custom-categories";
 import { formatCurrency, cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { RecurringFrequency } from "@/lib/types/database";
@@ -167,7 +168,14 @@ export function AddTransactionDialog({
   const canAddMoreSplitParts = splitParts.length < activeAccounts.length;
 
   const label = type === "expense" ? "Expense" : "Income";
-  const categories = type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const builtInCategories = type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const { customCategories, addCategory: saveCustomCategory, removeCategory } = useCustomCategories(type);
+  // Merge built-in (without "Other") + custom + "Other" at the end
+  const categories = [
+    ...builtInCategories.filter((c) => c !== "Other"),
+    ...customCategories,
+    "Other" as const,
+  ];
 
   // Reset on open
   useEffect(() => {
@@ -363,6 +371,7 @@ export function AddTransactionDialog({
         <p className="text-xs font-medium text-muted-foreground">Category</p>
         <div className="flex flex-wrap gap-2">
           {categories.map((cat) => {
+            const isCustom = customCategories.includes(cat);
             const Icon = CATEGORY_ICONS[cat.toLowerCase()] ?? Ellipsis;
             return (
               <button
@@ -372,11 +381,17 @@ export function AddTransactionDialog({
                   setCategory(cat);
                   if (cat !== "Other") setCustomCategory("");
                 }}
+                onContextMenu={isCustom ? (e) => {
+                  e.preventDefault();
+                  removeCategory(cat);
+                  if (category === cat) setCategory("");
+                } : undefined}
                 className={cn(
                   "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
                   category === cat
                     ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted",
+                  isCustom && "border-dashed"
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -386,12 +401,35 @@ export function AddTransactionDialog({
           })}
         </div>
         {category === "Other" && (
-          <input
-            value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value)}
-            placeholder="What category?"
-            className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
-          />
+          <div className="flex gap-2">
+            <input
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && customCategory.trim()) {
+                  e.preventDefault();
+                  saveCustomCategory(customCategory.trim());
+                  setCategory(customCategory.trim());
+                  setCustomCategory("");
+                }
+              }}
+              placeholder="Type a category name, press Enter to save it"
+              className="flex-1 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
+            />
+            {customCategory.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  saveCustomCategory(customCategory.trim());
+                  setCategory(customCategory.trim());
+                  setCustomCategory("");
+                }}
+                className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+              >
+                Save
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -523,8 +561,8 @@ export function AddTransactionDialog({
                     </p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
                       {type === "income"
-                        ? "Income needs an account so ExitPlan knows where to deposit it."
-                        : "Expenses need an account so ExitPlan knows where the money came from."}
+                        ? "Income needs an account so Sandalan knows where to deposit it."
+                        : "Expenses need an account so Sandalan knows where the money came from."}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button

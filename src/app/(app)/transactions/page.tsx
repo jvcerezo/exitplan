@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Minus, Plus, ChevronDown, ChevronRight, Landmark, CheckCircle2, Circle } from "lucide-react";
+import Link from "next/link";
+import { Upload, Minus, Plus, ChevronDown, ChevronRight, Landmark, CheckCircle2, Circle, ArrowLeft } from "lucide-react";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 import { TransactionsTable } from "@/components/transactions/transactions-table";
 import { ImportTransactionsDialog } from "@/components/transactions/import-transactions-dialog";
@@ -92,6 +93,10 @@ export default function TransactionsPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Dashboard
+          </Link>
           <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
           <p className="text-sm text-muted-foreground">
             Manage and review all your financial activity

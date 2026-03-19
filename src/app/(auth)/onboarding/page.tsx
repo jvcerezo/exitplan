@@ -248,7 +248,7 @@ export default function OnboardingPage() {
               {firstName ? `Hey ${firstName}!` : "Welcome!"}
             </h1>
             <p className="text-muted-foreground text-balance">
-              ExitPlan is your companion for every stage of Filipino adult life — from your first ID to retirement.
+              Sandalan is your companion for every stage of Filipino adult life — from your first ID to retirement.
             </p>
           </div>
 

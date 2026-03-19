@@ -42,7 +42,7 @@ export default function LoginPage() {
         <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">
           <BrandMark className="h-11 w-11" />
           <span>
-            Exit<span className="opacity-60">Plan</span>
+            Sandal<span className="opacity-60">an</span>
           </span>
         </Link>
 
@@ -73,7 +73,7 @@ export default function LoginPage() {
         <Link href="/" className="mb-10 inline-flex items-center gap-3 text-2xl font-bold tracking-tight lg:hidden">
           <BrandMark className="h-11 w-11" />
           <span className="text-[#14213D] dark:text-white">
-            Exit<span className="text-primary">Plan</span>
+            Sandal<span className="text-primary">an</span>
           </span>
         </Link>
 

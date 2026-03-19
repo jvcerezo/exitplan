@@ -41,7 +41,7 @@ export async function GET() {
 
   const exportPayload = {
     exported_at: new Date().toISOString(),
-    privacy_notice: "This export contains all your personal data stored in ExitPlan, in compliance with Republic Act 10173 (Data Privacy Act of 2012). No government ID numbers are stored.",
+    privacy_notice: "This export contains all your personal data stored in Sandalan, in compliance with Republic Act 10173 (Data Privacy Act of 2012). No government ID numbers are stored.",
     user: {
       id: user.id,
       email: profile?.email ?? user.email,

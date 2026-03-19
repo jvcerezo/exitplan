@@ -12,7 +12,7 @@ export function getNextBillDueDate(
   if (!dueDay) return null;
 
   const today = getToday();
-  const currentMonth = new Date(today.getFullYear(), today.getMonth(), dueDay);
+  const currentMonth = safeDate(today.getFullYear(), today.getMonth(), dueDay);
 
   // If no last_paid_date, find the next occurrence from today
   if (!lastPaidDate) {
@@ -25,7 +25,7 @@ export function getNextBillDueDate(
   const lastPaid = new Date(y, m - 1, d);
 
   // Calculate next due after last payment based on billing cycle
-  let nextDue = new Date(lastPaid.getFullYear(), lastPaid.getMonth(), dueDay);
+  let nextDue = safeDate(lastPaid.getFullYear(), lastPaid.getMonth(), dueDay);
   nextDue = addCycleMonths(nextDue, billingCycle);
 
   // If somehow in the past, keep advancing
@@ -41,9 +41,9 @@ export function getNextDebtDueDate(dueDay: number | null): Date | null {
   if (!dueDay) return null;
 
   const today = getToday();
-  const thisMonth = new Date(today.getFullYear(), today.getMonth(), dueDay);
+  const thisMonth = safeDate(today.getFullYear(), today.getMonth(), dueDay);
   if (thisMonth >= today) return thisMonth;
-  return new Date(today.getFullYear(), today.getMonth() + 1, dueDay);
+  return safeDate(today.getFullYear(), today.getMonth() + 1, dueDay);
 }
 
 /** Get the next premium due date for an insurance policy. */
@@ -101,6 +101,15 @@ function getToday(): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
+/**
+ * Build a date for `year/month` clamping `day` to the last day of that month.
+ * e.g. day 31 in February → Feb 28 (or 29 in leap years).
+ */
+function safeDate(year: number, month: number, day: number): Date {
+  const lastDay = new Date(year, month + 1, 0).getDate(); // 0th of next month = last day of this month
+  return new Date(year, month, Math.min(day, lastDay));
+}
+
 function getCycleMonths(cycle: string): number {
   switch (cycle) {
     case "monthly": return 1;
@@ -113,5 +122,5 @@ function getCycleMonths(cycle: string): number {
 
 function addCycleMonths(date: Date, cycle: string): Date {
   const months = getCycleMonths(cycle);
-  return new Date(date.getFullYear(), date.getMonth() + months, date.getDate());
+  return safeDate(date.getFullYear(), date.getMonth() + months, date.getDate());
 }

@@ -6,7 +6,8 @@ import { AddAccountDialog } from "@/components/accounts/add-account-dialog";
 import { AccountCard } from "@/components/accounts/account-card";
 import { TransferDialog } from "@/components/transactions/transfer-dialog";
 import { formatCurrency } from "@/lib/utils";
-import { AlertCircle, Archive, ArchiveRestore, ChevronDown, ChevronRight, Loader2, Wallet, Landmark } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, Archive, ArchiveRestore, ArrowLeft, ChevronDown, ChevronRight, Loader2, Wallet, Landmark } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,10 @@ export default function AccountsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Dashboard
+          </Link>
           <h1 className="text-2xl font-bold tracking-tight">Accounts</h1>
           <p className="text-muted-foreground">
             Manage your wallets and bank accounts

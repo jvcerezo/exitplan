@@ -76,75 +76,94 @@ export function AddInsuranceDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Insurance Policy</DialogTitle></DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Policy Name</Label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Policy identity */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Policy Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Sun Life VUL" className="h-9" required maxLength={100} />
+                placeholder="Sun Life VUL" className="h-11 sm:h-9 text-sm" required maxLength={100} />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as InsuranceType)}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {INSURANCE_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Provider</Label>
-              <Input value={provider} onChange={(e) => setProvider(e.target.value)}
-                placeholder="Sun Life" className="h-9" maxLength={100} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Premium (₱)</Label>
-              <Input type="number" min="0" max="999999999" value={premium} onChange={(e) => setPremium(e.target.value)}
-                placeholder="2000" className="h-9" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Frequency</Label>
-              <Select value={frequency} onValueChange={(v) => setFrequency(v as PremiumFrequency)}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {FREQ_OPTIONS.map((f) => (
-                    <SelectItem key={f.value} value={f.value} className="text-xs">{f.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Coverage Amount (₱)</Label>
-              <Input type="number" min="0" max="999999999" value={coverage} onChange={(e) => setCoverage(e.target.value)}
-                placeholder="1000000" className="h-9" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Renewal Date</Label>
-              <Input type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)}
-                min="2000-01-01" className="h-9 text-xs" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Policy Number</Label>
-              <Input value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)}
-                placeholder="Optional" className="h-9" maxLength={50} />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Pay From Account <span className="text-muted-foreground">(optional)</span></Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select account…" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none" className="text-xs">No account linked</SelectItem>
-                  {accounts?.map((a) => (
-                    <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[10px] text-muted-foreground">When you pay a premium, a transaction will be created from this account.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Type</Label>
+                <Select value={type} onValueChange={(v) => setType(v as InsuranceType)}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {INSURANCE_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Provider</Label>
+                <Input value={provider} onChange={(e) => setProvider(e.target.value)}
+                  placeholder="Sun Life" className="h-11 sm:h-9 text-sm" maxLength={100} />
+              </div>
             </div>
           </div>
-          <Button type="submit" className="w-full" disabled={!name || !premium || addPolicy.isPending}>
+
+          {/* Premium & coverage */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Premium</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Amount (₱)</Label>
+                <Input type="number" min="0" max="999999999" value={premium} onChange={(e) => setPremium(e.target.value)}
+                  placeholder="2000" className="h-11 sm:h-9 text-sm" required />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Frequency</Label>
+                <Select value={frequency} onValueChange={(v) => setFrequency(v as PremiumFrequency)}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {FREQ_OPTIONS.map((f) => (
+                      <SelectItem key={f.value} value={f.value} className="text-xs">{f.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Coverage (₱)</Label>
+                <Input type="number" min="0" max="999999999" value={coverage} onChange={(e) => setCoverage(e.target.value)}
+                  placeholder="1,000,000" className="h-11 sm:h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Pay From Account</Label>
+                <Select value={accountId} onValueChange={setAccountId}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">No account linked</SelectItem>
+                    {accounts?.map((a) => (
+                      <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Details</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Renewal Date</Label>
+                <Input type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)}
+                  min="2000-01-01" className="h-11 sm:h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Policy Number</Label>
+                <Input value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)}
+                  placeholder="Optional" className="h-11 sm:h-9 text-sm" maxLength={50} />
+              </div>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full h-11 sm:h-9" disabled={!name || !premium || addPolicy.isPending}>
             {addPolicy.isPending ? "Adding…" : "Add Policy"}
           </Button>
         </form>

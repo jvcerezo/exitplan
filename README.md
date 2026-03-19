@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org) project for `ExitPlan`, a personal finance tracker focused on budgeting, goals, transactions, and financial freedom planning.
+This is a [Next.js](https://nextjs.org) project for `Sandalan`, a personal finance tracker focused on budgeting, goals, transactions, and financial freedom planning.
 
 ## Google Play Release (Capacitor)
 
@@ -6,7 +6,7 @@ For Play deployment, use **Capacitor hosted mode** (recommended for this app bec
 
 ### Prerequisites
 
-- A deployed HTTPS URL for the app (example: `https://app.exitplan.app`)
+- A deployed HTTPS URL for the app (example: `https://app.sandalan.com`)
 - JDK installed and `JAVA_HOME` configured
 - Android Studio SDK + build tools installed
 - Signing keystore configured in Android Studio/Gradle before final release
@@ -43,18 +43,18 @@ Release output:
 
 Set these values as Gradle properties (recommended in `%USERPROFILE%\.gradle\gradle.properties`) or environment variables:
 
-- `EXITPLAN_UPLOAD_STORE_FILE` (path to `.jks`)
-- `EXITPLAN_UPLOAD_STORE_PASSWORD`
-- `EXITPLAN_UPLOAD_KEY_ALIAS`
-- `EXITPLAN_UPLOAD_KEY_PASSWORD`
+- `SANDALAN_UPLOAD_STORE_FILE` (path to `.jks`)
+- `SANDALAN_UPLOAD_STORE_PASSWORD`
+- `SANDALAN_UPLOAD_KEY_ALIAS`
+- `SANDALAN_UPLOAD_KEY_PASSWORD`
 
 PowerShell example:
 
 ```powershell
-$env:EXITPLAN_UPLOAD_STORE_FILE="C:\keys\exitplan-upload.jks"
-$env:EXITPLAN_UPLOAD_STORE_PASSWORD="your_store_password"
-$env:EXITPLAN_UPLOAD_KEY_ALIAS="upload"
-$env:EXITPLAN_UPLOAD_KEY_PASSWORD="your_key_password"
+$env:SANDALAN_UPLOAD_STORE_FILE="C:\keys\sandalan-upload.jks"
+$env:SANDALAN_UPLOAD_STORE_PASSWORD="your_store_password"
+$env:SANDALAN_UPLOAD_KEY_ALIAS="upload"
+$env:SANDALAN_UPLOAD_KEY_PASSWORD="your_key_password"
 ```
 
 Without these values, the app can still sync/build in development, but it is **not publish-ready** for Google Play.
@@ -74,14 +74,14 @@ Add these repository secrets:
 
 - `CAP_SERVER_URL` (deployed HTTPS app URL)
 - `ANDROID_UPLOAD_KEYSTORE_BASE64` (base64-encoded `.jks` file)
-- `EXITPLAN_UPLOAD_STORE_PASSWORD`
-- `EXITPLAN_UPLOAD_KEY_ALIAS`
-- `EXITPLAN_UPLOAD_KEY_PASSWORD`
+- `SANDALAN_UPLOAD_STORE_PASSWORD`
+- `SANDALAN_UPLOAD_KEY_ALIAS`
+- `SANDALAN_UPLOAD_KEY_PASSWORD`
 
 How to create `ANDROID_UPLOAD_KEYSTORE_BASE64` locally (PowerShell):
 
 ```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\keys\exitplan-upload.jks")) | Set-Clipboard
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\keys\sandalan-upload.jks")) | Set-Clipboard
 ```
 
 Then paste clipboard content into the GitHub secret value.

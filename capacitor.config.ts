@@ -11,7 +11,7 @@ const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : undefined;
 
 const config: CapacitorConfig = {
   appId: "com.jvcerezo.exitplan",
-  appName: "ExitPlan",
+  appName: "Sandalan",
   webDir: "out",
   server: {
     // Keep ALL navigation inside the WebView — prevents links from

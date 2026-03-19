@@ -60,10 +60,23 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        onPointerDownOutside={(e) => {
+          // Prevent Dialog from closing when interacting with Select/Popover portals
+          const target = e.target as HTMLElement;
+          if (target.closest("[data-radix-select-content]") || target.closest("[role='listbox']")) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest("[data-radix-select-content]") || target.closest("[role='listbox']")) {
+            e.preventDefault();
+          }
+        }}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed z-50 grid w-full gap-4 border shadow-lg duration-200 outline-none overflow-y-auto",
-          "bottom-0 inset-x-0 rounded-t-2xl max-h-[85dvh] p-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]",
-          "sm:bottom-auto sm:inset-x-auto sm:left-[50%] sm:top-[50%] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:max-h-[90dvh] sm:rounded-lg sm:p-6 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
+          "bottom-0 inset-x-0 rounded-t-2xl max-h-[85dvh] px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)]",
+          "sm:bottom-auto sm:inset-x-auto sm:left-[50%] sm:top-[50%] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:max-h-[90dvh] sm:rounded-lg sm:px-6 sm:pt-6 sm:pb-6 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
           className
         )}
         {...props}

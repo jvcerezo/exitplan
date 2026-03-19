@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchMonthlyObligations } from "./use-monthly-obligations";
 
 export interface SafeToSpendData {
   safeToSpend: number;
   monthlyIncome: number;
   budgetAllocated: number;
   goalContributions: number;
+  obligations: number;
   alreadySpent: number;
   // Breakdown
   totalExpenses: number;
@@ -27,10 +29,10 @@ export function useSafeToSpend() {
         .split("T")[0];
       const budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
-      const [txResult, budgetResult, goalFundingResult] = await Promise.all([
+      const [txResult, budgetResult, goalFundingResult, obligations] = await Promise.all([
         supabase
           .from("transactions")
-          .select("amount")
+          .select("amount, category")
           .gte("date", monthStart)
           .lte("date", monthEnd),
         supabase
@@ -42,22 +44,23 @@ export function useSafeToSpend() {
           .select("amount")
           .gte("funding_date", monthStart)
           .lte("funding_date", monthEnd),
+        fetchMonthlyObligations(monthStart, monthEnd),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
       if (budgetResult.error) throw new Error(budgetResult.error.message);
       if (goalFundingResult.error) throw new Error(goalFundingResult.error.message);
 
-      const transactions = txResult.data ?? [];
+      const transactions = (txResult.data ?? []).filter((t) => t.category !== "transfer");
       const budgets = budgetResult.data ?? [];
       const goalFundings = goalFundingResult.data ?? [];
 
-      // Income this month
+      // Income this month (excluding transfers)
       const monthlyIncome = transactions
         .filter((t) => t.amount > 0)
         .reduce((sum, t) => sum + t.amount, 0);
 
-      // Actual expenses already spent this month (absolute)
+      // Actual expenses already spent this month (absolute, excluding transfers)
       const alreadySpent = transactions
         .filter((t) => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
@@ -65,7 +68,7 @@ export function useSafeToSpend() {
       // Total budget allocated this month (the limit they set)
       const budgetAllocated = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
 
-      // Actual goal contributions this month from the funding ledger.
+      // Actual goal contributions this month
       const goalContributions = goalFundings.reduce(
         (sum, funding) => sum + Number(funding.amount),
         0
@@ -74,11 +77,16 @@ export function useSafeToSpend() {
       // Remaining budget after what's already spent
       const remainingBudget = Math.max(0, budgetAllocated - alreadySpent);
 
-      // Safe to spend = income - budget limits - this month's goal contributions.
+      // Monthly obligations (bills, debts, insurance, contributions)
+      // Contributions that are already paid show up as transactions, so use
+      // the full obligation total and let the budget/spent handle the overlap
+      const obligationsTotal = obligations.total;
+
+      // Safe to spend = income - budgets - goals - obligations
       const safeToSpend = Math.max(
         0,
         Math.round(
-          (monthlyIncome - budgetAllocated - goalContributions) * 100
+          (monthlyIncome - budgetAllocated - goalContributions - obligationsTotal) * 100
         ) / 100
       );
 
@@ -87,6 +95,7 @@ export function useSafeToSpend() {
         monthlyIncome: Math.round(monthlyIncome * 100) / 100,
         budgetAllocated: Math.round(budgetAllocated * 100) / 100,
         goalContributions: Math.round(goalContributions * 100) / 100,
+        obligations: Math.round(obligationsTotal * 100) / 100,
         alreadySpent: Math.round(alreadySpent * 100) / 100,
         totalExpenses: Math.round(alreadySpent * 100) / 100,
         remainingBudget: Math.round(remainingBudget * 100) / 100,

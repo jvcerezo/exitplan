@@ -302,7 +302,7 @@ function SettingsMockup() {
         </div>
       ))}
       <div className="mt-auto rounded-lg bg-primary/10 px-3 py-2 text-[9px] text-primary">
-        Customize ExitPlan your way
+        Customize Sandalan your way
       </div>
     </div>
   );

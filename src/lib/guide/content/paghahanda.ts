@@ -66,7 +66,7 @@ export const PAGHAHANDA_GUIDES: Guide[] = [
           "Protect your emergency fund and retirement savings first — these are non-negotiable",
           "Help siblings become self-sufficient rather than perpetuating dependency",
           "It's okay to say no to extended family requests that would put you in debt",
-          "Use Panganay Mode in ExitPlan to track family obligations separately from personal spending",
+          "Use Panganay Mode in Sandalan to track family obligations separately from personal spending",
         ],
         callout: {
           type: "info",

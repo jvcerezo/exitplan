@@ -1,4 +1,4 @@
-# ExitPlan Readiness Audit — Alpha Testing & Google Play Deployment
+# Sandalan Readiness Audit — Alpha Testing & Google Play Deployment
 
 Date: 2026-03-15
 

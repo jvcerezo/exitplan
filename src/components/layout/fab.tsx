@@ -38,24 +38,24 @@ export function FAB() {
   // Always show a single FAB that opens a minimal action sheet/modal
   return (
     <>
-      {/* Backdrop for modal */}
+      {/* Backdrop */}
       {menuOpen && (
         <div
-          className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
+          className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           onClick={() => setMenuOpen(false)}
         />
       )}
-      <div data-tour="fab" className="md:hidden fixed right-[calc(env(safe-area-inset-right)+0.875rem)] bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-50 flex flex-col-reverse items-end gap-3 pointer-events-none">
+      <div data-tour="fab" className="md:hidden fixed right-[calc(env(safe-area-inset-right)+0.875rem)] bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-50 flex flex-col-reverse items-end gap-3 pointer-events-none">
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg border-2 border-background/80 active:scale-95 transition-all"
+          className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95 transition-all"
           style={{ transform: menuOpen ? "rotate(45deg)" : "rotate(0)" }}
           aria-label={menuOpen ? "Close menu" : "Open actions"}
         >
           <Plus className="h-6 w-6" />
         </button>
         {menuOpen && (
-          <div className="pointer-events-auto absolute bottom-16 right-0 w-52 bg-popover border border-border rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 z-50">
+          <div className="pointer-events-auto absolute bottom-16 right-0 w-52 bg-popover border border-border/60 rounded-2xl shadow-2xl p-2 flex flex-col gap-0.5 animate-in fade-in slide-in-from-bottom-2 z-50">
             {isGoals && (
               <button
                 onClick={() => { setMenuOpen(false); setGoalOpen(true); }}

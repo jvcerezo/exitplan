@@ -1,4 +1,4 @@
-# ExitPlan Offline Strategy
+# Sandalan Offline Strategy
 
 ## Phase 1 Support Matrix
 

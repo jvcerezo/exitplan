@@ -74,65 +74,77 @@ export function AddBillDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Bill / Subscription</DialogTitle></DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Name</Label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Bill details */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-xs text-muted-foreground">Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Netflix, Meralco…" className="h-9" required maxLength={100} />
+                placeholder="Netflix, Meralco…" className="h-11 sm:h-9 text-sm" required maxLength={100} />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Category</Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as BillCategory)}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Provider</Label>
-              <Input value={provider} onChange={(e) => setProvider(e.target.value)}
-                placeholder="PLDT, Globe…" className="h-9" maxLength={100} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Amount (₱)</Label>
-              <Input type="number" min="0" max="999999999" value={amount} onChange={(e) => setAmount(e.target.value)}
-                placeholder="1500" className="h-9" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Billing Cycle</Label>
-              <Select value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CYCLES.map((c) => (
-                    <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Due Day (1–31)</Label>
-              <Input type="number" min="1" max="31" value={dueDay} onChange={(e) => setDueDay(e.target.value)}
-                placeholder="25" className="h-9" />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Pay From Account <span className="text-muted-foreground">(optional)</span></Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select account…" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none" className="text-xs">No account linked</SelectItem>
-                  {accounts?.map((a) => (
-                    <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[10px] text-muted-foreground">When you mark this bill as paid, a transaction will be created from this account.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Category</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v as BillCategory)}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Provider</Label>
+                <Input value={provider} onChange={(e) => setProvider(e.target.value)}
+                  placeholder="PLDT, Globe…" className="h-11 sm:h-9 text-sm" maxLength={100} />
+              </div>
             </div>
           </div>
-          <Button type="submit" className="w-full" disabled={!name || !amount || addBill.isPending}>
+
+          {/* Payment info */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Payment</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Amount (₱)</Label>
+                <Input type="number" min="0" max="999999999" value={amount} onChange={(e) => setAmount(e.target.value)}
+                  placeholder="1500" className="h-11 sm:h-9 text-sm" required />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Billing Cycle</Label>
+                <Select value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CYCLES.map((c) => (
+                      <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Due Day (1–31)</Label>
+                <Input type="number" min="1" max="31" value={dueDay} onChange={(e) => setDueDay(e.target.value)}
+                  placeholder="25" className="h-11 sm:h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Pay From Account</Label>
+                <Select value={accountId} onValueChange={setAccountId}>
+                  <SelectTrigger className="h-11 sm:h-9 text-xs"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">No account linked</SelectItem>
+                    {accounts?.map((a) => (
+                      <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full h-11 sm:h-9" disabled={!name || !amount || addBill.isPending}>
             {addBill.isPending ? "Adding…" : "Add Bill"}
           </Button>
         </form>

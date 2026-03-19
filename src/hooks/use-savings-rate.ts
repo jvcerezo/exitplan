@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchMonthlyObligations } from "./use-monthly-obligations";
 
 export interface SavingsRateData {
   monthlyIncome: number;
@@ -37,50 +38,59 @@ export function useSavingsRate() {
         .toISOString()
         .split("T")[0];
 
-      // Fetch transactions for current month
-      const { data: currentTx, error: currentError } = await supabase
-        .from("transactions")
-        .select("amount")
-        .gte("date", currentMonthStart)
-        .lte("date", currentMonthEnd);
+      const [currentTxResult, lastTxResult, currentObligations, lastObligations] = await Promise.all([
+        supabase
+          .from("transactions")
+          .select("amount, category")
+          .gte("date", currentMonthStart)
+          .lte("date", currentMonthEnd),
+        supabase
+          .from("transactions")
+          .select("amount, category")
+          .gte("date", lastMonthStart)
+          .lte("date", lastMonthEnd),
+        fetchMonthlyObligations(currentMonthStart, currentMonthEnd),
+        fetchMonthlyObligations(lastMonthStart, lastMonthEnd),
+      ]);
 
-      if (currentError) throw new Error(currentError.message);
+      if (currentTxResult.error) throw new Error(currentTxResult.error.message);
+      if (lastTxResult.error) throw new Error(lastTxResult.error.message);
 
-      // Fetch transactions for last month
-      const { data: lastTx, error: lastError } = await supabase
-        .from("transactions")
-        .select("amount")
-        .gte("date", lastMonthStart)
-        .lte("date", lastMonthEnd);
+      const currentTx = (currentTxResult.data || []).filter((t) => t.category !== "transfer");
+      const lastTx = (lastTxResult.data || []).filter((t) => t.category !== "transfer");
 
-      if (lastError) throw new Error(lastError.message);
-
-      // Calculate current month
-      const monthlyIncome = (currentTx || [])
+      // Current month
+      const monthlyIncome = currentTx
         .filter((t) => t.amount > 0)
         .reduce((sum, t) => sum + t.amount, 0);
 
-      const monthlyExpenses = (currentTx || [])
+      const txExpenses = currentTx
         .filter((t) => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+      // Add obligations not already captured in transactions
+      // Paid contributions already show as transactions, so only add unpaid portion
+      const monthlyExpenses = txExpenses + currentObligations.contributionsTotal - currentObligations.contributionsPaid;
 
       const monthlySavings = monthlyIncome - monthlyExpenses;
-      const savingsRatePercent = monthlyIncome > 0 
-        ? Math.round((monthlySavings / monthlyIncome) * 100) 
+      const savingsRatePercent = monthlyIncome > 0
+        ? Math.round((monthlySavings / monthlyIncome) * 100)
         : 0;
 
-      // Calculate last month for comparison
-      const lastMonthIncome = (lastTx || [])
+      // Last month for comparison
+      const lastMonthIncome = lastTx
         .filter((t) => t.amount > 0)
         .reduce((sum, t) => sum + t.amount, 0);
 
-      const lastMonthExpenses = (lastTx || [])
+      const lastTxExpenses = lastTx
         .filter((t) => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
+      const lastMonthExpenses = lastTxExpenses + lastObligations.contributionsTotal - lastObligations.contributionsPaid;
+
       const lastMonthSavings = lastMonthIncome - lastMonthExpenses;
-      const lastMonthSavingsPercent = lastMonthIncome > 0 
-        ? Math.round((lastMonthSavings / lastMonthIncome) * 100) 
+      const lastMonthSavingsPercent = lastMonthIncome > 0
+        ? Math.round((lastMonthSavings / lastMonthIncome) * 100)
         : undefined;
 
       return {

@@ -17,8 +17,9 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTransactions, useTransactionsCount } from "@/hooks/use-transactions";
+import { useAccounts } from "@/hooks/use-accounts";
 import { CATEGORIES } from "@/lib/constants";
-import { formatSignedCurrency, cn, getTransactionLabel, getTransactionCategory } from "@/lib/utils";
+import { formatSignedCurrency, formatCurrency, cn, getTransactionLabel, getTransactionCategory } from "@/lib/utils";
 import { EditTransactionDialog } from "./edit-transaction-dialog";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
 import { SplitTransactionDialog } from "./split-transaction-dialog";
@@ -118,7 +119,58 @@ export function TransactionsTable() {
     tag: tagFilter || undefined,
   });
 
-  const visibleTransactions = (transactions ?? []).slice(0, PAGE_SIZE);
+  const { data: accounts } = useAccounts();
+  const accountMap = new Map((accounts ?? []).map((a) => [a.id, a.name]));
+
+  // Merge transfer pairs into a single display row
+  const visibleTransactions = (() => {
+    const raw = (transactions ?? []).slice(0, PAGE_SIZE);
+    const seenTransferIds = new Set<string>();
+    const merged: typeof raw = [];
+
+    for (const tx of raw) {
+      if (tx.category === "transfer" && tx.transfer_id) {
+        if (seenTransferIds.has(tx.transfer_id)) continue; // skip the second half
+        seenTransferIds.add(tx.transfer_id);
+
+        // Find the pair: outgoing (negative) and incoming (positive)
+        const pair = raw.filter((t) => t.transfer_id === tx.transfer_id);
+        const outgoing = pair.find((t) => t.amount < 0);
+        const incoming = pair.find((t) => t.amount > 0);
+
+        const fromName = outgoing?.account_id ? accountMap.get(outgoing.account_id) ?? "Account" : "Account";
+        const toName = incoming?.account_id ? accountMap.get(incoming.account_id) ?? "Account" : "Account";
+        const transferAmount = Math.abs(outgoing?.amount ?? incoming?.amount ?? 0);
+
+        // Create a merged transfer row using the outgoing tx as base
+        merged.push({
+          ...(outgoing ?? tx),
+          description: `Transfer from ${fromName} to ${toName}`,
+          amount: transferAmount, // positive, unsigned
+          category: "transfer",
+          // Tag with a marker so the render knows this is a merged transfer
+          _mergedTransfer: true,
+        } as typeof tx & { _mergedTransfer?: boolean });
+      } else {
+        merged.push(tx);
+      }
+    }
+    return merged;
+  })();
+
+  // Count how many transfer rows were merged (each merge removes 1 from the count)
+  const mergedTransferCount = (() => {
+    const raw = transactions ?? [];
+    const transferIds = new Set<string>();
+    for (const tx of raw) {
+      if (tx.category === "transfer" && tx.transfer_id) {
+        transferIds.add(tx.transfer_id);
+      }
+    }
+    return transferIds.size; // each ID had 2 rows, now has 1
+  })();
+  const adjustedTotal = Math.max(0, (totalMatchingTransactions ?? 0) - mergedTransferCount);
+
   const hasPreviousPage = currentPage > 1;
   const hasNextPage = (transactions?.length ?? 0) > PAGE_SIZE;
 
@@ -401,7 +453,7 @@ export function TransactionsTable() {
         {/* Results count */}
         <div className="px-3 pt-3 pb-1 sm:px-4">
           <p className="text-xs text-muted-foreground tabular-nums">
-            {(totalMatchingTransactions ?? 0).toLocaleString("en-PH")} total match{(totalMatchingTransactions ?? 0) === 1 ? "" : "es"} • {visibleTransactions.length} on this page
+            {adjustedTotal.toLocaleString("en-PH")} total match{adjustedTotal === 1 ? "" : "es"} • {visibleTransactions.length} on this page
           </p>
         </div>
 
@@ -477,7 +529,7 @@ export function TransactionsTable() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-medium break-words">
                       {getTransactionLabel(tx)}
                     </p>
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -517,7 +569,9 @@ export function TransactionsTable() {
                           : "text-foreground"
                       )}
                     >
-                      {formatSignedCurrency(tx.amount, tx.currency)}
+                      {tx.category === "transfer" && (tx as any)._mergedTransfer
+                        ? formatCurrency(tx.amount)
+                        : formatSignedCurrency(tx.amount, tx.currency)}
                     </p>
 
                     {/* Actions — always visible on touch, hover-reveal on desktop */}
