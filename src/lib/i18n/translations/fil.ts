@@ -8,7 +8,7 @@ const fil: TranslationKeys = {
     title: "Sandalan — Ang Kasama Mo sa Buhay-Adulto",
     description:
       "Gagabayan ka ng Sandalan sa bawat yugto ng buhay-adulto bilang Pilipino — mula sa unang government ID hanggang sa pagreretiro. Subaybayan ang pera, i-manage ang contributions, at sundin ang step-by-step na gabay.",
-    footer: "Gawa para sa kalayaan mo.",
+    footer: "Gawa para sa Pilipino.",
   },
 
   // ── Common ──
@@ -226,7 +226,7 @@ const fil: TranslationKeys = {
   // ── Landing page ──
   landing: {
     hero: {
-      badge: "100% libre · Gawa para sa Pilipino",
+      badge: "Gawa para sa Pilipino",
       headline: "Ang kasama mo sa bawat yugto ng buhay-adulto bilang Pilipino",
       headlineHighlight: "bawat yugto",
       subheadline: "Mula sa unang government ID hanggang pagreretiro — step-by-step na gabay, financial tracking, at smart reminders sa isang app.",
@@ -319,7 +319,7 @@ const fil: TranslationKeys = {
       button: "Simulan ang Biyahe Mo",
     },
     footer: {
-      copyright: "Sandalan. Gawa para sa kalayaan mo.",
+      copyright: "Sandalan. Gawa para sa Pilipino.",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       signIn: "Mag-sign In",

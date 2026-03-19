@@ -63,7 +63,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-sm text-primary-foreground/50">
-          100% free · No credit card required
+          No credit card required
         </p>
       </div>
 
@@ -156,7 +156,7 @@ export default function LoginPage() {
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="font-medium text-primary hover:text-primary/80 transition-colors">
-              Create one free
+              Create one
             </Link>
           </p>
         </div>

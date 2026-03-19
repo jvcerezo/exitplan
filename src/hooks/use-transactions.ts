@@ -90,9 +90,9 @@ export function useTransactions(filters?: {
       }
 
       if (filters?.type === "income") {
-        query = query.gt("amount", 0);
+        query = query.gt("amount", 0).neq("category", "transfer");
       } else if (filters?.type === "expense") {
-        query = query.lt("amount", 0);
+        query = query.lt("amount", 0).neq("category", "transfer");
       }
 
       if (filters?.search) {
@@ -149,6 +149,12 @@ export function useTransactionsCount(filters?: {
       if (filters?.category && filters.category !== "all") {
         query = query.eq("category", filters.category);
       }
+
+      // Always exclude individual transfer halves from the count.
+      // In "all" tab they display as merged single rows, so we count
+      // unique transfer_ids separately below. In income/expense tabs
+      // they are hidden entirely.
+      query = query.neq("category", "transfer");
 
       if (filters?.type === "income") {
         query = query.gt("amount", 0);

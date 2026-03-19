@@ -77,7 +77,7 @@ export function RecentTransactions() {
           <EmptyState
             icon={Wallet}
             title="No transactions yet"
-            description="Add your first transaction and start tracking your path to financial freedom."
+            description="Add your first transaction and start tracking your finances."
           />
         ) : (
           <div className="space-y-4">

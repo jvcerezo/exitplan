@@ -6,11 +6,8 @@ type LogoIconProps = {
 };
 
 /**
- * Sandalan Logo — Stylized Baybayin "sa" (ᜐ), the first syllable of "Sandalan".
- *
- * The vertical stroke represents the "sandalan" (pillar / something to lean on).
- * The flowing curve represents the person leaning — trust, support, guidance.
- * The kudlit (dot) is a traditional Baybayin vowel marker used here as a design accent.
+ * Sandalan Logo — Bahay Kubo on navy rounded-square.
+ * White house body on dark background — always visible, always consistent.
  */
 export function LogoIcon({ className = "w-12 h-12", style }: LogoIconProps) {
   return (
@@ -22,26 +19,24 @@ export function LogoIcon({ className = "w-12 h-12", style }: LogoIconProps) {
       aria-label="Sandalan Logo"
       role="img"
     >
-      {/* Vertical pillar — the "sandalan" (support) */}
-      <path
-        d="M 62 25 Q 60 100, 62 175"
-        stroke="#14213D"
-        strokeWidth="24"
-        strokeLinecap="round"
-        fill="none"
-      />
+      {/* Navy background */}
+      <rect width="200" height="200" rx="44" fill="#FFFFFF" />
 
-      {/* Curved stroke of Baybayin "sa" — person leaning / embrace */}
-      <path
-        d="M 62 28 C 140 28, 170 78, 155 118 C 140 155, 98 178, 62 178"
-        fill="none"
-        stroke="#55C48A"
-        strokeWidth="20"
-        strokeLinecap="round"
-      />
+      {/* Roof rafters — green */}
+      <line x1="108" y1="36" x2="40" y2="86" stroke="#55C48A" strokeWidth="7" strokeLinecap="butt" />
+      <line x1="92" y1="36" x2="160" y2="86" stroke="#55C48A" strokeWidth="7" strokeLinecap="butt" />
 
-      {/* Kudlit (vowel accent dot) — traditional Baybayin element */}
-      <circle cx="150" cy="44" r="10" fill="#55C48A" />
+      {/* House body — white */}
+      <polygon points="100,50 60,80 140,80" fill="#14213D" />
+      <rect x="48" y="79" width="104" height="4" fill="#14213D" />
+      <polygon points="52,86 66,86 66,126 58,126" fill="#14213D" />
+      <path d="M 69 86 H 131 V 126 H 111 V 102 H 89 V 126 H 69 Z" fill="#14213D" />
+      <polygon points="134,86 148,86 142,126 134,126" fill="#14213D" />
+      <rect x="57" y="129" width="86" height="5" fill="#14213D" />
+      <rect x="68" y="134" width="7" height="10" fill="#14213D" />
+      <rect x="96" y="134" width="7" height="10" fill="#14213D" />
+      <rect x="124" y="134" width="7" height="10" fill="#14213D" />
+      <rect x="48" y="144" width="104" height="5" fill="#14213D" />
     </svg>
   );
 }
