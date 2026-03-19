@@ -143,7 +143,7 @@ export async function deleteAccount() {
 
   if (error) {
     console.error("Error deleting account:", error);
-    return { error: "Could not delete account. Please try again or contact support@exitplan.app." };
+    return { error: "Could not delete account. Please try again or contact support@sandalan.com." };
   }
 
   return { success: true };

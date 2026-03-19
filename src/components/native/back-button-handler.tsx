@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
@@ -17,6 +17,7 @@ function isPublicRoute(pathname: string) {
 export function BackButtonHandler() {
   const router = useRouter();
   const pathname = usePathname();
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Hardware back button (Android)
   useEffect(() => {
@@ -35,26 +36,23 @@ export function BackButtonHandler() {
     };
   }, [router]);
 
-  // App resume → check session validity, redirect to /login if expired.
-  // Uses getUser() (server round-trip) instead of getSession() (local cache)
-  // so that truly-expired sessions are detected reliably.  This runs
-  // client-side (in-WebView navigation) so the server-side middleware
-  // redirect — which can open the system browser on Capacitor — is never
-  // reached.
+  // App resume → refresh session first, then validate.
+  // refreshSession() gets a new access token using the refresh token,
+  // so the middleware won't see an expired session and redirect externally.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
     const listener = App.addListener("appStateChange", async ({ isActive }) => {
-      if (!isActive) return;
-      if (isPublicRoute(pathname)) return;
-
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.replace("/login");
+      if (isActive) {
+        // App foregrounded — try to refresh the session silently
+        const { error } = await supabase.auth.refreshSession();
+
+        if (error && !isPublicRoute(pathname)) {
+          // Refresh failed (e.g., refresh token also expired) → go to login
+          router.replace("/login");
+        }
       }
     });
 
@@ -62,6 +60,24 @@ export function BackButtonHandler() {
       listener.then((handle) => handle.remove());
     };
   }, [router, pathname]);
+
+  // Periodic silent token refresh every 10 minutes on native platforms.
+  // Supabase access tokens expire after 1 hour by default.
+  // Refreshing proactively prevents the middleware from ever seeing an expired token.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    refreshIntervalRef.current = setInterval(async () => {
+      const supabase = createClient();
+      await supabase.auth.refreshSession();
+    }, 10 * 60 * 1000); // every 10 minutes
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, []);
 
   return null;
 }
