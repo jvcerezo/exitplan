@@ -38,6 +38,9 @@ yarn-error.log*
 *.keystore
 android/key.properties
 
+# marketing tooling
+/marketing
+
 # vercel
 .vercel
 
