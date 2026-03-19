@@ -389,17 +389,17 @@ const SCREENSHOT_COMPONENTS: Record<NonNullable<TourStep["screenshot"]>, React.C
 };
 
 const SCREENSHOT_URLS: Record<NonNullable<TourStep["screenshot"]>, string> = {
-  dashboard: "exitplan.app/dashboard",
-  transactions: "exitplan.app/transactions",
-  goals: "exitplan.app/goals",
-  budgets: "exitplan.app/budgets",
-  accounts: "exitplan.app/accounts",
-  adulting: "exitplan.app/tools",
-  journey: "exitplan.app/guide",
-  fab: "exitplan.app/home",
-  search: "exitplan.app/search",
-  settings: "exitplan.app/settings",
-  done: "exitplan.app/home",
+  dashboard: "sandalan.com/dashboard",
+  transactions: "sandalan.com/transactions",
+  goals: "sandalan.com/goals",
+  budgets: "sandalan.com/budgets",
+  accounts: "sandalan.com/accounts",
+  adulting: "sandalan.com/tools",
+  journey: "sandalan.com/guide",
+  fab: "sandalan.com/home",
+  search: "sandalan.com/search",
+  settings: "sandalan.com/settings",
+  done: "sandalan.com/home",
 };
 
 function TourCard({

@@ -62,7 +62,7 @@ export default function TermsPage() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               You are responsible for maintaining the confidentiality of your account credentials and for all
               activity that occurs under your account. Notify us immediately at{" "}
-              <a href="mailto:support@exitplan.app" className="text-primary hover:underline">support@exitplan.app</a>{" "}
+              <a href="mailto:support@sandalan.com" className="text-primary hover:underline">support@sandalan.com</a>{" "}
               if you suspect unauthorized access. We are not liable for losses caused by unauthorized use of your account.
             </p>
           </section>
@@ -188,7 +188,7 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold">16. Contact</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               For questions about these Terms, contact us at{" "}
-              <a href="mailto:support@exitplan.app" className="text-primary hover:underline">support@exitplan.app</a>.
+              <a href="mailto:support@sandalan.com" className="text-primary hover:underline">support@sandalan.com</a>.
             </p>
           </section>
         </div>

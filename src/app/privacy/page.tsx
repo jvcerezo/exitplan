@@ -37,7 +37,7 @@ export default function PrivacyPolicyPage() {
               available as a web application and a mobile application distributed through the Google Play Store.
               We act as the <strong>Personal Information Controller</strong> for the data you provide when
               using our services. If you have any privacy-related concerns, you may contact us at{" "}
-              <a href="mailto:privacy@exitplan.app" className="text-primary hover:underline">privacy@exitplan.app</a>.
+              <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>.
             </p>
           </section>
 
@@ -220,7 +220,7 @@ export default function PrivacyPolicyPage() {
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               To exercise any right not available in-app, email us at{" "}
-              <a href="mailto:privacy@exitplan.app" className="text-primary hover:underline">privacy@exitplan.app</a>.
+              <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>.
               We will respond within 15 business days.
             </p>
           </section>
@@ -275,7 +275,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-lg font-semibold">14. Contact & Complaints</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               For privacy-related concerns, contact our Data Protection Officer at{" "}
-              <a href="mailto:privacy@exitplan.app" className="text-primary hover:underline">privacy@exitplan.app</a>.
+              <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>.
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               If you believe your rights under RA 10173 have been violated, you may file a complaint with the

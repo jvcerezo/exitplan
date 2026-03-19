@@ -63,7 +63,10 @@ export default function SettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState("profile");
+  const [activeSection, setActiveSection] = useState(() => {
+    if (typeof window === "undefined") return "profile";
+    return window.innerWidth >= 640 ? "profile" : "";
+  });
 
   // Automation & notification toggles (localStorage-backed)
   const automationKeys = [
@@ -857,8 +860,8 @@ export default function SettingsPage() {
 
           <p className="text-xs text-muted-foreground">
             For privacy-related concerns, email{" "}
-            <a href="mailto:privacy@exitplan.app" className="text-primary hover:underline">
-              privacy@exitplan.app
+            <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">
+              privacy@sandalan.com
             </a>
             . We will respond within 15 business days.
           </p>
