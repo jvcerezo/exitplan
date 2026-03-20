@@ -1,0 +1,79 @@
+name: Flutter Sandalan Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or tag to build from sandalan-android"
+        default: "main"
+        required: false
+
+jobs:
+  build-flutter-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout sandalan-android
+        uses: actions/checkout@v4
+        with:
+          repository: jvcerezo/sandalan-android
+          ref: ${{ github.event.inputs.ref || 'main' }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.5"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Validate secrets
+        run: |
+          test -n "${{ secrets.SANDALAN_KEYSTORE_BASE64 }}" || (echo "Missing SANDALAN_KEYSTORE_BASE64" && exit 1)
+          test -n "${{ secrets.SANDALAN_STORE_PASSWORD }}" || (echo "Missing SANDALAN_STORE_PASSWORD" && exit 1)
+          test -n "${{ secrets.SANDALAN_KEY_ALIAS }}" || (echo "Missing SANDALAN_KEY_ALIAS" && exit 1)
+          test -n "${{ secrets.SANDALAN_KEY_PASSWORD }}" || (echo "Missing SANDALAN_KEY_PASSWORD" && exit 1)
+
+      - name: Decode signing keystore
+        run: |
+          mkdir -p android/keystore
+          echo "${{ secrets.SANDALAN_KEYSTORE_BASE64 }}" | base64 --decode > android/keystore/sandalan.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/app/key.properties << EOF
+          storePassword=${{ secrets.SANDALAN_STORE_PASSWORD }}
+          keyPassword=${{ secrets.SANDALAN_KEY_PASSWORD }}
+          keyAlias=${{ secrets.SANDALAN_KEY_ALIAS }}
+          storeFile=../../android/keystore/sandalan.jks
+          EOF
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Build release AAB
+        run: flutter build appbundle --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandalan-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandalan-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
