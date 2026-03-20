@@ -38,7 +38,7 @@ const config: CapacitorConfig = {
     },
   },
   android: {
-    allowMixedContent: true,
+    allowMixedContent: process.env.NODE_ENV === "development",
   },
 };
 
