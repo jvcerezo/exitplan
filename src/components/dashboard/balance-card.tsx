@@ -4,16 +4,18 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Wallet, AlertCircle, Target, DollarSign } from "lucide-react";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
+import { useDebtSummary } from "@/hooks/use-debts";
 import { cn, formatCurrency } from "@/lib/utils";
 
 export function BalanceCard() {
   const { data: summary, isLoading, error } = useTransactionsSummary();
+  const { data: debtSummary } = useDebtSummary();
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className={cn("animate-pulse", i === 0 ? "col-span-2 md:col-span-1" : "col-span-1")}>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="animate-pulse col-span-1">
             <CardHeader className="pb-2">
               <div className="h-4 w-24 bg-muted rounded" />
             </CardHeader>
@@ -42,12 +44,23 @@ export function BalanceCard() {
     );
   }
 
+  // Net worth = total assets (account balances) - total debts
+  const totalDebt = debtSummary?.totalDebt ?? 0;
+  const netWorth = (summary?.balance ?? 0) - totalDebt;
+
   const cards = [
     {
       title: "Total Balance",
       value: summary?.balance ?? 0,
       icon: Wallet,
       color: "text-foreground",
+      href: "/accounts",
+    },
+    {
+      title: "Net Worth",
+      value: netWorth,
+      icon: netWorth >= 0 ? TrendingUp : TrendingDown,
+      color: netWorth >= 0 ? "text-green-600" : "text-red-500",
       href: "/accounts",
     },
     {
@@ -70,10 +83,10 @@ export function BalanceCard() {
 
   return (
     <div className="space-y-3">
-      {/* Row 1: Total Balance (full width) + Income + Expenses */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        {cards.map((card, index) => (
-          <Link key={card.title} href={card.href} className={cn(index === 0 ? "col-span-2 md:col-span-1" : "col-span-1")}>
+      {/* Row 1: Total Balance + Net Worth, Row 2: Income + Expenses */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {cards.map((card) => (
+          <Link key={card.title} href={card.href} className="col-span-1">
             <Card className="h-full hover:bg-muted/30 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between pb-1.5">
                 <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:tracking-normal">

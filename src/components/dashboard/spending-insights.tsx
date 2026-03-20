@@ -14,18 +14,36 @@ function getCurrentMonthRange() {
   };
 }
 
+interface TopCategory {
+  category: string;
+  amount: number;
+  count: number;
+}
+
 function computeInsights(transactions: Transaction[]) {
   const expenses = transactions.filter((tx) => tx.amount < 0 && tx.category !== "transfer");
 
-  // Top spending category
-  const categoryTotals: Record<string, number> = {};
+  // Category totals with counts
+  const categoryData: Record<string, { amount: number; count: number }> = {};
   for (const tx of expenses) {
-    categoryTotals[tx.category] =
-      (categoryTotals[tx.category] || 0) + Math.abs(tx.amount);
+    if (!categoryData[tx.category]) {
+      categoryData[tx.category] = { amount: 0, count: 0 };
+    }
+    categoryData[tx.category].amount += Math.abs(tx.amount);
+    categoryData[tx.category].count += 1;
   }
-  const topCategory =
-    Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]?.[0] ??
-    "N/A";
+
+  // Top categories sorted by amount
+  const topCategories: TopCategory[] = Object.entries(categoryData)
+    .map(([category, data]) => ({
+      category,
+      amount: Math.round(data.amount * 100) / 100,
+      count: data.count,
+    }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5);
+
+  const topCategory = topCategories[0]?.category ?? "N/A";
 
   // Number of transactions this month (excluding transfers)
   const transactionCount = transactions.filter((tx) => tx.category !== "transfer").length;
@@ -45,6 +63,7 @@ function computeInsights(transactions: Transaction[]) {
 
   return {
     topCategory,
+    topCategories,
     transactionCount,
     avgAmount,
     biggestExpense,
@@ -99,7 +118,7 @@ export function SpendingInsights() {
                 <p className="font-bold text-right">{insights?.transactionCount}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between py-2 border-b border-border">
               <div>
                 <p className="text-xs text-muted-foreground">Average Amount</p>
                 <p className="font-bold">{formatCurrency(insights?.avgAmount ?? 0)}</p>
@@ -109,6 +128,49 @@ export function SpendingInsights() {
                 <p className="font-bold text-right">{formatCurrency(insights?.biggestExpense ?? 0)}</p>
               </div>
             </div>
+
+            {/* Top Categories */}
+            {insights?.topCategories && insights.topCategories.length > 0 && (
+              <div className="pt-1 space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Top Categories
+                </p>
+                <div className="space-y-2">
+                  {insights.topCategories.map((cat, i) => {
+                    const maxAmount = insights.topCategories[0].amount;
+                    const barWidth = maxAmount > 0 ? (cat.amount / maxAmount) * 100 : 0;
+                    return (
+                      <div key={cat.category} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-muted-foreground w-4 text-center">
+                              {i + 1}
+                            </span>
+                            <span className="font-medium capitalize truncate">
+                              {cat.category}
+                            </span>
+                          </div>
+                          <div className="text-right shrink-0 ml-2">
+                            <span className="text-xs font-semibold">
+                              {formatCurrency(cat.amount)}
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({cat.count}x)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary/60 transition-all"
+                            style={{ width: `${barWidth}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

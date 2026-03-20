@@ -9,6 +9,8 @@ import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { SavingsRateIndicator } from "@/components/dashboard/savings-rate-indicator";
 import { EmergencyFundStatus } from "@/components/dashboard/emergency-fund-status";
 import { SafeToSpendCard } from "@/components/dashboard/safe-to-spend-card";
+import { AverageDailySpend } from "@/components/dashboard/average-daily-spend";
+import { SpendingVelocity } from "@/components/dashboard/spending-velocity";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
 
 export default function DashboardPage() {
@@ -48,8 +50,9 @@ export default function DashboardPage() {
           <TrendsSection />
         </section>
 
-        <section className="hidden md:block order-4 md:order-2">
+        <section className="hidden md:block order-4 md:order-2 space-y-4">
           <HealthScoreCard />
+          <SpendingVelocity />
         </section>
 
         <section className="hidden md:block order-5 md:order-3 space-y-6">
@@ -64,6 +67,7 @@ export default function DashboardPage() {
 
         <section className="hidden md:block order-6 md:order-4 space-y-6">
           <SafeToSpendCard />
+          <AverageDailySpend />
           <div className="grid gap-6 lg:grid-cols-2">
             <SavingsRateIndicator />
             <EmergencyFundStatus targetMonths={3} />

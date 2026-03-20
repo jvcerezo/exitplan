@@ -11,6 +11,8 @@ import { SavingsRateIndicator } from "@/components/dashboard/savings-rate-indica
 import { EmergencyFundStatus } from "@/components/dashboard/emergency-fund-status";
 import { SpendingInsights } from "@/components/dashboard/spending-insights";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+import { AverageDailySpend } from "@/components/dashboard/average-daily-spend";
+import { SpendingVelocity } from "@/components/dashboard/spending-velocity";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 
 type DashboardSection =
@@ -74,7 +76,9 @@ export function MobileDashboardSections() {
         {activeSection === "health" && (
           <div className="space-y-4">
             <HealthScoreCard />
+            <SpendingVelocity />
             <SafeToSpendCard />
+            <AverageDailySpend />
             <div className="grid gap-4">
               <SavingsRateIndicator />
               <EmergencyFundStatus targetMonths={3} />

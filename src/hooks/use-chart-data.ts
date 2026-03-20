@@ -79,7 +79,7 @@ export function useNetWorthOverTime() {
       const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
       const startDate = twelveMonthsAgo.toISOString().split("T")[0];
 
-      const [preWindowResult, windowResult, accountResult, goalsResult] = await Promise.all([
+      const [preWindowResult, windowResult, accountResult, goalsResult, debtResult] = await Promise.all([
         // Sum of all transactions BEFORE the 12-month window (for baseline)
         supabase
           .from("transactions")
@@ -95,6 +95,10 @@ export function useNetWorthOverTime() {
           .from("accounts")
           .select("balance"),
         supabase.from("goals").select("current_amount"),
+        supabase
+          .from("debts")
+          .select("current_balance")
+          .eq("is_paid_off", false),
       ]);
 
       if (preWindowResult.error) throw new Error(preWindowResult.error.message);
@@ -104,6 +108,7 @@ export function useNetWorthOverTime() {
       const data = windowResult.data ?? [];
       const accounts = accountResult.data ?? [];
       const goals = goalsResult.data ?? [];
+      const debts = debtResult.data ?? [];
 
       // Account balances already include their linked transactions.
       // Goal savings are included so moving money to goals doesn't reduce net worth.
@@ -115,11 +120,16 @@ export function useNetWorthOverTime() {
         (sum, g) => sum + Number(g.current_amount),
         0
       );
+      // Net worth = total assets - total debts
+      const totalDebt = debts.reduce(
+        (sum, d) => sum + Number(d.current_balance),
+        0
+      );
       const allTimeUnlinkedBalance = [
         ...preWindowData.filter((t) => !t.account_id),
         ...data.filter((t) => !t.account_id),
       ].reduce((sum, t) => sum + t.amount, 0);
-      const currentNetWorth = accountsTotal + goalsTotalSaved + allTimeUnlinkedBalance;
+      const currentNetWorth = accountsTotal + goalsTotalSaved + allTimeUnlinkedBalance - totalDebt;
 
       // Compute total of all transactions (linked + unlinked) to find starting point
       const allPreWindowTotal = preWindowData.reduce((sum, t) => sum + t.amount, 0);

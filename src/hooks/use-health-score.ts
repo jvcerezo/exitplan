@@ -29,45 +29,51 @@ export function useHealthScore() {
 
       const budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
-      const [txResult, budgetResult, goalResult, accountResult] = await Promise.all([
+      const [txResult, budgetResult, accountResult, goalResult] = await Promise.all([
         supabase
           .from("transactions")
           .select("amount, date, category")
           .gte("date", currentMonthStart)
           .lte("date", currentMonthEnd),
         supabase.from("budgets").select("*").eq("month", budgetMonth),
-        supabase.from("goals").select("*"),
-        supabase
-          .from("accounts")
-          .select("balance"),
+        supabase.from("accounts").select("balance"),
+        supabase.from("goals").select("current_amount, target_amount, is_completed"),
       ]);
 
       if (txResult.error) throw new Error(txResult.error.message);
       if (budgetResult.error) throw new Error(budgetResult.error.message);
-      if (goalResult.error) throw new Error(goalResult.error.message);
 
       const transactions = txResult.data;
       const budgets = budgetResult.data;
-      const goals = goalResult.data;
       const accounts = accountResult.data ?? [];
+      const goals = goalResult.data ?? [];
+
       const accountsTotal = accounts.reduce(
         (sum, a) => sum + Number(a.balance),
         0
       );
 
-      // ----- Savings Rate (30%) -----
-      const income = transactions
+      // Exclude transfers from income/expense totals
+      const nonTransferTx = transactions.filter(
+        (t) => t.category !== "transfer"
+      );
+
+      const income = nonTransferTx
         .filter((t) => t.amount > 0)
         .reduce((sum, t) => sum + t.amount, 0);
-      const expenses = transactions
+      const expenses = nonTransferTx
         .filter((t) => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-      const savingsRate = income > 0 ? (income - expenses) / income : 0;
-      // 20%+ savings rate = 100 score, 0% = 0, linear
-      const savingsScore = Math.min(100, Math.max(0, (savingsRate / 0.2) * 100));
 
-      // ----- Budget Adherence (25%) -----
-      // Budgets are stored lowercase; normalize tx.category to match
+      // ----- 1. Savings Rate (40%) -----
+      // 20% savings rate = perfect score (100), linear
+      const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
+      const savingsRateScore = income > 0
+        ? Math.min(100, Math.max(0, (savingsRate / 20) * 100))
+        : 0;
+
+      // ----- 2. Budget Adherence (20%) -----
+      // % of budgets where spending is under the limit; default 50 if no budgets
       const spentByCategory: Record<string, number> = {};
       for (const tx of transactions) {
         if (tx.amount < 0) {
@@ -76,88 +82,77 @@ export function useHealthScore() {
             (spentByCategory[normalizedCat] || 0) + Math.abs(tx.amount);
         }
       }
-      let budgetScore = 0;
+
+      let budgetAdherenceScore = 50; // default if no budgets
+      let budgetAdherenceDetail = "No budgets set";
       if (budgets.length > 0) {
         const underBudget = budgets.filter(
           (b) => (spentByCategory[b.category] || 0) <= b.amount
         ).length;
-        budgetScore = (underBudget / budgets.length) * 100;
-      }
-
-      // ----- Goal Progress (25%) -----
-      const activeGoals = goals.filter((g) => !g.is_completed);
-      let goalScore = 0;
-      if (activeGoals.length > 0) {
-        const totalProgress = activeGoals.reduce((sum, g) => {
-          const pct =
-            g.target_amount > 0
-              ? Math.min(1, g.current_amount / g.target_amount)
-              : 0;
-          return sum + pct;
-        }, 0);
-        goalScore = (totalProgress / activeGoals.length) * 100;
-      }
-
-      // ----- Emergency Fund (20%) -----
-      // Use emergency goal amount if one exists, otherwise fall back
-      // to total account balances as the financial cushion
-      const emergencyGoal = goals.find(
-        (g) =>
-          g.name.toLowerCase().includes("emergency") ||
-          g.category.toLowerCase().includes("emergency")
-      );
-      // Use a ₱10,000/month floor so new users with no expense history get a
-      // meaningful (not trivially-100%) emergency fund score.
-      const monthlyExpenses = expenses > 0 ? expenses : 10000;
-      const targetEmergency = monthlyExpenses * 3;
-      const cushionAmount = emergencyGoal
-        ? emergencyGoal.current_amount
-        : accountsTotal;
-      let emergencyScore = 0;
-      if (cushionAmount > 0) {
-        emergencyScore = Math.min(
+        budgetAdherenceScore = Math.min(
           100,
-          (cushionAmount / targetEmergency) * 100
+          Math.max(0, (underBudget / budgets.length) * 100)
         );
+        budgetAdherenceDetail = `${underBudget}/${budgets.length} under limit`;
       }
+
+      // ----- 3. Goal Progress (20%) -----
+      // Average progress across all active goals; 100% if all completed or no goals
+      const activeGoals = goals.filter((g) => !g.is_completed);
+      let goalProgressScore = 50; // default if no goals
+      let goalProgressDetail = "No active goals";
+      if (activeGoals.length > 0) {
+        const avgProgress =
+          activeGoals.reduce((sum, g) => {
+            const pct = g.target_amount > 0
+              ? Math.min(100, (g.current_amount / g.target_amount) * 100)
+              : 0;
+            return sum + pct;
+          }, 0) / activeGoals.length;
+        goalProgressScore = Math.min(100, Math.max(0, avgProgress));
+        goalProgressDetail = `${avgProgress.toFixed(0)}% avg across ${activeGoals.length} goal${activeGoals.length > 1 ? "s" : ""}`;
+      } else if (goals.length > 0 && activeGoals.length === 0) {
+        // All goals completed
+        goalProgressScore = 100;
+        goalProgressDetail = "All goals completed";
+      }
+
+      // ----- 4. Emergency Fund (20%) -----
+      // 3 months of expenses covered = perfect score (100)
+      const monthlyExpenses = expenses > 0 ? expenses : 10000;
+      const emergencyMonths = accountsTotal / monthlyExpenses;
+      const emergencyFundScore = Math.min(
+        100,
+        Math.max(0, (emergencyMonths / 3) * 100)
+      );
 
       const subScores: SubScore[] = [
         {
           label: "Savings Rate",
-          score: Math.round(savingsScore),
-          weight: 30,
+          score: Math.round(savingsRateScore),
+          weight: 40,
           detail:
             income > 0
-              ? `${(savingsRate * 100).toFixed(0)}% of income saved`
+              ? `${savingsRate.toFixed(0)}% of income saved`
               : "No income this month",
         },
         {
           label: "Budget Adherence",
-          score: Math.round(budgetScore),
-          weight: 25,
-          detail:
-            budgets.length > 0
-              ? `${budgets.filter((b) => (spentByCategory[b.category] || 0) <= b.amount).length}/${budgets.length} under budget`
-              : "No budgets set",
+          score: Math.round(budgetAdherenceScore),
+          weight: 20,
+          detail: budgetAdherenceDetail,
         },
         {
           label: "Goal Progress",
-          score: Math.round(goalScore),
-          weight: 25,
-          detail:
-            activeGoals.length > 0
-              ? `${activeGoals.length} active goal${activeGoals.length > 1 ? "s" : ""}`
-              : "No active goals",
+          score: Math.round(goalProgressScore),
+          weight: 20,
+          detail: goalProgressDetail,
         },
         {
           label: "Emergency Fund",
-          score: Math.round(emergencyScore),
+          score: Math.round(emergencyFundScore),
           weight: 20,
-          detail: emergencyGoal
-            ? `₱${emergencyGoal.current_amount.toLocaleString()} saved`
-            : accountsTotal > 0
-              ? `₱${Math.round(accountsTotal).toLocaleString()} in accounts`
-              : "No emergency fund goal",
+          detail: `${emergencyMonths.toFixed(1)} of 3 months covered`,
         },
       ];
 
