@@ -34,6 +34,15 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Auto-increment version code
+        run: |
+          # Read current version from pubspec.yaml
+          CURRENT=$(grep '^version:' pubspec.yaml | sed 's/.*+//')
+          NEW=$((CURRENT + ${{ github.run_number }}))
+          VERSION_NAME=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          sed -i "s/^version: .*/version: ${VERSION_NAME}+${NEW}/" pubspec.yaml
+          echo "Building with versionCode=${NEW}"
+
       - name: Install dependencies
         run: flutter pub get
 
