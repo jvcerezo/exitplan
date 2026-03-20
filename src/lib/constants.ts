@@ -111,7 +111,7 @@ export const PAGIBIG_RATE = {
   employer_low: 0.02,
   salary_threshold: 1500,
   /** Max compensation for mandatory contribution computation */
-  max_compensation: 5000,
+  max_compensation: 10000,
 } as const;
 
 /** TRAIN Law income tax brackets (2023 onwards, annual) */
