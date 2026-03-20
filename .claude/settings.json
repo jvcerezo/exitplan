@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"c:/flutter/flutter/bin/flutter.bat\" analyze:*)",
+      "Bash(\"c:/flutter/flutter/bin/flutter.bat\" run:*)",
+      "Bash(wc -l \"c:/Users/My PC/Desktop/Repositories/exitplan/src/lib/guide/content/\"*.ts)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\My PC\\Desktop\\Repositories\\sandalan-android\\lib\\features\\transactions\\widgets"
+    ]
+  }
+}

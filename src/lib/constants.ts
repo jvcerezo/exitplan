@@ -83,9 +83,9 @@ export const COMMON_ACCOUNTS = [
 /** SSS 2024: 14% total. MSC range ₱3,000–₱30,000 */
 export const SSS_RATE = {
   employee: 0.045,
-  employer: 0.085,
-  total: 0.13,
-  min_msc: 3000,
+  employer: 0.095,
+  total: 0.14,
+  min_msc: 4000,
   max_msc: 30000,
   /** EC (Employee Compensation) added on top for employed, borne by employer */
   ec_min: 10,
@@ -117,11 +117,11 @@ export const PAGIBIG_RATE = {
 /** TRAIN Law income tax brackets (2023 onwards, annual) */
 export const TRAIN_TAX_BRACKETS = [
   { min: 0,         max: 250000,   base: 0,      rate: 0 },
-  { min: 250001,    max: 400000,   base: 0,      rate: 0.15 },
-  { min: 400001,    max: 800000,   base: 22500,  rate: 0.20 },
-  { min: 800001,    max: 2000000,  base: 102500, rate: 0.25 },
-  { min: 2000001,   max: 8000000,  base: 402500, rate: 0.30 },
-  { min: 8000001,   max: Infinity, base: 2202500,rate: 0.35 },
+  { min: 250000,    max: 400000,   base: 0,      rate: 0.15 },
+  { min: 400000,    max: 800000,   base: 22500,  rate: 0.20 },
+  { min: 800000,    max: 2000000,  base: 102500, rate: 0.25 },
+  { min: 2000000,   max: 8000000,  base: 402500, rate: 0.30 },
+  { min: 8000000,   max: Infinity, base: 2202500,rate: 0.35 },
 ] as const;
 
 export const EMPLOYMENT_TYPES = [
