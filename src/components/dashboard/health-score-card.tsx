@@ -5,21 +5,24 @@ import { useHealthScore } from "@/hooks/use-health-score";
 import { cn } from "@/lib/utils";
 
 function getScoreColor(score: number) {
-  if (score >= 80) return "text-green-600 dark:text-green-400";
-  if (score >= 50) return "text-yellow-500 dark:text-yellow-400";
+  if (score >= 71) return "text-green-600 dark:text-green-400";
+  if (score >= 51) return "text-yellow-500 dark:text-yellow-400";
+  if (score >= 31) return "text-orange-500 dark:text-orange-400";
   return "text-red-500 dark:text-red-400";
 }
 
 function getScoreLabel(score: number) {
-  if (score >= 80) return "Excellent";
-  if (score >= 60) return "Good";
-  if (score >= 40) return "Fair";
+  if (score >= 91) return "Excellent";
+  if (score >= 71) return "Great";
+  if (score >= 51) return "Good";
+  if (score >= 31) return "Fair";
   return "Needs Work";
 }
 
 function getBarColor(score: number) {
-  if (score >= 80) return "bg-green-500";
-  if (score >= 50) return "bg-yellow-500";
+  if (score >= 71) return "bg-green-500";
+  if (score >= 51) return "bg-yellow-500";
+  if (score >= 31) return "bg-orange-500";
   return "bg-red-500";
 }
 
@@ -77,11 +80,13 @@ export function HealthScoreCard() {
                 strokeWidth="6"
                 strokeLinecap="round"
                 className={cn(
-                  data.total >= 80
+                  data.total >= 71
                     ? "stroke-green-500"
-                    : data.total >= 50
+                    : data.total >= 51
                       ? "stroke-yellow-500"
-                      : "stroke-red-500"
+                      : data.total >= 31
+                        ? "stroke-orange-500"
+                        : "stroke-red-500"
                 )}
                 strokeDasharray={circumference}
                 strokeDashoffset={dashOffset}

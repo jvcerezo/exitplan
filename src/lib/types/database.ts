@@ -35,9 +35,12 @@ export interface Goal {
   deadline: string | null;
   category: string;
   is_completed: boolean;
+  account_id: string | null;
 }
 
-export type GoalInsert = Omit<Goal, "id" | "created_at" | "user_id" | "is_completed">;
+export type GoalInsert = Omit<Goal, "id" | "created_at" | "user_id" | "is_completed"> & {
+  account_id?: string | null;
+};
 
 export interface Profile {
   id: string;

@@ -22,9 +22,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAddGoal } from "@/hooks/use-goals";
+import { useAccounts } from "@/hooks/use-accounts";
 import { GOAL_CATEGORIES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 
 const GOAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "emergency fund": Shield,
@@ -67,6 +75,8 @@ function parseAmountInput(value: string): string {
   return normalizedInt;
 }
 
+const NO_ACCOUNT = "__none__";
+
 export function AddGoalDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
@@ -82,7 +92,10 @@ export function AddGoalDialog({
   const [targetAmount, setTargetAmount] = useState("");
   const [currentAmount, setCurrentAmount] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [accountId, setAccountId] = useState("");
   const addGoal = useAddGoal();
+  const { data: accounts } = useAccounts();
+  const activeAccounts = accounts ?? [];
 
   function resetForm() {
     setCategory("");
@@ -91,6 +104,7 @@ export function AddGoalDialog({
     setTargetAmount("");
     setCurrentAmount("");
     setDeadline("");
+    setAccountId("");
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -110,11 +124,14 @@ export function AddGoalDialog({
       current_amount: parsedCurrent,
       deadline: deadline || null,
       category: finalCategory,
+      account_id: accountId || null,
     });
 
     setOpen(false);
     resetForm();
   }
+
+  const selectedAccount = activeAccounts.find((a) => a.id === accountId);
 
   const dialogContent = (
     <DialogContent className="sm:max-w-md overflow-x-hidden px-4 pt-4 sm:px-6 sm:pt-6">
@@ -190,6 +207,38 @@ export function AddGoalDialog({
             />
           </div>
         </div>
+
+        {/* Account dropdown */}
+        {activeAccounts.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">
+              Linked Account <span className="text-muted-foreground/50">(optional)</span>
+            </p>
+            <Select value={accountId || NO_ACCOUNT} onValueChange={(v) => setAccountId(v === NO_ACCOUNT ? "" : v)}>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="No linked account" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_ACCOUNT}>No linked account</SelectItem>
+                {activeAccounts.map((acc) => (
+                  <SelectItem key={acc.id} value={acc.id}>
+                    <div className="flex min-w-0 items-center justify-between gap-3">
+                      <span className="truncate font-medium">{acc.name}</span>
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                        {formatCurrency(acc.balance, acc.currency)}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedAccount && (
+              <p className="text-[10px] text-muted-foreground">
+                Adding funds will deduct from this account by default.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Saved so far + Deadline row */}
         <div className="grid grid-cols-2 gap-2">

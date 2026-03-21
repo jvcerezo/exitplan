@@ -1,29 +1,49 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Wallet, AlertCircle, Target, DollarSign } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+  Wallet,
+  Target,
+  Landmark,
+} from "lucide-react";
 import { useTransactionsSummary } from "@/hooks/use-transactions";
 import { useDebtSummary } from "@/hooks/use-debts";
+import { useGoalsSummary } from "@/hooks/use-goals";
 import { cn, formatCurrency } from "@/lib/utils";
 
 export function BalanceCard() {
   const { data: summary, isLoading, error } = useTransactionsSummary();
   const { data: debtSummary } = useDebtSummary();
+  const { data: goalsSummary } = useGoalsSummary();
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse col-span-1">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-24 bg-muted rounded" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-32 bg-muted rounded" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-3">
+        <Card className="animate-pulse border-l-4 border-l-primary">
+          <CardContent className="py-6">
+            <div className="h-8 w-48 bg-muted rounded" />
+            <div className="mt-3 h-4 w-64 bg-muted rounded" />
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-3 gap-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="py-4">
+                <div className="h-4 w-16 bg-muted rounded mb-2" />
+                <div className="h-6 w-24 bg-muted rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card className="animate-pulse">
+          <CardContent className="py-3">
+            <div className="h-3 w-full bg-muted rounded" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -36,7 +56,9 @@ export function BalanceCard() {
           <div>
             <p className="text-sm font-medium">Could not load balance</p>
             <p className="text-xs text-muted-foreground">
-              {error instanceof Error ? error.message : "Check your Supabase connection and ensure the transactions table exists."}
+              {error instanceof Error
+                ? error.message
+                : "Check your Supabase connection and ensure the transactions table exists."}
             </p>
           </div>
         </CardContent>
@@ -44,97 +66,140 @@ export function BalanceCard() {
     );
   }
 
-  // Net worth = total assets (account balances) - total debts
   const totalDebt = debtSummary?.totalDebt ?? 0;
   const netWorth = (summary?.balance ?? 0) - totalDebt;
+  const income = summary?.income ?? 0;
+  const expenses = summary?.expenses ?? 0;
+  const saved = Math.max(0, income - expenses);
+  const savingsPercent = income > 0 ? Math.round((saved / income) * 100) : 0;
 
-  const cards = [
-    {
-      title: "Total Balance",
-      value: summary?.balance ?? 0,
-      icon: Wallet,
-      color: "text-foreground",
-      href: "/accounts",
-    },
-    {
-      title: "Net Worth",
-      value: netWorth,
-      icon: netWorth >= 0 ? TrendingUp : TrendingDown,
-      color: netWorth >= 0 ? "text-green-600" : "text-red-500",
-      href: "/accounts",
-    },
-    {
-      title: "Income",
-      value: summary?.income ?? 0,
-      icon: TrendingUp,
-      color: "text-green-600",
-      href: "/transactions",
-    },
-    {
-      title: "Expenses",
-      value: summary?.expenses ?? 0,
-      icon: TrendingDown,
-      color: "text-foreground",
-      href: "/transactions",
-    },
-  ];
+  const accountsTotal = summary?.breakdown?.inAccounts ?? 0;
 
-  const breakdown = summary?.breakdown;
+  const goalsTotalSaved = goalsSummary?.totalSaved ?? 0;
+  const goalsActive = goalsSummary?.active ?? 0;
+
+  const debtsCount = debtSummary?.count ?? 0;
 
   return (
     <div className="space-y-3">
-      {/* Row 1: Total Balance + Net Worth, Row 2: Income + Expenses */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {cards.map((card) => (
-          <Link key={card.title} href={card.href} className="col-span-1">
-            <Card className="h-full hover:bg-muted/30 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between pb-1.5">
-                <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:text-sm sm:tracking-normal">
-                  {card.title}
-                </CardTitle>
-                <card.icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${card.color}`} />
-              </CardHeader>
-              <CardContent className="pt-1">
-                <div className={`text-lg font-bold sm:text-2xl ${card.color}`}>
-                  {formatCurrency(card.value)}
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+      {/* Section 1: Hero Card */}
+      <Card className="border-l-4 border-l-primary">
+        <CardContent className="py-5 px-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
+            Net Worth
+          </p>
+          <p
+            className={cn(
+              "text-3xl font-bold sm:text-4xl",
+              netWorth >= 0
+                ? "text-primary"
+                : "text-red-500"
+            )}
+          >
+            {formatCurrency(netWorth)}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+              Income {formatCurrency(income)}
+            </span>
+            <span className="flex items-center gap-1">
+              <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+              Expenses {formatCurrency(expenses)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Wallet className="h-3.5 w-3.5 text-primary" />
+              Saved {formatCurrency(saved)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 2: Quick Stats Row */}
+      <div className="grid grid-cols-3 gap-3">
+        <Link href="/accounts">
+          <Card className="h-full hover:bg-muted/30 transition-colors">
+            <CardContent className="py-3 px-3 sm:py-4 sm:px-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+                  Accounts
+                </span>
+              </div>
+              <p className="text-sm font-bold tabular-nums sm:text-lg">
+                {formatCurrency(accountsTotal)}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/goals">
+          <Card className="h-full hover:bg-muted/30 transition-colors">
+            <CardContent className="py-3 px-3 sm:py-4 sm:px-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Target className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+                  Goals
+                </span>
+              </div>
+              <p className="text-sm font-bold tabular-nums sm:text-lg">
+                {formatCurrency(goalsTotalSaved)}
+              </p>
+              <p className="text-[10px] text-muted-foreground sm:text-xs">
+                {goalsActive} active
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/tools/debts">
+          <Card className="h-full hover:bg-muted/30 transition-colors">
+            <CardContent className="py-3 px-3 sm:py-4 sm:px-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+                  Debts
+                </span>
+              </div>
+              <p className="text-sm font-bold tabular-nums sm:text-lg">
+                {formatCurrency(totalDebt)}
+              </p>
+              <p className="text-[10px] text-muted-foreground sm:text-xs">
+                {debtsCount} active
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      {/* Row 2: Breakdown — clickable links to each section */}
-      {breakdown && (
-        <div className="grid grid-cols-3 gap-2">
-          <Link href="/accounts" className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/60 transition-colors">
-            <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              <Wallet className="h-3 w-3 shrink-0" />
-              <span className="truncate">Accounts</span>
+      {/* Section 3: This Month Bar */}
+      {income > 0 && (
+        <Card>
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-muted-foreground">
+                You saved <span className="font-semibold text-foreground">{savingsPercent}%</span> of
+                your income this month
+              </p>
             </div>
-            <p className="text-xs font-semibold tabular-nums sm:text-sm">
-              {formatCurrency(breakdown.inAccounts)}
-            </p>
-          </Link>
-          <Link href="/goals" className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/60 transition-colors">
-            <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              <Target className="h-3 w-3 shrink-0" />
-              <span className="truncate">Goals</span>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+              <div className="flex h-full">
+                <div
+                  className="h-full bg-green-500 transition-all"
+                  style={{
+                    width: `${Math.min(100, savingsPercent)}%`,
+                  }}
+                />
+                <div
+                  className="h-full bg-primary/30 transition-all"
+                  style={{
+                    width: `${Math.min(100, 100 - savingsPercent)}%`,
+                  }}
+                />
+              </div>
             </div>
-            <p className="text-xs font-semibold tabular-nums sm:text-sm">
-              {formatCurrency(breakdown.inGoals)}
-            </p>
-          </Link>
-          <Link href="/budgets" className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/60 transition-colors">
-            <div className="mb-1 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              <DollarSign className="h-3 w-3 shrink-0" />
-              <span className="truncate">Budgets</span>
-            </div>
-            <p className="text-xs font-semibold tabular-nums sm:text-sm">
-              {formatCurrency(breakdown.budgetAllocated)}
-            </p>
-          </Link>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

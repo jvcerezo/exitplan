@@ -77,6 +77,7 @@ export function useAddGoal() {
           deadline: goal.deadline,
           category: goal.category,
           is_completed: false,
+          account_id: goal.account_id ?? null,
         };
 
         await enqueueOfflineMutation({
@@ -89,6 +90,7 @@ export function useAddGoal() {
             current_amount: goal.current_amount,
             deadline: goal.deadline,
             category: goal.category,
+            account_id: goal.account_id ?? null,
           },
         });
 
@@ -216,7 +218,7 @@ export function useAddFundsToGoal() {
 
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       if (!isBrowserOffline()) {
         queryClient.invalidateQueries({ queryKey: ["goals"] });
         queryClient.invalidateQueries({ queryKey: ["goals", "summary"] });
@@ -228,6 +230,20 @@ export function useAddFundsToGoal() {
         queryClient.invalidateQueries({ queryKey: ["transactions", "summary"] });
       }
       toast.success(isBrowserOffline() ? "Goal funding saved offline" : "Funds added to goal");
+
+      // Check if goal is now completed and show celebration toast
+      const goals = queryClient.getQueryData<Goal[]>(["goals"]);
+      if (goals) {
+        const goal = goals.find((g) => g.id === variables.goalId);
+        if (goal) {
+          const newAmount = goal.current_amount + Math.abs(variables.amount);
+          if (newAmount >= goal.target_amount) {
+            setTimeout(() => {
+              toast.success(`Congratulations! You've reached your ${goal.name} goal!`);
+            }, 500);
+          }
+        }
+      }
     },
     onError: (error) => {
       toast.error("Failed to add funds", { description: error.message });

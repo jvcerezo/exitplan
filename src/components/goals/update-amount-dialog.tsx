@@ -66,10 +66,15 @@ export function UpdateAmountDialog({
   const accountCurrencySymbol =
     CURRENCIES.find((currency) => currency.code === selectedAccount?.currency)?.symbol ?? "₱";
 
-  // Default to first account on open
+  // Default to linked account on open, or first account if none linked
   useEffect(() => {
     if (open && activeAccounts.length > 0 && !accountId) {
-      setAccountId(activeAccounts[0].id);
+      const linkedId = goal.account_id;
+      const defaultId =
+        linkedId && activeAccounts.some((a) => a.id === linkedId)
+          ? linkedId
+          : activeAccounts[0].id;
+      setAccountId(defaultId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, activeAccounts.length]);

@@ -451,8 +451,20 @@ CREATE TABLE IF NOT EXISTS public.goals (
   current_amount  numeric(12, 2) DEFAULT 0 NOT NULL,
   deadline        date,
   category        text NOT NULL,
-  is_completed    boolean DEFAULT false NOT NULL
+  is_completed    boolean DEFAULT false NOT NULL,
+  account_id      uuid REFERENCES public.accounts(id) ON DELETE SET NULL
 );
+
+-- Add account_id to existing goals tables (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'goals' AND column_name = 'account_id'
+  ) THEN
+    ALTER TABLE public.goals ADD COLUMN account_id uuid REFERENCES public.accounts(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 DO $$
 BEGIN

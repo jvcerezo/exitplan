@@ -196,9 +196,22 @@ export function useTransactionsSummary() {
     queryKey: ["transactions", "summary"],
     queryFn: async () => {
       const supabase = createClient();
+      const now = new Date();
+
+      // Current month boundaries for income/expense filtering
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString()
+        .split("T")[0];
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        .toISOString()
+        .split("T")[0];
 
       const [txResult, accountResult, goalsResult, budgetsResult, contribResult] = await Promise.all([
-        supabase.from("transactions").select("amount, account_id, category"),
+        supabase
+          .from("transactions")
+          .select("amount, account_id, category")
+          .gte("date", monthStart)
+          .lte("date", monthEnd),
         supabase.from("accounts").select("balance"),
         supabase.from("goals").select("current_amount"),
         supabase.from("budgets").select("amount"),
@@ -216,9 +229,10 @@ export function useTransactionsSummary() {
       const budgets = budgetsResult.data ?? [];
       const paidContributions = contribResult.data ?? [];
 
-      // Exclude transfers from income/expense totals — transfers move money
-      // between accounts but don't represent actual income or spending
-      const nonTransferTx = transactions.filter((t) => t.category !== "transfer");
+      // Exclude transfers and goal funding from income/expense totals
+      const nonTransferTx = transactions.filter(
+        (t) => t.category !== "transfer" && t.category !== "goal_funding"
+      );
 
       const income = nonTransferTx
         .filter((t) => t.amount > 0)
@@ -235,9 +249,6 @@ export function useTransactionsSummary() {
         (sum, a) => sum + Number(a.balance),
         0
       );
-      const unlinkedBalance = transactions
-        .filter((t) => !t.account_id)
-        .reduce((sum, t) => sum + t.amount, 0);
       const goalsTotalSaved = goals.reduce(
         (sum, g) => sum + Number(g.current_amount),
         0
@@ -248,7 +259,7 @@ export function useTransactionsSummary() {
       );
 
       return {
-        balance: Math.round((accountsTotal + goalsTotalSaved + unlinkedBalance) * 100) / 100,
+        balance: Math.round((accountsTotal + goalsTotalSaved) * 100) / 100,
         income: Math.round(income * 100) / 100,
         expenses: Math.round(expenses * 100) / 100,
         breakdown: {

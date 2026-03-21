@@ -177,6 +177,16 @@ export function AddTransactionDialog({
     "Other" as const,
   ];
 
+  // Check if custom category duplicates an existing one (case-insensitive)
+  const customCategoryDuplicate =
+    category === "Other" &&
+    customCategory.trim().length > 0 &&
+    categories.some(
+      (c) =>
+        c !== "Other" &&
+        c.toLowerCase() === customCategory.trim().toLowerCase()
+    );
+
   // Reset on open
   useEffect(() => {
     if (open) {
@@ -401,33 +411,43 @@ export function AddTransactionDialog({
           })}
         </div>
         {category === "Other" && (
-          <div className="flex gap-2">
-            <input
-              value={customCategory}
-              onChange={(e) => setCustomCategory(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && customCategory.trim()) {
-                  e.preventDefault();
-                  saveCustomCategory(customCategory.trim());
-                  setCategory(customCategory.trim());
-                  setCustomCategory("");
-                }
-              }}
-              placeholder="Type a category name, press Enter to save it"
-              className="flex-1 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring"
-            />
-            {customCategory.trim() && (
-              <button
-                type="button"
-                onClick={() => {
-                  saveCustomCategory(customCategory.trim());
-                  setCategory(customCategory.trim());
-                  setCustomCategory("");
+          <div className="space-y-1">
+            <div className="flex gap-2">
+              <input
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && customCategory.trim() && !customCategoryDuplicate) {
+                    e.preventDefault();
+                    saveCustomCategory(customCategory.trim());
+                    setCategory(customCategory.trim());
+                    setCustomCategory("");
+                  }
                 }}
-                className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
-              >
-                Save
+                placeholder="Type a category name, press Enter to save it"
+                className={cn(
+                  "flex-1 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-ring",
+                  customCategoryDuplicate && "border-destructive focus:ring-destructive"
+                )}
+              />
+              {customCategory.trim() && !customCategoryDuplicate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveCustomCategory(customCategory.trim());
+                    setCategory(customCategory.trim());
+                    setCustomCategory("");
+                  }}
+                  className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+                >
+                  Save
               </button>
+            )}
+            </div>
+            {customCategoryDuplicate && (
+              <p className="text-xs text-destructive">
+                This category already exists. Choose it from the list above.
+              </p>
             )}
           </div>
         )}
@@ -667,7 +687,8 @@ export function AddTransactionDialog({
                 disabled={
                   (isRecurring ? addRecurring.isPending : addTransaction.isPending) ||
                   !category ||
-                  !effectiveAccountId
+                  !effectiveAccountId ||
+                  customCategoryDuplicate
                 }
               >
                 {isRecurring
@@ -852,6 +873,7 @@ export function AddTransactionDialog({
                   !isBalanced ||
                   !category ||
                   !allSplitAccountsSelected ||
+                  customCategoryDuplicate ||
                   hasDuplicateSplitAccounts
                 }
               >
