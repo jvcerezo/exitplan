@@ -21,7 +21,9 @@ interface TopCategory {
 }
 
 function computeInsights(transactions: Transaction[]) {
-  const expenses = transactions.filter((tx) => tx.amount < 0 && tx.category !== "transfer");
+  const expenses = transactions.filter(
+    (tx) => tx.amount < 0 && tx.category !== "transfer" && tx.category !== "goal_funding"
+  );
 
   // Category totals with counts
   const categoryData: Record<string, { amount: number; count: number }> = {};
@@ -45,8 +47,10 @@ function computeInsights(transactions: Transaction[]) {
 
   const topCategory = topCategories[0]?.category ?? "N/A";
 
-  // Number of transactions this month (excluding transfers)
-  const transactionCount = transactions.filter((tx) => tx.category !== "transfer").length;
+  // Number of transactions this month (excluding transfers and goal funding)
+  const transactionCount = transactions.filter(
+    (tx) => tx.category !== "transfer" && tx.category !== "goal_funding"
+  ).length;
 
   // Average expense amount
   const avgAmount =

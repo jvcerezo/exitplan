@@ -51,7 +51,9 @@ export function useSafeToSpend() {
       if (budgetResult.error) throw new Error(budgetResult.error.message);
       if (goalFundingResult.error) throw new Error(goalFundingResult.error.message);
 
-      const transactions = (txResult.data ?? []).filter((t) => t.category !== "transfer");
+      const transactions = (txResult.data ?? []).filter(
+        (t) => t.category !== "transfer" && t.category !== "goal_funding"
+      );
       const budgets = budgetResult.data ?? [];
       const goalFundings = goalFundingResult.data ?? [];
 

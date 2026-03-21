@@ -53,9 +53,9 @@ export function useHealthScore() {
         0
       );
 
-      // Exclude transfers from income/expense totals
+      // Exclude transfers and goal funding from income/expense totals
       const nonTransferTx = transactions.filter(
-        (t) => t.category !== "transfer"
+        (t) => t.category !== "transfer" && t.category !== "goal_funding"
       );
 
       const income = nonTransferTx
@@ -75,7 +75,7 @@ export function useHealthScore() {
       // ----- 2. Budget Adherence (20%) -----
       // % of budgets where spending is under the limit; default 50 if no budgets
       const spentByCategory: Record<string, number> = {};
-      for (const tx of transactions) {
+      for (const tx of nonTransferTx) {
         if (tx.amount < 0) {
           const normalizedCat = tx.category.trim().toLowerCase();
           spentByCategory[normalizedCat] =

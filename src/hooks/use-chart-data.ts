@@ -32,6 +32,7 @@ export function useSpendingByCategory() {
         .select("category, amount")
         .lt("amount", 0)
         .neq("category", "transfer")
+        .neq("category", "goal_funding")
         .gte("date", startOfMonth)
         .lte("date", endOfMonth);
 
@@ -212,12 +213,16 @@ export function useSpendingComparison() {
           .from("transactions")
           .select("category, amount")
           .lt("amount", 0)
+          .neq("category", "transfer")
+          .neq("category", "goal_funding")
           .gte("date", currentStart)
           .lte("date", currentEnd),
         supabase
           .from("transactions")
           .select("category, amount")
           .lt("amount", 0)
+          .neq("category", "transfer")
+          .neq("category", "goal_funding")
           .gte("date", prevStart)
           .lte("date", prevEnd),
       ]);
@@ -272,7 +277,9 @@ export function useMonthlyTrend() {
 
       const { data, error } = await supabase
         .from("transactions")
-        .select("amount, date")
+        .select("amount, date, category")
+        .neq("category", "transfer")
+        .neq("category", "goal_funding")
         .gte("date", startDate);
 
       if (error) throw new Error(error.message);
