@@ -741,6 +741,11 @@ export default function SettingsPage() {
             label="Morning summary"
             description="Get a daily summary of what's due today at 9:00 AM"
           />
+          <SettingsToggleRow
+            storageKey="exitplan_daily_log_reminder"
+            label="Daily log reminder"
+            description="Remind you at 7:00 PM to log your expenses if you haven't logged any today"
+          />
         </CardContent>
       </Card>
       )}

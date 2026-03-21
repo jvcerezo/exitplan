@@ -12,6 +12,7 @@ import { RecurringProcessor } from "@/components/transactions/recurring-processo
 import { useAchievements } from "@/hooks/use-achievements";
 import { useAutoContributions } from "@/hooks/use-auto-contributions";
 import { usePaymentNotifications } from "@/hooks/use-payment-notifications";
+import { useDailyLogReminder } from "@/hooks/use-daily-log-reminder";
 
 function AppShellInner({ children }: { children: ReactNode }) {
   useKeyboardShortcuts();
@@ -19,6 +20,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   useAchievements();
   useAutoContributions();
   usePaymentNotifications();
+  useDailyLogReminder();
 
   const queryClient = useQueryClient();
   const { isOnline } = useOfflineStatus();

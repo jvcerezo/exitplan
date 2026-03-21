@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Terms and conditions for using Sandalan.",
 };
 
-const LAST_UPDATED = "March 18, 2026";
+const LAST_UPDATED = "March 21, 2026";
 
 export default function TermsPage() {
   return (
@@ -185,7 +185,18 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">16. Contact</h2>
+            <h2 className="text-lg font-semibold">16. Dispute Resolution</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Before filing a formal legal claim, you agree to first contact us at{" "}
+              <a href="mailto:support@sandalan.com" className="text-primary hover:underline">support@sandalan.com</a>{" "}
+              to attempt to resolve the dispute informally. We will endeavor to resolve any dispute within
+              30 days. If the dispute cannot be resolved informally, it shall be submitted to the appropriate
+              courts of the Philippines.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">17. Contact</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               For questions about these Terms, contact us at{" "}
               <a href="mailto:support@sandalan.com" className="text-primary hover:underline">support@sandalan.com</a>.

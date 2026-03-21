@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "How Sandalan collects, uses, and protects your personal information under the Data Privacy Act of 2012.",
 };
 
-const LAST_UPDATED = "March 18, 2026";
+const LAST_UPDATED = "March 21, 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -66,6 +66,7 @@ export default function PrivacyPolicyPage() {
                     ["Tax records", "Income tax computation and filing history"],
                     ["Government contribution records (SSS, PhilHealth, Pag-IBIG)", "Contribution history tracking"],
                     ["Adulting checklist progress", "Tracking completion of life milestones and tasks"],
+                    ["Device token (mobile app)", "Sending push notifications for bill reminders and alerts"],
                     ["Browser type (when filing bug reports)", "Diagnosing and fixing technical issues"],
                   ].map(([data, purpose]) => (
                     <tr key={data}>
@@ -152,10 +153,16 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">6. On-Device Storage</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Sandalan stores a cached copy of your data on your device using browser storage (IndexedDB) to
-              enable offline access and faster load times. This data remains on your device and is not shared
-              with any third party. You can clear this cached data at any time by clearing the app&apos;s data in
-              your device settings or browser.
+              Sandalan stores a cached copy of your data on your device to enable offline access and faster
+              load times. On the web app, this uses browser storage (IndexedDB). On the mobile app, data is
+              stored in a local SQLite database on your device. This data remains on your device and is not
+              shared with any third party. You can clear this cached data at any time by clearing the
+              app&apos;s data in your device settings or browser.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <strong>Guest Mode:</strong> When using the app in guest mode, all data is stored locally on
+              your device only. No data is uploaded to our servers. Guest mode data is never synced to the
+              cloud unless you create an account.
             </p>
           </section>
 
