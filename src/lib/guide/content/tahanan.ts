@@ -203,4 +203,164 @@ export const TAHANAN_GUIDES: Guide[] = [
       },
     ],
   },
+  {
+    slug: "buying-first-vehicle",
+    title: "Buying Your First Vehicle",
+    description:
+      "Motorcycle or car? New or secondhand? A practical guide to vehicle ownership costs, financing, and insurance in the Philippines.",
+    category: "financial-literacy",
+    readTimeMinutes: 6,
+    toolLinks: [
+      { href: "/goals", label: "Set Vehicle Fund Goal" },
+      { href: "/budgets", label: "Set Up Vehicle Budget" },
+    ],
+    sections: [
+      {
+        heading: "Motorcycle vs car: the real math",
+        content:
+          "Motorcycles dominate Filipino roads — sales grew 7% in 2024 to 1.68 million units. For most young professionals, a motorcycle makes more financial sense. But let's compare honestly:",
+        items: [
+          "Motorcycle (scooter, 125cc): ₱60,000–₱120,000 new. Monthly costs: ₱1,500–₱3,000 (gas, maintenance, insurance)",
+          "Motorcycle (manual, 150cc+): ₱80,000–₱180,000 new. Monthly costs: ₱2,000–₱4,000",
+          "Car (subcompact, new): ₱700,000–₱1,000,000. Monthly costs: ₱10,000–₱20,000 (amortization, gas, insurance, parking, maintenance)",
+          "Car (secondhand): ₱250,000–₱500,000. Monthly costs: ₱5,000–₱12,000 (no amortization if paid cash, but higher maintenance)",
+          "Rule of thumb: If your monthly take-home is under ₱40,000, a car will eat your savings alive. A motorcycle gets you mobile at 1/10th the cost",
+        ],
+        callout: {
+          type: "tip",
+          text: "65% of motorcycle sales in the Philippines are automatic scooters. For commuting, you don't need a big bike — a Honda Click or Yamaha Mio is fuel-efficient, easy to ride, and cheap to maintain.",
+        },
+      },
+      {
+        heading: "New vs secondhand",
+        content:
+          "Both have trade-offs. Here's what to consider:",
+        items: [
+          "New vehicles: Full warranty (3-5 years for cars, 1-2 years for motorcycles), predictable maintenance schedule, latest safety features. But you pay a 15-20% depreciation the moment you drive off the lot",
+          "Secondhand vehicles: 30-50% cheaper, no depreciation hit. But you inherit someone else's problems. Always: check service records, do a test drive, and have a trusted mechanic inspect it before you buy",
+          "Secondhand red flags: Salvaged title, flood damage (check for waterline stains under carpets), odometer rollback, no original OR/CR documents",
+          "Where to buy secondhand: Facebook Marketplace, Carousell, Autodeal, Tsikot (cars); FB motorcycle groups (bikes). Avoid buying from someone who can't show you the original OR/CR",
+        ],
+      },
+      {
+        heading: "Financing: cash vs installment",
+        content:
+          "If you can pay cash, do it. If you must finance, know the real cost:",
+        items: [
+          "Bank auto loans: 5-15% interest per year, 3-5 year terms. Requires credit history and proof of income",
+          "Dealer financing: Convenient but typically higher rates (8-18%). Read the fine print on early termination penalties",
+          "Motorcycle financing: Casa (dealer) installments are common. Down payment: 10-30%. Monthly: ₱2,500–₱5,000 for 12-36 months",
+          "Total cost of financing: A ₱800,000 car at 10% interest over 5 years = ₱1,020,000 total. You're paying ₱220,000 just for the privilege of borrowing",
+          "The 20/4/10 rule: Put 20% down, finance for no more than 4 years, and total vehicle costs (payment + insurance + gas) should not exceed 10% of your gross income",
+        ],
+      },
+      {
+        heading: "Registration, insurance, and legal requirements",
+        content:
+          "Owning a vehicle comes with mandatory annual costs:",
+        items: [
+          "LTO registration: Renewed annually. Cars: ₱1,500–₱5,000. Motorcycles: ₱500–₱1,500. Check your OR/CR expiry date",
+          "CTPL (Compulsory Third-Party Liability) insurance: Required by law. Cars: ₱600–₱1,800/year. Motorcycles: ₱300–₱600/year",
+          "Comprehensive insurance (optional but recommended): Covers theft, fire, natural disasters, and own damage. Cars: ₱15,000–₱40,000/year depending on value",
+          "Emission testing: Required for registration renewal. ₱300–₱600",
+          "Driver's license: Student permit (₱535) → Non-Pro (₱585 for 5 years) or Pro (₱745 for 3 years). Motorcycle license is a separate restriction code",
+          "Helmet law: Riders and passengers must wear standard helmets (ICC-certified). Fines: ₱1,500 (first offense) to ₱10,000 (third)",
+        ],
+        callout: {
+          type: "warning",
+          text: "Never buy a vehicle without verifying the OR/CR (Official Receipt and Certificate of Registration) from LTO. Stolen vehicles and fake documents are common in the secondhand market. Check at the LTO office or through their online verification system.",
+        },
+      },
+      {
+        heading: "The true cost of ownership",
+        content:
+          "Before buying, calculate the total annual cost — not just the purchase price:",
+        items: [
+          "Motorcycle: Purchase + registration + CTPL + gas + maintenance + helmet/gear = ₱15,000–₱30,000/year (excluding purchase)",
+          "Car: Purchase + registration + CTPL + comprehensive insurance + gas + maintenance + parking + toll = ₱80,000–₱200,000/year (excluding purchase/amortization)",
+          "Set up a 'Vehicle Fund' goal in Sandalan and auto-save for annual costs monthly so you're never caught off guard by registration or repair bills",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "digital-safety-privacy",
+    title: "Digital Safety & Protecting Your Accounts",
+    description:
+      "86% of Filipino youth encounter online safety issues. Secure your financial accounts, protect your data, and know your rights under the Data Privacy Act.",
+    category: "financial-literacy",
+    readTimeMinutes: 5,
+    toolLinks: [
+      { href: "/guide/tahanan", label: "View Stage Progress" },
+    ],
+    sections: [
+      {
+        heading: "Your digital life is your financial life",
+        content:
+          "Everything is online now: GCash, Maya, online banking, SSS, PhilHealth, Pag-IBIG portals, BIR eFiling. If someone gains access to your accounts, they can drain your money, steal your identity, or take out loans in your name. 86% of Filipino youth encounter online safety issues, yet only 3% report to authorities. Prevention is everything.",
+      },
+      {
+        heading: "Secure your financial accounts",
+        content:
+          "Do this today — it takes 30 minutes and could save you hundreds of thousands of pesos:",
+        items: [
+          "Enable 2FA (Two-Factor Authentication) on every financial account: GCash, Maya, BDO, BPI, UnionBank, Metrobank — all support this",
+          "Use unique passwords for each account. 'Juan123' for everything means losing one password loses everything",
+          "Use a password manager: Bitwarden (free) or 1Password (paid) generates and stores strong passwords so you don't have to remember them",
+          "Set up login notifications: Most banks can text or email you when your account is accessed. Enable this immediately",
+          "Check your GCash/Maya transaction history weekly — catch unauthorized transactions early",
+          "Never save passwords in your browser on shared or public computers",
+          "Use biometric login (fingerprint/face ID) on your banking apps — it's faster AND more secure than passwords",
+        ],
+        callout: {
+          type: "tip",
+          text: "A strong password is at least 12 characters with a mix of letters, numbers, and symbols. Better yet: use a passphrase like 'AdoboNiLola#2025!' — easy to remember, extremely hard to crack.",
+        },
+      },
+      {
+        heading: "Protecting your personal data",
+        content:
+          "Your personal information has value — scammers use it for identity theft, SIM swaps, and loan fraud:",
+        items: [
+          "Never post photos of your IDs, credit cards, or boarding passes on social media — they contain sensitive information that can be used for fraud",
+          "Review your Facebook/Instagram privacy settings: Set profile to 'Friends Only,' hide your phone number, email, and birthday from public view",
+          "Be careful with online forms: Only provide personal data to verified, legitimate websites. Check for HTTPS and look up the company before sharing info",
+          "Shred or burn physical documents with personal info before throwing them away — dumpster diving for identity theft is real",
+          "When apps request permissions (contacts, photos, location), ask: 'Does this app actually need this to function?' If not, deny it",
+          "Regularly check if your email has been in a data breach at haveibeenpwned.com — if it has, change that password immediately",
+        ],
+      },
+      {
+        heading: "Your rights under the Data Privacy Act",
+        content:
+          "RA 10173 (Data Privacy Act of 2012) gives you powerful rights that most Filipinos don't know about:",
+        items: [
+          "Right to be informed: Companies must tell you what data they collect and why",
+          "Right to access: You can request a copy of all personal data a company holds about you",
+          "Right to correct: You can demand correction of inaccurate data",
+          "Right to erasure: You can request deletion of your personal data when it's no longer needed",
+          "Right to file a complaint: Report violations to the National Privacy Commission (privacy.gov.ph)",
+          "Companies that mishandle your data face fines of ₱500,000–₱5,000,000 and imprisonment of 1-6 years",
+        ],
+        callout: {
+          type: "ph-law",
+          text: "Under RA 10173, you have the right to know what personal data companies collect about you, and you can demand they delete it. This includes lending apps that harvest your contacts and photos. Report violators to the NPC at privacy.gov.ph.",
+        },
+      },
+      {
+        heading: "What to do if your accounts are compromised",
+        content:
+          "Act within the first hour — speed matters:",
+        items: [
+          "Immediately change the password of the compromised account from a different, secure device",
+          "Contact the bank/e-wallet's fraud department. GCash: 2882. Maya: (02) 8845-7788. BDO: (02) 8631-8000. BPI: (02) 889-10000",
+          "If your SIM was swapped (phone suddenly has no signal): Call your telco immediately to block the number and issue a new SIM",
+          "File a police report — this is required documentation for disputing fraudulent transactions",
+          "Check all linked accounts: If your email was compromised, every account using that email is at risk",
+          "Freeze your credit: Contact CIC (creditinfo.gov.ph) to flag your record if you suspect identity theft",
+          "Enable additional security on all accounts and change passwords for everything that used the same password",
+        ],
+      },
+    ],
+  },
 ];

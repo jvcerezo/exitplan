@@ -236,4 +236,301 @@ export const PUNDASYON_GUIDES: Guide[] = [
       },
     ],
   },
+  {
+    slug: "side-hustle-guide",
+    title: "The Filipino Side Hustle Guide",
+    description:
+      "65% of Gen Z Filipinos have a side job. Here's how to start one, manage the money, and avoid the common traps of gig work.",
+    category: "career",
+    readTimeMinutes: 6,
+    toolLinks: [
+      { href: "/transactions", label: "Track Side Hustle Income" },
+      { href: "/goals", label: "Set Income Goal" },
+    ],
+    sections: [
+      {
+        heading: "Why a side hustle isn't optional anymore",
+        content:
+          "With rising commodity costs and salaries that can't keep up, 65% of Filipino Gen Zs have a part-time or full-time side job. The digital economy contributed ₱2.25 trillion (8.5% of GDP) in 2024. The opportunity is real — but so are the risks if you don't manage it properly.",
+      },
+      {
+        heading: "Best side hustles for Filipinos in 2025",
+        content:
+          "These are ranked by accessibility, earning potential, and flexibility:",
+        items: [
+          "Virtual Assistant (VA): ₱15,000–₱60,000+/month. Low barrier to entry, high demand from international clients. Start on OnlineJobs.ph, Upwork, or Fiverr",
+          "Freelance writing/copywriting: ₱5,000–₱40,000/month. If you write well in English, global clients are hiring. Build samples on Medium or a free blog",
+          "Graphic design: ₱10,000–₱50,000/month. Tools: Canva (free), Figma (free). Sell services on Fiverr or local FB groups",
+          "Social media management: ₱8,000–₱30,000/month. Many small PH businesses need help with Facebook/IG. Approach local shops directly",
+          "Online tutoring: ₱10,000–₱25,000/month. Teach English to Korean/Japanese students through platforms like Cambly, Preply, or local tutorial centers",
+          "E-commerce reselling: Start with dropshipping on Shopee/Lazada or buy-and-sell from Divisoria/Taytay. Capital needed: ₱3,000–₱10,000",
+          "Content creation: YouTube, TikTok, blogging. Slow build but can become a full income stream. Filipino content creators are in demand globally",
+        ],
+      },
+      {
+        heading: "Managing side hustle money",
+        content:
+          "The #1 mistake: mixing side hustle income with your salary. Separate them from day one:",
+        items: [
+          "Open a dedicated bank account or e-wallet for side hustle income only",
+          "Track all side hustle income in Sandalan as a separate category — know exactly what you're earning",
+          "Set aside 30% of every payment for taxes (if you earn over ₱250,000/year, you owe BIR)",
+          "Don't lifestyle-inflate — treat side hustle money as acceleration for your financial goals (EF, investments, debt payoff), not extra spending money",
+          "Reinvest in your hustle: better equipment, courses, or tools that increase your earning capacity",
+        ],
+        callout: {
+          type: "warning",
+          text: "If your side hustle income exceeds ₱250,000/year, you must register with BIR and file taxes. See our Freelancer Tax Guide for the step-by-step process.",
+        },
+      },
+      {
+        heading: "The risks nobody talks about",
+        content:
+          "Gig work has real downsides that full-time employment covers:",
+        items: [
+          "No employer-paid SSS, PhilHealth, or Pag-IBIG — you must contribute voluntarily if freelancing full-time",
+          "No HMO coverage — budget for your own health insurance or HMO plan",
+          "Income instability — feast-or-famine cycles are normal. This is why your emergency fund must be larger (6 months minimum)",
+          "Burnout: Working a day job + side hustle = 60-80 hour weeks. Set boundaries. A burnt-out freelancer earns zero",
+          "Client non-payment: Stick to established platforms (Upwork, OnlineJobs.ph) that have payment protection. Avoid direct deals with strangers unless you get partial payment upfront",
+          "Blurred work-life boundaries: Set a schedule and stick to it. 'Always available' is not sustainable",
+        ],
+      },
+      {
+        heading: "Going full-time freelance",
+        content:
+          "Before quitting your day job to freelance full-time, hit these milestones:",
+        items: [
+          "Side hustle income consistently matches or exceeds your salary for 6+ months",
+          "Emergency fund covers 6-12 months of living expenses (longer runway because income is irregular)",
+          "You're already registered with BIR and filing taxes properly",
+          "You have voluntary SSS, PhilHealth, and Pag-IBIG contributions set up",
+          "You have at least 2-3 regular clients (don't depend on a single income source)",
+          "You have health coverage (HMO or private insurance) independent of any employer",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "debt-management-young-adults",
+    title: "Escaping the Debt Trap",
+    description:
+      "Credit cards, lending apps, salary loans — debt spirals fast when you're young. Here's how to take control before it controls you.",
+    category: "financial-literacy",
+    readTimeMinutes: 5,
+    toolLinks: [
+      { href: "/transactions", label: "Track Expenses" },
+      { href: "/goals", label: "Set Debt Payoff Goal" },
+    ],
+    sections: [
+      {
+        heading: "How young Filipinos fall into debt",
+        content:
+          "It starts innocently: a credit card for 'emergencies,' a lending app for a gadget, a salary loan to cover petsa de peligro. Then the minimum payments pile up, interest compounds, and suddenly 30-40% of your salary goes to debt servicing. 44% of Filipinos fear they can't pay their bills in full. If that's you, there's a way out.",
+      },
+      {
+        heading: "The debt inventory — face the numbers",
+        content:
+          "You can't fix what you don't measure. List every debt you owe:",
+        items: [
+          "Credit card balances: Note the interest rate (typically 24-36% per year or 2-3% per month)",
+          "Lending app loans: GCash/Maya loans, Tala, Cashalo, Home Credit — check the effective interest rate, not just the 'service fee'",
+          "Salary loans: SSS, Pag-IBIG, company salary loans — usually lower interest but still debt",
+          "Personal loans from family or friends — no interest but carries emotional weight",
+          "For each debt: write the total balance, monthly payment, interest rate, and due date",
+        ],
+        callout: {
+          type: "tip",
+          text: "Many lending apps advertise a 'small service fee' that translates to 50-100%+ annual interest. A P10,000 loan with a P1,500 'processing fee' paid over 3 months is effectively 60% annual interest. Always calculate the true cost.",
+        },
+      },
+      {
+        heading: "Two strategies to pay off debt",
+        content:
+          "Pick one approach and commit to it:",
+        items: [
+          "Avalanche method (mathematically optimal): Pay minimums on all debts, then throw every extra peso at the debt with the HIGHEST interest rate. Once that's paid off, redirect that payment to the next highest. Saves the most money on interest",
+          "Snowball method (psychologically powerful): Pay minimums on all debts, then throw every extra peso at the SMALLEST balance first. The quick wins keep you motivated. Best if you've tried and failed to stick to a plan before",
+          "Either method: NEVER pay just the minimum on credit cards. At 2% minimum payment on a P50,000 balance at 3%/month interest, it takes 7+ years to pay off and you'll pay P40,000+ in interest alone",
+        ],
+      },
+      {
+        heading: "Emergency moves for a debt crisis",
+        content:
+          "If you're already drowning — payments are late, collectors are calling — take these steps:",
+        items: [
+          "Stop borrowing immediately. Cut up credit cards if you have to. Delete lending apps",
+          "Call your credit card company and ask for a restructuring plan. Most banks will reduce interest or extend terms if you ask before you miss payments",
+          "For lending app harassment: RA 10173 (Data Privacy Act) prohibits lending apps from accessing your contacts or shaming you publicly. Report to the National Privacy Commission (privacy.gov.ph)",
+          "SSS calamity/salary loans have lower rates — consider using one to consolidate higher-interest debt (but only if you stop creating new debt)",
+          "Negotiate with family lenders: Be honest about your situation and propose a realistic repayment schedule",
+        ],
+        callout: {
+          type: "ph-law",
+          text: "Lending apps that harass you, contact people in your phonebook, or publicly shame you are violating the Data Privacy Act (RA 10173) and Lending Company Regulation Act (RA 9474). Report them to the National Privacy Commission and SEC.",
+        },
+      },
+      {
+        heading: "Staying debt-free after payoff",
+        content:
+          "Paying off debt is only half the battle. Stay out:",
+        items: [
+          "Build your emergency fund to prevent borrowing for unexpected expenses",
+          "Use credit cards only for purchases you can pay in FULL by the due date. Never revolve a balance",
+          "The 24-hour rule: Want something expensive? Wait 24 hours before buying. Most impulse urges pass",
+          "Automate your savings on payday — what you don't see, you won't spend",
+          "Track every peso in Sandalan. Awareness alone reduces spending by 10-15%",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "family-financial-boundaries",
+    title: "Setting Financial Boundaries with Family",
+    description:
+      "Pamilya muna culture is beautiful — until it drains your savings. How to support family without sacrificing your future.",
+    category: "family",
+    readTimeMinutes: 5,
+    toolLinks: [
+      { href: "/budgets", label: "Set Up Support Budget" },
+      { href: "/transactions", label: "Track Family Support" },
+    ],
+    sections: [
+      {
+        heading: "The peso and the pamilya",
+        content:
+          "Filipino family culture is built on mutual support — 'utang na loob' and the expectation that breadwinners provide. This is beautiful when balanced. It becomes destructive when you give until you have nothing left for yourself: no savings, no emergency fund, no retirement. 44% of Filipinos cite 'providing financial help to others' as a top reason they can't meet their own financial goals. You can love your family AND protect your future.",
+      },
+      {
+        heading: "The fixed monthly amount approach",
+        content:
+          "The most effective strategy: set a fixed monthly amount for family support. Not open-ended. Not 'whatever they need.' A specific number.",
+        items: [
+          "Calculate what you can actually afford: Total income minus (survival costs + savings + insurance) = maximum family support",
+          "Be honest with your family about the number: 'I can give ₱5,000 every month, reliably, every 15th.' This is more helpful than random large amounts followed by nothing",
+          "Set up an automatic transfer on payday so it's consistent and doesn't feel like a monthly negotiation",
+          "Anything beyond the fixed amount should be an emergency-only exception — not a regular expansion",
+        ],
+        callout: {
+          type: "tip",
+          text: "Frame it as responsibility, not rejection: 'I'm setting this amount so I can support the family consistently for years — not just for a few months before I burn out.' Long-term reliability is more valuable than short-term generosity.",
+        },
+      },
+      {
+        heading: "How to say no without guilt",
+        content:
+          "Saying no to family feels impossible in Filipino culture. But saying yes to everything means saying no to your own future. Here are scripts that work:",
+        items: [
+          "Sibling asking for tuition: 'I can contribute ₱X per semester, but they should also apply for scholarships and part-time work. I'm happy to help with the application.'",
+          "Parent asking for a large amount: 'I don't have that available right now, but I can increase my monthly support by ₱X for the next 3 months.'",
+          "Relative asking for a loan: 'I have a personal rule — I don't lend money to family because it ruins relationships. But I can help you find a low-interest option.'",
+          "Wedding/event contributions: 'I can contribute ₱X. I'd love to help in other ways too — maybe I can help with planning/coordination.'",
+          "General: Redirect to help that isn't cash — advice, time, connections, helping them find work, teaching them financial literacy",
+        ],
+      },
+      {
+        heading: "When family members are financially irresponsible",
+        content:
+          "This is the hardest situation: you're being asked to fund someone else's poor decisions. Here's the uncomfortable truth:",
+        items: [
+          "Giving money to someone who doesn't budget is funding a pattern, not solving a problem",
+          "Offer to teach them financial skills instead — help them set up a budget, understand their expenses, find better-paying work",
+          "For parents nearing retirement: Sit down and map out their SSS pension, PhilHealth, Pag-IBIG. Help them understand what they'll receive vs. what they'll need",
+          "For siblings: Invest in their capability (education, training, job placement) rather than their consumption",
+          "It's okay to say: 'I love you AND I need to take care of my own financial security too.' Both can be true",
+        ],
+      },
+      {
+        heading: "Building a family support plan",
+        content:
+          "Create a sustainable system:",
+        items: [
+          "Budget a 'Family Support' category in Sandalan — track it separately from your personal expenses",
+          "Set up a small 'family emergency fund' (₱10,000–₱20,000) for true emergencies so you don't raid your own EF",
+          "Have a family meeting about finances — normalize the conversation. Many Filipino families never discuss money openly",
+          "Encourage family members to register for SSS, PhilHealth, and Pag-IBIG (even as voluntary members) — this reduces their future dependency on you",
+          "Remember: the best thing you can do for your family's long-term security is to be financially stable yourself. You can't pour from an empty cup",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "mental-health-on-a-budget",
+    title: "Mental Health on a Budget",
+    description:
+      "Depression among young Filipinos doubled since 2013. Here's where to find affordable mental health support — and why it's not 'maarte' to ask for help.",
+    category: "health",
+    readTimeMinutes: 5,
+    toolLinks: [
+      { href: "/guide/pundasyon", label: "View Stage Progress" },
+    ],
+    sections: [
+      {
+        heading: "This is an adulting essential",
+        content:
+          "Depression among Filipinos aged 15-24 doubled from 9.6% to 20.9% between 2013 and 2021. 60% of Filipino employees report burnout. The Philippines has only ~1,600 psychologists and ~500 psychiatrists for 110+ million people. Financial stress, job insecurity, family pressure, and the cultural taboo around 'hiya' make it worse. Mental health isn't a luxury — it's infrastructure. You can't build a career, save money, or manage relationships if your brain is running on empty.",
+        callout: {
+          type: "info",
+          text: "RA 11036 (Philippine Mental Health Act) guarantees your right to accessible mental health services. Your employer is required to develop workplace policies that promote mental health. You can't be discriminated against for seeking treatment.",
+        },
+      },
+      {
+        heading: "Recognizing burnout and depression",
+        content:
+          "These aren't just 'pagod' or 'tamad.' They're signals your mental health needs attention:",
+        items: [
+          "Persistent exhaustion that sleep doesn't fix — you wake up tired",
+          "Losing interest in things you used to enjoy (hobbies, friends, food)",
+          "Difficulty concentrating at work — tasks that used to be easy feel impossible",
+          "Irritability or emotional numbness — snapping at coworkers, feeling nothing",
+          "Physical symptoms: headaches, stomachaches, chest tightness without medical cause",
+          "Feeling like a burden to your family or that things won't get better",
+          "Using alcohol, social media, or shopping as coping mechanisms more than before",
+        ],
+        callout: {
+          type: "warning",
+          text: "If you're having thoughts of self-harm or suicide, contact the National Center for Mental Health Crisis Hotline: 0917-899-8727 (USAP) or 989 (toll-free for all networks). You are not alone.",
+        },
+      },
+      {
+        heading: "Affordable therapy options in the Philippines",
+        content:
+          "Professional help doesn't have to cost ₱3,500 per session. Here are accessible options:",
+        items: [
+          "PhilHealth-accredited mental health services: The Konsulta Package covers consultations at accredited primary care facilities — check with your nearest health center",
+          "Government hospitals: PGH, NCMH (National Center for Mental Health), and public hospitals offer psychiatric services on a sliding scale — as low as ₱50–₱200/session",
+          "University clinics: UP PGH, UST Hospital, DLSU, Ateneo — many offer free or low-cost counseling to the public, not just students",
+          "Teletherapy platforms: Empath (empath.ph), Saya (talksaya.com), BetterHelp (international) — sessions from ₱1,000–₱2,500. Convenient and stigma-free",
+          "Community mental health centers: Your LGU may have community-based mental health services under RA 11036. Ask your barangay health center",
+          "Employee assistance programs (EAP): Many companies provide free counseling sessions. Check with HR — many employees don't know this benefit exists",
+          "NGOs: In Touch Community Services (intropsych.com), Natasha Goulbourn Foundation — offer free counseling and support groups",
+        ],
+      },
+      {
+        heading: "Daily habits that protect your mental health",
+        content:
+          "Professional help is ideal, but these daily practices make a real difference — especially when sessions aren't accessible:",
+        items: [
+          "Sleep: 7-8 hours is non-negotiable. Chronic sleep deprivation mimics depression symptoms. Set a consistent bedtime",
+          "Movement: 30 minutes of any physical activity (walking, dancing, gym, basketball) releases endorphins. It's free therapy",
+          "Social connection: Isolation amplifies depression. Schedule regular time with friends — even a 15-minute phone call helps",
+          "Limit social media: Comparing your life to curated feeds increases anxiety. Set a daily time limit (Screen Time on iOS, Digital Wellbeing on Android)",
+          "Financial stress management: A huge chunk of Filipino anxiety comes from money worries. Having a budget and tracking your finances in Sandalan reduces this uncertainty",
+          "Say no to 'toxic productivity': Rest is not laziness. You don't need a side hustle on top of a side hustle. Burnout isn't a badge of honor",
+        ],
+      },
+      {
+        heading: "Talking about it in a Filipino context",
+        content:
+          "The biggest barrier isn't access — it's stigma. 'Hiya' culture makes many Filipinos suffer in silence. Some reframes that help:",
+        items: [
+          "Going to therapy is like going to a doctor for a stomachache — your brain is an organ too",
+          "You don't need to be 'crazy' to see a therapist. Most clients are regular people dealing with stress, grief, or transitions",
+          "Talking to a professional isn't 'maarte' or 'mayabang' — it takes more courage to ask for help than to pretend you're fine",
+          "You wouldn't tell someone with diabetes to just 'pray harder.' Mental health conditions are medical, not moral failures",
+          "Start with someone you trust if professional help feels too big: a friend, a mentor, a school counselor, or a priest/pastor",
+        ],
+      },
+    ],
+  },
 ];
