@@ -43,8 +43,19 @@ jobs:
           sed -i "s/^version: .*/version: ${VERSION_NAME}+${NEW}/" pubspec.yaml
           echo "Building with versionCode=${NEW}"
 
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          SUPABASE_URL=${{ secrets.SANDALAN_SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SANDALAN_SUPABASE_ANON_KEY }}
+          GOOGLE_WEB_CLIENT_ID=${{ secrets.SANDALAN_GOOGLE_WEB_CLIENT_ID }}
+          EOF
+
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Generate envied code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Validate secrets
         run: |
