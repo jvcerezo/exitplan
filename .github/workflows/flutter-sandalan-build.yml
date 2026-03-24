@@ -45,11 +45,13 @@ jobs:
 
       - name: Create .env file
         run: |
-          cat > .env << EOF
+          cat > .env << ENVEOF
           SUPABASE_URL=${{ secrets.SANDALAN_SUPABASE_URL }}
           SUPABASE_ANON_KEY=${{ secrets.SANDALAN_SUPABASE_ANON_KEY }}
           GOOGLE_WEB_CLIENT_ID=${{ secrets.SANDALAN_GOOGLE_WEB_CLIENT_ID }}
-          EOF
+          ENVEOF
+          # Strip leading whitespace from each line
+          sed -i 's/^[[:space:]]*//' .env
 
       - name: Install dependencies
         run: flutter pub get
@@ -71,12 +73,13 @@ jobs:
 
       - name: Create key.properties
         run: |
-          cat > android/app/key.properties << EOF
+          cat > android/app/key.properties << KEYEOF
           storePassword=${{ secrets.SANDALAN_STORE_PASSWORD }}
           keyPassword=${{ secrets.SANDALAN_KEY_PASSWORD }}
           keyAlias=${{ secrets.SANDALAN_KEY_ALIAS }}
           storeFile=../../android/keystore/sandalan.jks
-          EOF
+          KEYEOF
+          sed -i 's/^[[:space:]]*//' android/app/key.properties
 
       - name: Build release APK
         run: flutter build apk --release
