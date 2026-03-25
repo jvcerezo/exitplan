@@ -1371,11 +1371,17 @@ BEGIN
   DELETE FROM public.tax_records WHERE user_id = current_user_id;
   DELETE FROM public.investments WHERE user_id = current_user_id;
   DELETE FROM public.bug_reports WHERE user_id = current_user_id;
+  DELETE FROM public.admin_users WHERE user_id = current_user_id;
   DELETE FROM public.profiles WHERE id = current_user_id;
   DELETE FROM public.user_settings WHERE id = current_user_id;
 
   -- Delete the auth user (also removes all linked identities: email, Google, etc.)
   DELETE FROM auth.users WHERE id = current_user_id;
+
+  -- Verify deletion actually happened
+  IF EXISTS (SELECT 1 FROM auth.users WHERE id = current_user_id) THEN
+    RAISE EXCEPTION 'Failed to delete auth user %. This may require manual admin deletion.', current_user_id;
+  END IF;
 END;
 $$;
 
