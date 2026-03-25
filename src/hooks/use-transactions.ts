@@ -11,6 +11,15 @@ import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { invalidateFinancialQueries } from "@/lib/query-utils";
 import { toast } from "sonner";
 import type { Transaction, TransactionInsert } from "@/lib/types/database";
+import {
+  sanitizeAmount,
+  sanitizeLabel,
+  sanitizeDescription,
+  sanitizeDate,
+  sanitizeTags,
+  sanitizeUUID,
+  requireUUID,
+} from "@/lib/sanitize";
 
 function isMissingRpcFunctionError(error: {
   message?: string;
@@ -276,7 +285,24 @@ export function useAddTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (transaction: TransactionInsert) => {
+    mutationFn: async (raw: TransactionInsert) => {
+      // Sanitize all inputs before touching DB or offline store
+      const transaction: TransactionInsert = {
+        ...raw,
+        amount: sanitizeAmount(raw.amount),
+        category: sanitizeLabel(raw.category),
+        description: sanitizeDescription(raw.description),
+        date: sanitizeDate(raw.date),
+        currency: raw.currency?.trim().slice(0, 10) || "PHP",
+        account_id: sanitizeUUID(raw.account_id),
+        transfer_id: sanitizeUUID(raw.transfer_id),
+        split_group_id: sanitizeUUID(raw.split_group_id),
+        tags: sanitizeTags(raw.tags),
+        attachment_path: raw.attachment_path?.trim().slice(0, 500) || null,
+      };
+
+      if (!transaction.category) throw new Error("Category is required");
+
       if (isBrowserOffline()) {
         if (!transaction.account_id) {
           throw new Error("Select an account before adding this transaction");
@@ -373,9 +399,19 @@ export function useUpdateTransaction() {
 
   return useMutation({
     mutationFn: async ({
-      id,
-      ...updates
+      id: rawId,
+      ...rawUpdates
     }: Partial<TransactionInsert> & { id: string }) => {
+      const id = requireUUID(rawId, "transaction ID")!;
+      // Sanitize only the fields being updated
+      const updates: Partial<TransactionInsert> = { ...rawUpdates };
+      if (updates.amount !== undefined) updates.amount = sanitizeAmount(updates.amount);
+      if (updates.category !== undefined) updates.category = sanitizeLabel(updates.category);
+      if (updates.description !== undefined) updates.description = sanitizeDescription(updates.description);
+      if (updates.date !== undefined) updates.date = sanitizeDate(updates.date);
+      if (updates.tags !== undefined) updates.tags = sanitizeTags(updates.tags);
+      if (updates.account_id !== undefined) updates.account_id = sanitizeUUID(updates.account_id);
+
       if (isBrowserOffline()) {
         const existing = findCachedTransaction(queryClient, id);
 
@@ -449,7 +485,22 @@ export function useImportTransactions() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (transactions: TransactionInsert[]) => {
+    mutationFn: async (rawTransactions: TransactionInsert[]) => {
+      // Sanitize all imported rows
+      const transactions = rawTransactions.map((raw) => ({
+        ...raw,
+        amount: sanitizeAmount(raw.amount),
+        category: sanitizeLabel(raw.category) || "uncategorized",
+        description: sanitizeDescription(raw.description),
+        date: sanitizeDate(raw.date),
+        currency: raw.currency?.trim().slice(0, 10) || "PHP",
+        account_id: sanitizeUUID(raw.account_id),
+        transfer_id: sanitizeUUID(raw.transfer_id),
+        split_group_id: sanitizeUUID(raw.split_group_id),
+        tags: sanitizeTags(raw.tags),
+        attachment_path: raw.attachment_path?.trim().slice(0, 500) || null,
+      }));
+
       if (isBrowserOffline()) {
         await enqueueOfflineMutation({
           id: createOfflineId("mutation"),

@@ -9,6 +9,7 @@ import {
 import { createOfflineId, isBrowserOffline } from "@/lib/offline/utils";
 import { toast } from "sonner";
 import type { Account, AccountInsert } from "@/lib/types/database";
+import { sanitizeName, sanitizeAmount, sanitizeEnum, ACCOUNT_TYPES } from "@/lib/sanitize";
 
 export function useAccounts() {
   return useQuery({
@@ -78,14 +79,23 @@ export function useAddAccount() {
   }
 
   return useMutation({
-    mutationFn: async (account: AccountInsert) => {
+    mutationFn: async (raw: AccountInsert) => {
+      // Sanitize all inputs
+      const name = sanitizeName(raw.name);
+      if (!name) throw new Error("Account name is required");
+      const type = sanitizeEnum(raw.type, ACCOUNT_TYPES, "account type");
+      const currency = raw.currency?.trim().slice(0, 10) || "PHP";
+      const balance = sanitizeAmount(raw.balance ?? 0);
+
+      const account: AccountInsert = { ...raw, name, type, currency, balance };
+
       if (isBrowserOffline()) {
         const localId = createOfflineId("account");
         const offlineAccount: Account = {
           id: localId,
           created_at: new Date().toISOString(),
           user_id: "offline",
-          name: account.name.trim(),
+          name: account.name,
           type: account.type,
           currency: account.currency,
           balance: Number(account.balance ?? 0),

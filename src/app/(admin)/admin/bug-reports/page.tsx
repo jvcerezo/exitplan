@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { BugReportSeverity, BugReportStatus } from "@/lib/types/database";
+import { requireUUID } from "@/lib/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -112,10 +113,8 @@ async function updateBugStatus(formData: FormData) {
 
   const adminUserId = await assertAdmin();
 
-  const bugId = String(formData.get("bug_id") || "").trim();
+  const bugId = requireUUID(String(formData.get("bug_id") || ""), "bug report id");
   const status = String(formData.get("status") || "") as BugReportStatus;
-
-  if (!bugId) throw new Error("Missing bug report id");
   if (!STATUS_OPTIONS.includes(status)) throw new Error("Invalid status");
 
   const admin = createAdminClient();

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizeEmail, sanitizePassword, sanitizeName } from "@/lib/sanitize";
 
 function normalizeOrigin(value: string) {
   try {
@@ -56,9 +57,19 @@ async function getBaseUrl() {
 }
 
 export async function signUp(formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const fullName = formData.get("fullName") as string;
+  let email: string;
+  let password: string;
+  let fullName: string;
+
+  try {
+    email = sanitizeEmail(formData.get("email") as string);
+    password = sanitizePassword(formData.get("password") as string);
+    fullName = sanitizeName(formData.get("fullName") as string);
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+
+  if (!fullName) return { error: "Name is required." };
 
   const supabase = await createClient();
   const baseUrl = await getBaseUrl();
@@ -97,11 +108,22 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signIn(formData: FormData) {
+  let email: string;
+  let password: string;
+
+  try {
+    email = sanitizeEmail(formData.get("email") as string);
+    password = formData.get("password") as string;
+    if (!password) return { error: "Password is required." };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithPassword({
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
+    email,
+    password,
   });
 
   if (error) {

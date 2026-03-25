@@ -1,7 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET() {
+// Simple in-memory rate limiter: max 3 exports per user per 5 minutes
+const exportTimestamps = new Map<string, number[]>();
+const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes
+const RATE_LIMIT_MAX = 3;
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const timestamps = (exportTimestamps.get(userId) ?? []).filter(
+    (t) => now - t < RATE_LIMIT_WINDOW
+  );
+  if (timestamps.length >= RATE_LIMIT_MAX) return false;
+  timestamps.push(now);
+  exportTimestamps.set(userId, timestamps);
+  return true;
+}
+
+export async function GET(_request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -9,6 +25,13 @@ export async function GET() {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json(
+      { error: "Too many export requests. Please wait a few minutes." },
+      { status: 429 }
+    );
   }
 
   const [
