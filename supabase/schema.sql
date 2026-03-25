@@ -1340,6 +1340,31 @@ GRANT EXECUTE ON FUNCTION public.complete_onboarding() TO authenticated;
 
 
 -- ============================================
+-- Delete own account (called by mobile app)
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.delete_own_account()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  current_user_id uuid := auth.uid();
+BEGIN
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- Delete the auth user — cascades to all public tables and linked identities
+  DELETE FROM auth.users WHERE id = current_user_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.delete_own_account() TO authenticated;
+
+
+-- ============================================
 -- Avatars storage bucket
 -- Run once in the Supabase Dashboard → Storage tab,
 -- or paste in the SQL editor after enabling pg_storage.
