@@ -36,8 +36,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
   }
 
-  // Use admin client to delete the user — cascades to all data
   const admin = createAdminClient();
+
+  // Sign out all sessions first — stale sessions can block GoTrue deletion
+  await admin.auth.admin.signOut(user.id, "global").catch(() => {});
+
+  // Delete the user — cascades to all data and linked identities
   const { error } = await admin.auth.admin.deleteUser(user.id);
 
   if (error) {
