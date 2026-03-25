@@ -716,6 +716,7 @@ DECLARE
   target_goal_id uuid;
   total_funded numeric(12, 2);
   goal_target_amount numeric(12, 2);
+  goal_exists boolean;
 BEGIN
   affected_goal_id := COALESCE(NEW.goal_id, OLD.goal_id);
 
@@ -728,6 +729,13 @@ BEGIN
     FROM (VALUES (NEW.goal_id), (OLD.goal_id)) AS candidate(goal_id)
     WHERE goal_id IS NOT NULL
   LOOP
+    -- Skip if goal no longer exists (e.g. during CASCADE delete)
+    SELECT EXISTS (SELECT 1 FROM public.goals WHERE id = target_goal_id)
+      INTO goal_exists;
+    IF NOT goal_exists THEN
+      CONTINUE;
+    END IF;
+
     SELECT COALESCE(SUM(amount), 0)
       INTO total_funded
     FROM public.goal_fundings
