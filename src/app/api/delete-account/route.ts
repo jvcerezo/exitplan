@@ -38,16 +38,21 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // Sign out all sessions first — stale sessions can block GoTrue deletion
-  await admin.auth.admin.signOut(user.id, "global").catch(() => {});
+  // Sign out all sessions first — stale sessions can block GoTrue deletion.
+  // admin.signOut(jwt, scope) takes the JWT token, NOT the user ID.
+  try {
+    await admin.auth.admin.signOut(token, "global");
+  } catch {
+    // Continue even if session cleanup fails
+  }
 
   // Delete the user — cascades to all data and linked identities
   const { error } = await admin.auth.admin.deleteUser(user.id);
 
   if (error) {
-    console.error("Error deleting account:", error);
+    console.error("Error deleting account:", error.message, error);
     return NextResponse.json(
-      { error: "Could not delete account. Please try again." },
+      { error: `Could not delete account: ${error.message}` },
       { status: 500 }
     );
   }
