@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+// Simple in-memory rate limiter: max 3 requests per IP per 15 minutes
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 3;
+const RATE_WINDOW_MS = 15 * 60 * 1000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 /**
  * POST /api/delete-account
  *
@@ -9,9 +26,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * The Flutter app calls this because Supabase hosted instances don't allow
  * direct DELETE FROM auth.users via SQL/RPC.
  *
+ * Rate limited: 3 requests per IP per 15 minutes.
  * Expects: Authorization: Bearer <supabase-access-token>
  */
 export async function POST(request: NextRequest) {
+  // Rate limit check
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      { status: 429 }
+    );
+  }
+
   const authHeader = request.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Missing authorization" }, { status: 401 });
