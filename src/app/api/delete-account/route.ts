@@ -38,23 +38,56 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // Sign out all sessions first — stale sessions can block GoTrue deletion.
-  // admin.signOut(jwt, scope) takes the JWT token, NOT the user ID.
+  // 1. Clear all sessions and refresh tokens first — GoTrue chokes
+  //    on deleteUser when there are many active sessions.
   try {
-    await admin.auth.admin.signOut(token, "global");
+    await admin.rpc("cleanup_before_delete", { target_user_id: user.id });
   } catch {
-    // Continue even if session cleanup fails
+    // If RPC doesn't exist yet, try manual cleanup via admin API
+    try {
+      await admin.auth.admin.signOut(token);
+    } catch {
+      // Continue — deleteUser might still work
+    }
   }
 
-  // Delete the user — cascades to all data and linked identities
+  // 2. Delete the user — cascades to all data and linked identities
   const { error } = await admin.auth.admin.deleteUser(user.id);
 
   if (error) {
     console.error("Error deleting account:", error.message, error);
-    return NextResponse.json(
-      { error: `Could not delete account: ${error.message}` },
-      { status: 500 }
-    );
+
+    // If GoTrue fails, try direct SQL cleanup as last resort
+    try {
+      // Clear all user data from public tables
+      const tables = [
+        "transactions", "goal_fundings", "goals", "budgets", "accounts",
+        "contributions", "debts", "bills", "insurance_policies", "investments",
+        "bug_reports", "recurring_transactions", "exchange_rates",
+        "adulting_checklist_progress",
+      ];
+      for (const table of tables) {
+        await admin.from(table).delete().eq("user_id", user.id);
+      }
+      await admin.from("profiles").delete().eq("id", user.id);
+      await admin.from("admin_users").delete().eq("user_id", user.id);
+
+      // Retry deleteUser after clearing data
+      const { error: retryError } = await admin.auth.admin.deleteUser(user.id);
+      if (retryError) {
+        console.error("Retry delete failed:", retryError.message);
+        return NextResponse.json(
+          { error: `Could not delete account after cleanup: ${retryError.message}` },
+          { status: 500 }
+        );
+      }
+    } catch (cleanupErr) {
+      console.error("Cleanup failed:", cleanupErr);
+      return NextResponse.json(
+        { error: `Could not delete account: ${error.message}` },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json({ success: true });
