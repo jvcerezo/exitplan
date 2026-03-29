@@ -174,6 +174,11 @@ BEGIN
     RAISE EXCEPTION 'Account not found';
   END IF;
 
+  -- Prevent negative balances on expense transactions
+  IF p_amount < 0 AND (account_balance + p_amount) < 0 THEN
+    RAISE EXCEPTION 'Insufficient balance (available: %)', account_balance;
+  END IF;
+
   UPDATE public.accounts
   SET balance = ROUND((balance + p_amount)::numeric, 2)
   WHERE id = p_account_id;
