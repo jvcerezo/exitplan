@@ -4,60 +4,70 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { BugReportSeverity, BugReportStatus } from "@/lib/types/database";
+import type { BugReportStatus } from "@/lib/types/database";
 import { requireUUID } from "@/lib/sanitize";
 
 export const dynamic = "force-dynamic";
 
 const STATUS_OPTIONS: BugReportStatus[] = ["open", "in_progress", "resolved"];
-const SEVERITY_OPTIONS: Array<BugReportSeverity | "all"> = [
-  "all",
-  "critical",
-  "high",
-  "medium",
-  "low",
-];
 
 function prettyStatus(status: BugReportStatus) {
-  return status === "in_progress" ? "In Progress" : status === "open" ? "Open" : "Resolved";
-}
-
-function prettySeverity(severity: BugReportSeverity) {
-  return severity.charAt(0).toUpperCase() + severity.slice(1);
-}
-
-function severityClass(severity: string) {
-  switch (severity) {
-    case "critical":
-      return "text-red-600";
-    case "high":
-      return "text-amber-600";
-    case "medium":
-      return "text-blue-600";
-    default:
-      return "text-muted-foreground";
-  }
+  return status === "in_progress"
+    ? "In Progress"
+    : status === "open"
+      ? "Open"
+      : "Resolved";
 }
 
 function statusBadgeClass(status: BugReportStatus) {
-  if (status === "resolved") return "text-emerald-700";
-  if (status === "in_progress") return "text-amber-700";
-  return "text-red-600";
+  if (status === "resolved") return "bg-emerald-100 text-emerald-700";
+  if (status === "in_progress") return "bg-amber-100 text-amber-700";
+  return "bg-red-100 text-red-700";
+}
+
+/** Parse feedback type from title like "[suggestion] ⭐⭐⭐ App Feedback" */
+function parseFeedbackType(title: string): {
+  type: "bug" | "suggestion" | "praise" | "unknown";
+  rating: number;
+  cleanTitle: string;
+} {
+  const typeMatch = title.match(/^\[(bug|suggestion|praise)\]\s*/i);
+  const type = typeMatch
+    ? (typeMatch[1].toLowerCase() as "bug" | "suggestion" | "praise")
+    : "unknown";
+  let cleaned = typeMatch ? title.slice(typeMatch[0].length) : title;
+
+  const starMatch = cleaned.match(/^(⭐+)\s*/);
+  const rating = starMatch ? starMatch[1].length : 0;
+  cleaned = starMatch ? cleaned.slice(starMatch[0].length) : cleaned;
+
+  return { type, rating, cleanTitle: cleaned || title };
+}
+
+function typeBadgeClass(type: string) {
+  if (type === "bug") return "bg-red-100 text-red-700";
+  if (type === "suggestion") return "bg-blue-100 text-blue-700";
+  if (type === "praise") return "bg-emerald-100 text-emerald-700";
+  return "bg-gray-100 text-gray-700";
+}
+
+function typeIcon(type: string) {
+  if (type === "bug") return "🐛";
+  if (type === "suggestion") return "💡";
+  if (type === "praise") return "💜";
+  return "📋";
 }
 
 function getInitials(name: string) {
   const cleaned = name.trim();
   if (!cleaned) return "U";
-  return cleaned
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("") || "U";
-}
-
-function firstSearchParam(value: string | string[] | undefined) {
-  if (Array.isArray(value)) return value[0] ?? "";
-  return value ?? "";
+  return (
+    cleaned
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "U"
+  );
 }
 
 async function getBugReports() {
@@ -65,7 +75,9 @@ async function getBugReports() {
 
   const { data: reports, error } = await admin
     .from("bug_reports")
-    .select("id, created_at, user_id, title, description, severity, status, page_path, user_agent")
+    .select(
+      "id, created_at, user_id, title, description, severity, status, page_path, user_agent"
+    )
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -77,16 +89,26 @@ async function getBugReports() {
         .from("profiles")
         .select("id, full_name, email")
         .in("id", userIds)
-    : { data: [] as { id: string; full_name: string | null; email: string | null }[] };
+    : {
+        data: [] as {
+          id: string;
+          full_name: string | null;
+          email: string | null;
+        }[],
+      };
 
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
   return (reports ?? []).map((report) => {
     const profile = profileById.get(report.user_id);
+    const parsed = parseFeedbackType(report.title);
     return {
       ...report,
       reporterName: profile?.full_name || "Unknown",
       reporterEmail: profile?.email || null,
+      feedbackType: parsed.type,
+      rating: parsed.rating,
+      cleanTitle: parsed.cleanTitle,
     };
   });
 }
@@ -113,7 +135,10 @@ async function updateBugStatus(formData: FormData) {
 
   const adminUserId = await assertAdmin();
 
-  const bugId = requireUUID(String(formData.get("bug_id") || ""), "bug report id");
+  const bugId = requireUUID(
+    String(formData.get("bug_id") || ""),
+    "bug report id"
+  );
   const status = String(formData.get("status") || "") as BugReportStatus;
   if (!STATUS_OPTIONS.includes(status)) throw new Error("Invalid status");
 
@@ -136,116 +161,271 @@ async function updateBugStatus(formData: FormData) {
   revalidatePath("/admin");
 }
 
-export default async function AdminBugReportsPage() {
+export default async function AdminBugReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   await assertAdmin();
   const reports = await getBugReports();
+  const params = await searchParams;
+  const filterStatus = (typeof params.status === "string" ? params.status : "all") as string;
+  const filterType = (typeof params.type === "string" ? params.type : "all") as string;
+  const search = (typeof params.q === "string" ? params.q : "") as string;
 
-  return <AdminBugReportsView reports={reports} />;
+  return (
+    <AdminBugReportsView
+      reports={reports}
+      filterStatus={filterStatus}
+      filterType={filterType}
+      search={search}
+    />
+  );
 }
 
 function AdminBugReportsView({
   reports,
+  filterStatus,
+  filterType,
+  search,
 }: {
   reports: Awaited<ReturnType<typeof getBugReports>>;
+  filterStatus: string;
+  filterType: string;
+  search: string;
 }) {
+  // Apply filters
+  let filtered = reports;
+  if (filterStatus !== "all") {
+    filtered = filtered.filter((r) => r.status === filterStatus);
+  }
+  if (filterType !== "all") {
+    filtered = filtered.filter((r) => r.feedbackType === filterType);
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.description ?? "").toLowerCase().includes(q) ||
+        r.reporterName.toLowerCase().includes(q) ||
+        (r.reporterEmail ?? "").toLowerCase().includes(q)
+    );
+  }
+
   const totalReports = reports.length;
-  const openCount = reports.filter((report) => report.status === "open").length;
+  const openCount = reports.filter((r) => r.status === "open").length;
   const inProgressCount = reports.filter(
-    (report) => report.status === "in_progress"
+    (r) => r.status === "in_progress"
   ).length;
-  const resolvedCount = reports.filter(
-    (report) => report.status === "resolved"
+  const bugCount = reports.filter((r) => r.feedbackType === "bug").length;
+  const suggestionCount = reports.filter(
+    (r) => r.feedbackType === "suggestion"
   ).length;
-  const criticalOpenCount = reports.filter(
-    (report) => report.severity === "critical" && report.status !== "resolved"
-  ).length;
+  const praiseCount = reports.filter((r) => r.feedbackType === "praise").length;
+  const avgRating =
+    reports.filter((r) => r.rating > 0).length > 0
+      ? (
+          reports
+            .filter((r) => r.rating > 0)
+            .reduce((sum, r) => sum + r.rating, 0) /
+          reports.filter((r) => r.rating > 0).length
+        ).toFixed(1)
+      : "—";
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Bug Reports</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Feedback & Bug Reports
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Triage incoming issues and inspect reporter context fast.
+          User feedback, bug reports, and suggestions from the app.
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard title="Total Reports" value={totalReports} />
-        <SummaryCard title="Open" value={openCount} tone="critical" />
-        <SummaryCard title="In Progress" value={inProgressCount} tone="warn" />
-        <SummaryCard title="Critical Open" value={criticalOpenCount} tone="critical" />
+      {/* KPI Cards */}
+      <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
+        <KpiCard label="Total" value={totalReports} />
+        <KpiCard label="Open" value={openCount} tone="critical" />
+        <KpiCard label="In Progress" value={inProgressCount} tone="warn" />
+        <KpiCard label="Avg Rating" value={avgRating} />
       </div>
 
+      {/* Type breakdown */}
+      <div className="grid gap-3 grid-cols-3">
+        <Card>
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl">🐛</p>
+            <p className="text-lg font-bold text-red-600">{bugCount}</p>
+            <p className="text-[11px] text-muted-foreground">Bugs</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl">💡</p>
+            <p className="text-lg font-bold text-blue-600">
+              {suggestionCount}
+            </p>
+            <p className="text-[11px] text-muted-foreground">Suggestions</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl">💜</p>
+            <p className="text-lg font-bold text-emerald-600">
+              {praiseCount}
+            </p>
+            <p className="text-[11px] text-muted-foreground">Praise</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-3">
+          <form method="GET" className="flex flex-wrap gap-2 items-center">
+            <input
+              type="text"
+              name="q"
+              placeholder="Search feedback..."
+              defaultValue={search}
+              className="h-9 rounded-md border bg-background px-3 text-sm flex-1 min-w-[200px]"
+            />
+            <select
+              name="status"
+              defaultValue={filterStatus}
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+            >
+              <option value="all">All Status</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+            </select>
+            <select
+              name="type"
+              defaultValue={filterType}
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+            >
+              <option value="all">All Types</option>
+              <option value="bug">Bugs</option>
+              <option value="suggestion">Suggestions</option>
+              <option value="praise">Praise</option>
+            </select>
+            <button
+              type="submit"
+              className="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              Filter
+            </button>
+            {(filterStatus !== "all" ||
+              filterType !== "all" ||
+              search) && (
+              <a
+                href="/admin/bug-reports"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </a>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Reports list */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">All Reports ({reports.length})</CardTitle>
+          <CardTitle className="text-base">
+            {filtered.length === reports.length
+              ? `All Feedback (${filtered.length})`
+              : `Filtered (${filtered.length} of ${reports.length})`}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {reports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No bug reports yet.</p>
+          {filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              No feedback matches your filters.
+            </p>
           ) : (
-            <div className="space-y-4">
-              {reports.map((report) => (
-                <div key={report.id} className="rounded-lg border border-border/60 p-4 space-y-3">
+            <div className="space-y-3">
+              {filtered.map((report) => (
+                <div
+                  key={report.id}
+                  className="rounded-lg border border-border/60 p-4 space-y-3"
+                >
+                  {/* Header row */}
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-2 flex items-center gap-2">
-                        <Badge variant="secondary" className={`text-[11px] ${statusBadgeClass(report.status as BugReportStatus)}`}>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      {/* Badges */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge
+                          className={`text-[11px] ${typeBadgeClass(report.feedbackType)}`}
+                        >
+                          {typeIcon(report.feedbackType)}{" "}
+                          {report.feedbackType === "unknown"
+                            ? "Other"
+                            : report.feedbackType.charAt(0).toUpperCase() +
+                              report.feedbackType.slice(1)}
+                        </Badge>
+                        <Badge
+                          className={`text-[11px] ${statusBadgeClass(report.status as BugReportStatus)}`}
+                        >
                           {prettyStatus(report.status as BugReportStatus)}
                         </Badge>
-                        <Badge variant="outline" className={`text-[11px] ${severityClass(report.severity)}`}>
-                          {prettySeverity(report.severity as BugReportSeverity)}
-                        </Badge>
+                        {report.rating > 0 && (
+                          <span className="text-sm">
+                            {"⭐".repeat(report.rating)}
+                          </span>
+                        )}
                         <span className="text-[11px] text-muted-foreground">
-                          {new Date(report.created_at).toLocaleDateString("en-PH", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                          {new Date(report.created_at).toLocaleDateString(
+                            "en-PH",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
                         </span>
                       </div>
 
-                      <p className="font-semibold leading-tight">{report.title}</p>
-                      <p className="mt-2 text-sm whitespace-pre-wrap break-words">{report.description}</p>
+                      {/* Message */}
+                      {report.description && (
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                          {report.description}
+                        </p>
+                      )}
 
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        <div className="rounded-md border bg-muted/20 p-2.5">
-                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Reporter</p>
-                          <div className="mt-1 flex items-start gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
-                              {getInitials(report.reporterName)}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium">{report.reporterName}</p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {report.reporterEmail ?? "No email on profile"}
-                              </p>
-                              <p className="truncate text-[11px] text-muted-foreground/80">
-                                ID: {report.user_id}
-                              </p>
-                            </div>
-                          </div>
+                      {/* Reporter */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
+                          {getInitials(report.reporterName)}
                         </div>
-
-                        <div className="rounded-md border bg-muted/20 p-2.5">
-                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Environment</p>
-                          <p className="mt-1 truncate text-xs text-muted-foreground">
-                            Page: {report.page_path || "(not provided)"}
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground/80">
-                            UA: {report.user_agent || "(not provided)"}
-                          </p>
-                        </div>
+                        <span className="text-xs font-medium">
+                          {report.reporterName}
+                        </span>
+                        {report.reporterEmail && (
+                          <span className="text-xs text-muted-foreground">
+                            {report.reporterEmail}
+                          </span>
+                        )}
                       </div>
                     </div>
 
+                    {/* Status update */}
                     <div className="shrink-0">
-                      <form action={updateBugStatus} className="space-y-2">
-                        <input type="hidden" name="bug_id" value={report.id} />
+                      <form action={updateBugStatus} className="space-y-1.5">
+                        <input
+                          type="hidden"
+                          name="bug_id"
+                          value={report.id}
+                        />
                         <select
                           name="status"
                           defaultValue={report.status}
-                          className="h-9 rounded-md border bg-background px-3 text-sm"
+                          className="h-8 rounded-md border bg-background px-2 text-xs"
                         >
                           {STATUS_OPTIONS.map((status) => (
                             <option key={status} value={status}>
@@ -255,7 +435,7 @@ function AdminBugReportsView({
                         </select>
                         <button
                           type="submit"
-                          className="h-9 w-full rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+                          className="h-8 w-full rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90"
                         >
                           Save
                         </button>
@@ -268,45 +448,25 @@ function AdminBugReportsView({
           )}
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Status Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-md border p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Open</p>
-              <p className="mt-1 text-lg font-semibold text-red-600">{openCount}</p>
-            </div>
-            <div className="rounded-md border p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">In Progress</p>
-              <p className="mt-1 text-lg font-semibold text-amber-600">{inProgressCount}</p>
-            </div>
-            <div className="rounded-md border p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Resolved</p>
-              <p className="mt-1 text-lg font-semibold text-emerald-600">{resolvedCount}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
 
-function SummaryCard({
-  title,
+function KpiCard({
+  label,
   value,
   tone,
 }: {
-  title: string;
-  value: number;
+  label: string;
+  value: number | string;
   tone?: "warn" | "critical";
 }) {
   return (
     <Card>
       <CardContent className="p-3">
-        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{title}</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
         <p
           className={`mt-1 text-xl font-bold ${
             tone === "critical"
