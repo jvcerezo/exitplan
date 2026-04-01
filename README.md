@@ -1,140 +1,135 @@
-This is a [Next.js](https://nextjs.org) project for `Sandalan`, a personal finance tracker focused on budgeting, goals, transactions, and financial freedom planning.
+# Sandalan — Web App & Admin Panel
 
-## Google Play Release (Capacitor)
+Next.js web application for Sandalan. Serves as:
+1. **Web app** — full personal finance tracker (same features as Flutter app)
+2. **Admin panel** — user management, feedback triage, analytics
+3. **API routes** — exchange rates, receipt OCR, data export, feedback webhook
 
-For Play deployment, use **Capacitor hosted mode** (recommended for this app because it uses Next API routes like `/api/exchange-rates`).
+## Tech Stack
 
-### Prerequisites
-
-- A deployed HTTPS URL for the app (example: `https://app.sandalan.com`)
-- JDK installed and `JAVA_HOME` configured
-- Android Studio SDK + build tools installed
-- Signing keystore configured in Android Studio/Gradle before final release
-
-### 1) Set release environment
-
-```bash
-CAP_SERVER_URL=https://your-deployed-app-url
-```
-
-On Windows PowerShell:
-
-```powershell
-$env:CAP_SERVER_URL="https://your-deployed-app-url"
-```
-
-### 2) Sync Capacitor Android project
-
-```bash
-npm run mobile:android:hosted
-```
-
-### 3) Build release bundle (AAB)
-
-```powershell
-Set-Location "android"
-.\gradlew.bat bundleRelease
-```
-
-Release output:
-- `android/app/build/outputs/bundle/release/app-release.aab`
-
-### 4) Configure signing for Google Play (required)
-
-Set these values as Gradle properties (recommended in `%USERPROFILE%\.gradle\gradle.properties`) or environment variables:
-
-- `SANDALAN_UPLOAD_STORE_FILE` (path to `.jks`)
-- `SANDALAN_UPLOAD_STORE_PASSWORD`
-- `SANDALAN_UPLOAD_KEY_ALIAS`
-- `SANDALAN_UPLOAD_KEY_PASSWORD`
-
-PowerShell example:
-
-```powershell
-$env:SANDALAN_UPLOAD_STORE_FILE="C:\keys\sandalan-upload.jks"
-$env:SANDALAN_UPLOAD_STORE_PASSWORD="your_store_password"
-$env:SANDALAN_UPLOAD_KEY_ALIAS="upload"
-$env:SANDALAN_UPLOAD_KEY_PASSWORD="your_key_password"
-```
-
-Without these values, the app can still sync/build in development, but it is **not publish-ready** for Google Play.
-
-### Important Notes
-
-- `mobile:*:static` scripts rely on Next static export and can fail when server API routes are required.
-- For Play release, keep `CAP_SERVER_URL` as `https://...`.
-- `CAP_ALLOW_HTTP=true` is for local testing only.
-- Java/JDK is required when building Android bundles locally with Gradle.
-
-### CI Option (No local Java needed)
-
-You can build Play-ready AABs in GitHub Actions using `.github/workflows/android-play-aab.yml`.
-
-Add these repository secrets:
-
-- `CAP_SERVER_URL` (deployed HTTPS app URL)
-- `ANDROID_UPLOAD_KEYSTORE_BASE64` (base64-encoded `.jks` file)
-- `SANDALAN_UPLOAD_STORE_PASSWORD`
-- `SANDALAN_UPLOAD_KEY_ALIAS`
-- `SANDALAN_UPLOAD_KEY_PASSWORD`
-
-How to create `ANDROID_UPLOAD_KEYSTORE_BASE64` locally (PowerShell):
-
-```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\keys\sandalan-upload.jks")) | Set-Clipboard
-```
-
-Then paste clipboard content into the GitHub secret value.
-
-To run the workflow:
-
-1. Push your code to GitHub.
-2. Go to **Actions** → **Android Play AAB**.
-3. Click **Run workflow**.
-4. Download artifacts from the workflow run:
-	- `app-release-aab` (for Google Play upload)
-	- `app-release-apk` (for direct tester install)
-
-This path is recommended if you want to avoid local Java/Gradle setup.
-
-## Offline Support
-
-The current offline rollout plan is documented in `docs/offline-strategy.md`.
-
-- Phase 1 includes cached reads, an offline banner, and service worker-based route fallback.
-- The next phase adds queued offline writes and sync recovery.
+- **Next.js 16** / React 19
+- **Supabase** — auth, database, RLS, admin functions
+- **TailwindCSS 4** — styling
+- **shadcn/ui** — component library
+- **Capacitor 8** — Android wrapper (hosted mode)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook
+WEBHOOK_SECRET=your-webhook-secret
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/
+    (admin)/admin/          # Admin panel (protected by is_admin_user RPC)
+      page.tsx              #   Dashboard overview (50+ metrics)
+      users/page.tsx        #   User management
+      bug-reports/page.tsx  #   Feedback triage (bug/suggestion/praise)
+      adulting/page.tsx     #   Adulting hub analytics
+    (app)/                  # Main app routes (protected by auth)
+      dashboard/            #   Financial dashboard
+      guide/                #   Life stage guide
+      budgets/              #   Budget management
+      tools/                #   Financial tools
+      settings/             #   User settings
+    (auth)/auth/            # Auth callback
+    api/                    # API routes
+      exchange-rates/       #   PHP exchange rates (24hr cache)
+      export-data/          #   GDPR/DPA data export
+      receipts/extract/     #   OCR receipt extraction (OCR.Space)
+      delete-account/       #   Account deletion
+      webhooks/new-feedback/ # Discord webhook for feedback
+    privacy/                # Privacy policy page
+    terms/                  # Terms of service page
+  components/               # React components by feature
+  hooks/                    # Custom hooks (accounts, transactions, budgets, etc.)
+  lib/
+    supabase/               # Supabase clients (browser, server, middleware, admin)
+    types/database.ts       # TypeScript types for all DB tables
+    constants.ts            # Rates, categories, currencies
+supabase/
+  schema.sql                # Main DB schema
+  adulting_tables.sql       # Contributions + tax tables
+  subscriptions.sql         # Premium billing table
+docs/
+  ADMIN.md                  # Admin panel documentation
+  offline-strategy.md       # Offline architecture (5 phases)
+  alpha-play-readiness-audit.md # Play Store readiness assessment
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Admin Panel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See [docs/ADMIN.md](docs/ADMIN.md) for full documentation.
 
-## Deploy on Vercel
+**Access**: `https://exitplan-tau.vercel.app/admin`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4 pages:
+- **Overview** — KPIs, user activity, data health, signups
+- **Users** — full user listing with activity metrics
+- **Bug Reports** — feedback triage with search, filtering, status updates
+- **Adulting Hub** — adoption metrics for contributions, tax, debts, insurance, bills
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## API Routes
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/exchange-rates` | GET | PHP exchange rates (cached 24hr) |
+| `/api/export-data` | POST | GDPR/DPA compliant data export |
+| `/api/receipts/extract` | POST | OCR receipt text extraction |
+| `/api/delete-account` | DELETE | Full account deletion |
+| `/api/webhooks/new-feedback` | POST | Discord notification on new feedback |
+
+## Deployment
+
+### Web (Vercel)
+
+Push to `main` branch — auto-deploys to `exitplan-tau.vercel.app`.
+
+### Android (Capacitor Hosted Mode)
+
+For Google Play builds using Capacitor:
+
+```bash
+# Set deployed URL
+$env:CAP_SERVER_URL="https://exitplan-tau.vercel.app"
+
+# Sync Capacitor
+npm run mobile:android:hosted
+
+# Build AAB
+cd android
+.\gradlew.bat bundleRelease
+```
+
+See the [Flutter app's DEPLOYMENT.md](../sandalan-android/docs/DEPLOYMENT.md) for the current primary Android build process (native Flutter, not Capacitor).
+
+## Supabase Migrations
+
+| File | Purpose | Run when |
+|------|---------|----------|
+| `supabase/schema.sql` | Core tables + RPC functions | Initial setup |
+| `supabase/adulting_tables.sql` | Contributions + tax_records | Initial setup |
+| `supabase/subscriptions.sql` | Premium subscriptions table | Before billing goes live |
+
+## Documentation
+
+- [Admin Panel](docs/ADMIN.md)
+- [Offline Strategy](docs/offline-strategy.md)
+- [Play Readiness Audit](docs/alpha-play-readiness-audit.md)
