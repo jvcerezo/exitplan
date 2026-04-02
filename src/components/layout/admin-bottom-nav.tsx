@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, ArrowLeft, Bug, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Users, ArrowLeft, Bug, GraduationCap, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNavItems = [
@@ -10,6 +10,7 @@ const adminNavItems = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/adulting", label: "Adulting", icon: GraduationCap },
   { href: "/admin/bug-reports", label: "Bugs", icon: Bug },
+  { href: "/admin/dev-notes", label: "Notes", icon: Megaphone },
   { href: "/dashboard", label: "Back", icon: ArrowLeft },
 ];
 

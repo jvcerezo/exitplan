@@ -9,6 +9,7 @@ import {
   Shield,
   Bug,
   GraduationCap,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const adminNavItems = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/adulting", label: "Adulting Hub", icon: GraduationCap },
   { href: "/admin/bug-reports", label: "Bug Reports", icon: Bug },
+  { href: "/admin/dev-notes", label: "Notes & Roadmap", icon: Megaphone },
 ];
 
 export function AdminSidebar() {
