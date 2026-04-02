@@ -138,7 +138,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Onboarding enforcement for non-onboarding protected routes
-  if (user && !isAdminRoute(pathname) && pathname !== "/onboarding") {
+  // Skip public routes (landing page, privacy, terms) — they should always be accessible
+  if (user && !isAdminRoute(pathname) && pathname !== "/onboarding" && !isPublicRoute(pathname)) {
     const profile = await getProfile();
 
     if (profile && !profile.has_completed_onboarding) {
