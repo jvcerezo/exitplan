@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 function normalizeSiteUrl(value: string) {
   if (!value) {
-    return "https://exitplan.app";
+    return "https://sandalan.app";
   }
 
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
@@ -18,7 +18,7 @@ export const siteConfig = {
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL ||
     process.env.VERCEL_URL ||
-    "https://exitplan.app"
+    "https://sandalan.app"
   ),
   locale: "en_PH",
   language: "en-PH",

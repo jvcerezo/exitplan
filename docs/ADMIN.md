@@ -2,7 +2,7 @@
 
 ## Access
 
-- **URL**: `https://exitplan-tau.vercel.app/admin`
+- **URL**: `https://sandalan.app/admin`
 - **Requirement**: User must be in the `admin_users` Supabase table
 - **Auth**: Same Supabase auth as the main app — login with your admin account
 

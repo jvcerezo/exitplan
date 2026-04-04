@@ -17,8 +17,8 @@ const config: CapacitorConfig = {
     // Keep ALL navigation inside the WebView — prevents links from
     // opening in the system browser on redirects, auth flows, etc.
     allowNavigation: [
-      "exitplan.app",
-      "*.exitplan.app",
+      "sandalan.app",
+      "*.sandalan.app",
       "*.supabase.co",
       ...(supabaseHost ? [supabaseHost] : []),
       "accounts.google.com",

@@ -78,7 +78,7 @@ docs/
 
 See [docs/ADMIN.md](docs/ADMIN.md) for full documentation.
 
-**Access**: `https://exitplan-tau.vercel.app/admin`
+**Access**: `https://sandalan.app/admin`
 
 4 pages:
 - **Overview** — KPIs, user activity, data health, signups
@@ -100,7 +100,7 @@ See [docs/ADMIN.md](docs/ADMIN.md) for full documentation.
 
 ### Web (Vercel)
 
-Push to `main` branch — auto-deploys to `exitplan-tau.vercel.app`.
+Push to `main` branch — auto-deploys to `sandalan.app`.
 
 ### Android (Capacitor Hosted Mode)
 
@@ -108,7 +108,7 @@ For Google Play builds using Capacitor:
 
 ```bash
 # Set deployed URL
-$env:CAP_SERVER_URL="https://exitplan-tau.vercel.app"
+$env:CAP_SERVER_URL="https://sandalan.app"
 
 # Sync Capacitor
 npm run mobile:android:hosted
