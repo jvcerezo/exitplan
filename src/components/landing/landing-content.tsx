@@ -147,6 +147,21 @@ export function LandingContent() {
                 <Link href="/login">{t.landing.hero.ctaSecondary}</Link>
               </Button>
             </div>
+
+            {/* Google Play Store badge */}
+            <div className="mt-8">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.jvcerezo.exitplan"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+                  alt="Get it on Google Play"
+                  className="h-16 mx-auto"
+                />
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -405,23 +420,41 @@ export function LandingContent() {
 
       {/* Footer */}
       <footer className="border-t border-border/50">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-8 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
-          <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} {t.landing.footer.copyright}
-          </p>
-          <div className="flex items-center gap-6">
-            <Link href="/privacy" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              {t.landing.footer.privacy}
-            </Link>
-            <Link href="/terms" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              {t.landing.footer.terms}
-            </Link>
-            <Link href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              {t.landing.footer.signIn}
-            </Link>
-            <Link href="/signup" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              {t.landing.footer.signUp}
-            </Link>
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
+            <div className="flex flex-col items-center gap-3 sm:items-start">
+              <p className="text-sm text-muted-foreground">
+                &copy; {new Date().getFullYear()} {t.landing.footer.copyright}
+              </p>
+              <a
+                href="https://play.google.com/store/apps/details?id=com.jvcerezo.exitplan"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+                  alt="Get it on Google Play"
+                  className="h-12"
+                />
+              </a>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              <Link href="/privacy" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                {t.landing.footer.privacy}
+              </Link>
+              <Link href="/terms" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                {t.landing.footer.terms}
+              </Link>
+              <a href="mailto:support@sandalan.com" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                Support
+              </a>
+              <Link href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                {t.landing.footer.signIn}
+              </Link>
+              <Link href="/signup" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                {t.landing.footer.signUp}
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
