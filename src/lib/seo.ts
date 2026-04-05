@@ -10,7 +10,7 @@ function normalizeSiteUrl(value: string) {
 
 export const siteConfig = {
   name: "Sandalan",
-  title: "Sandalan — Your Filipino Adulting Companion",
+  title: "Sandalan — Your Adulting Companion",
   description:
     "Track expenses, set budgets, build savings goals, and navigate adulting with confidence using Sandalan.",
   shortDescription: "Track your finances. Plan your freedom.",

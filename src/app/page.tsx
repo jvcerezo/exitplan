@@ -4,7 +4,7 @@ import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
 import { LandingContent } from "@/components/landing/landing-content";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Sandalan — Your Filipino Adulting Companion",
+  title: "Sandalan — Your Adulting Companion",
   description:
     "Sandalan guides you through every stage of Filipino adult life — from getting your first IDs to retirement. Track finances, manage contributions, and follow step-by-step adulting guides.",
   path: "/",
@@ -14,7 +14,7 @@ export const metadata: Metadata = buildPageMetadata({
 const landingStructuredData = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  name: "Sandalan — Your Filipino Adulting Companion",
+  name: "Sandalan — Your Adulting Companion",
   url: siteConfig.url,
   description: siteConfig.description,
   isPartOf: {
