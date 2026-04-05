@@ -28,278 +28,252 @@ export default function PrivacyPolicyPage() {
           </p>
         </div>
 
-        <div className="prose prose-sm max-w-none space-y-8 text-foreground">
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">1. Who We Are</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+        {/* Content */}
+        <div className="space-y-8 text-sm leading-relaxed text-foreground">
+          <section>
+            <h2 className="text-lg font-semibold mb-3">1. Who We Are (Data Controller)</h2>
+            <p className="text-muted-foreground">
               Sandalan is a personal finance and adulting guide application designed for individuals in the Philippines,
-              available as a web application and a mobile application distributed through the Google Play Store.
-              We act as the <strong>Personal Information Controller</strong> for the data you provide when
-              using our services. If you have any privacy-related concerns, you may contact us at{" "}
-              <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>.
+              developed by Jet Timothy Cerezo. We act as the Personal Information Controller for the data you provide when
+              using our services.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              Contact: <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">2. Information We Collect</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">We collect only the information necessary to provide the app&apos;s features:</p>
-            <div className="rounded-lg border border-border/60 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr>
-                    <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wide text-muted-foreground">Data</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wide text-muted-foreground">Purpose</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {[
-                    ["Email address", "Account authentication and communication"],
-                    ["Full name", "Personalization of your account"],
-                    ["Profile photo (optional)", "Account personalization only"],
-                    ["Financial transactions", "Core app functionality — tracking income and expenses"],
-                    ["Account balances", "Net worth and budget calculations"],
-                    ["Financial goals and budgets", "Goal tracking and spending management"],
-                    ["Bill records", "Bill tracking and payment reminders"],
-                    ["Debt records", "Debt payoff tracking"],
-                    ["Insurance policy records", "Insurance coverage tracking and premium reminders"],
-                    ["Tax records", "Income tax computation and filing history"],
-                    ["Government contribution records (SSS, PhilHealth, Pag-IBIG)", "Contribution history tracking"],
-                    ["Adulting checklist progress", "Tracking completion of life milestones and tasks"],
-                    ["Device token (mobile app)", "Sending push notifications for bill reminders and alerts"],
-                    ["Browser type (when filing bug reports)", "Diagnosing and fixing technical issues"],
-                  ].map(([data, purpose]) => (
-                    <tr key={data}>
-                      <td className="px-4 py-2.5 text-xs font-medium">{data}</td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{purpose}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              We do <strong>not</strong> collect bank account numbers, credit card numbers, government ID numbers (TIN, SSS number, PhilHealth number),
-              or any payment credentials. All financial figures are manually entered by you.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">3. Legal Basis for Processing</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              We process your personal data based on your <strong>freely given, specific, informed, and unambiguous consent</strong>, provided
-              when you create an account and agree to this Privacy Policy. You may withdraw your consent at any time by deleting your account.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">4. How We Use Your Information</h2>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              {[
-                "To provide, maintain, and improve the app's features",
-                "To authenticate your identity and secure your account",
-                "To calculate financial summaries, net worth, and progress toward goals",
-                "To respond to bug reports and support requests",
-                "To send transactional emails (e.g., email confirmation, password reset)",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              We do <strong>not</strong> sell, rent, or share your personal data with third parties for marketing purposes.
-              We do not use your data for profiling, behavioral advertising, or any purpose beyond operating the app.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">5. Third-Party Services</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Sandalan uses a limited number of third-party services, each acting as a <strong>Personal Information Processor</strong> on our behalf:
+          <section>
+            <h2 className="text-lg font-semibold mb-3">2. Information We Collect</h2>
+            <p className="text-muted-foreground mb-3">
+              We collect only the information necessary to provide the app&apos;s features:
             </p>
             <div className="space-y-3">
-              {[
-                {
-                  name: "Supabase (supabase.com)",
-                  role: "Database and authentication infrastructure",
-                  data: "All user data is stored on Supabase servers hosted on Amazon Web Services (AWS). Supabase is SOC 2 Type II certified and ISO 27001 compliant. Data may be stored in servers outside the Philippines.",
-                },
-                {
-                  name: "Google Sign-In (accounts.google.com)",
-                  role: "Authentication (optional sign-in method)",
-                  data: "If you choose to sign in with Google, we receive your name, email address, and profile photo from your Google account. We do not access your Google Drive, Gmail, contacts, or any other Google service data. On mobile devices, authentication is handled via the native Google Sign-In SDK. Google's privacy policy is available at policies.google.com/privacy.",
-                },
-                {
-                  name: "OCR.space (ocr.space)",
-                  role: "Receipt scanning (optional feature)",
-                  data: "When you use the receipt scanner feature, the image you upload is sent to OCR.space for text extraction. No personally identifying information is attached to this request. Their privacy policy is available at ocr.space/privacy.",
-                },
-                {
-                  name: "ExchangeRate-API (open.er-api.com)",
-                  role: "Currency exchange rates",
-                  data: "No personal data is sent. Only a request for current PHP exchange rates is made.",
-                },
-              ].map((s) => (
-                <div key={s.name} className="rounded-lg border border-border/60 p-4 space-y-1">
-                  <p className="text-sm font-semibold">{s.name}</p>
-                  <p className="text-xs text-muted-foreground"><span className="font-medium">Role:</span> {s.role}</p>
-                  <p className="text-xs text-muted-foreground">{s.data}</p>
-                </div>
-              ))}
+              <div>
+                <p className="font-medium">Account Information:</p>
+                <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+                  <li>Email address (for authentication and communication)</li>
+                  <li>Full name (for personalization)</li>
+                  <li>Profile photo / avatar (optional, for account personalization)</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium">Financial Data (all manually entered by you):</p>
+                <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+                  <li>Transactions (income and expenses)</li>
+                  <li>Accounts and balances</li>
+                  <li>Budgets</li>
+                  <li>Financial goals</li>
+                  <li>Debts</li>
+                  <li>Bills</li>
+                  <li>Insurance policies</li>
+                  <li>Government contributions (SSS, PhilHealth, Pag-IBIG)</li>
+                  <li>Tax records</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium">Usage Data:</p>
+                <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+                  <li>Life stage selection</li>
+                  <li>Checklist progress (adulting journey milestones)</li>
+                  <li>Feature usage patterns</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium">Device Information:</p>
+                <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+                  <li>Device token (for push notifications only)</li>
+                </ul>
+              </div>
+            </div>
+            <p className="mt-3 text-muted-foreground">
+              We do <strong>NOT</strong> collect bank account numbers, credit card numbers, government ID numbers
+              (TIN, SSS number, PhilHealth number), or any payment credentials. All financial figures are manually entered by you.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold mb-3">3. Legal Basis for Processing</h2>
+            <p className="text-muted-foreground">
+              We process your personal data based on your freely given, specific, informed, and unambiguous consent,
+              provided when you create an account and agree to this Privacy Policy. You may withdraw your consent at any
+              time by deleting your account.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold mb-3">4. How We Use Your Information</h2>
+            <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+              <li>To provide, maintain, and improve the core service (financial tracking, budgeting, adulting guides)</li>
+              <li>To generate personalized insights and recommendations</li>
+              <li>To send notifications and reminders (bill due dates, contribution schedules, etc.)</li>
+              <li>To improve the app experience</li>
+              <li>To authenticate your identity and secure your account</li>
+              <li>To respond to bug reports and support requests</li>
+            </ul>
+            <p className="mt-3 text-muted-foreground">
+              We do <strong>NOT</strong> sell, rent, or share your personal data with third parties for marketing purposes.
+              We do not use your data for profiling, behavioral advertising, or any purpose beyond operating the app.
+              No advertising trackers are used.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold mb-3">5. Data Storage</h2>
+            <div className="space-y-3 text-muted-foreground">
+              <div>
+                <p className="font-medium text-foreground">Cloud Storage:</p>
+                <p>
+                  Your data is stored on Supabase, hosted on Amazon Web Services (AWS) in the Singapore region.
+                  Supabase is SOC 2 Type II certified and ISO 27001 compliant.
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Local Storage:</p>
+                <p>
+                  A cached copy of your data is stored locally on your device using SQLite to enable offline access
+                  and faster load times. This data remains on your device and is not shared with any third party.
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Guest Mode:</p>
+                <p>
+                  When using the app in guest mode, all data is stored locally on your device only. No data is uploaded
+                  to our servers. Guest mode data is never synced to the cloud unless you create an account.
+                </p>
+              </div>
             </div>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">6. On-Device Storage</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Sandalan stores a cached copy of your data on your device to enable offline access and faster
-              load times. On the web app, this uses browser storage (IndexedDB). On the mobile app, data is
-              stored in a local SQLite database on your device. This data remains on your device and is not
-              shared with any third party. You can clear this cached data at any time by clearing the
-              app&apos;s data in your device settings or browser.
-            </p>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              <strong>Guest Mode:</strong> When using the app in guest mode, all data is stored locally on
-              your device only. No data is uploaded to our servers. Guest mode data is never synced to the
-              cloud unless you create an account.
+          <section>
+            <h2 className="text-lg font-semibold mb-3">6. Data Retention</h2>
+            <p className="text-muted-foreground">
+              We retain your personal data for as long as your account is active. When you delete your account, all
+              associated data — including transactions, accounts, goals, debts, budgets, contributions, bills, insurance
+              records, and tax records — is permanently deleted from our systems within 30 days. Backups may retain data
+              for up to 30 additional days before being overwritten.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">7. Device Permissions</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">The mobile app may request the following device permissions:</p>
-            <div className="rounded-lg border border-border/60 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr>
-                    <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wide text-muted-foreground">Permission</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wide text-muted-foreground">Purpose</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {[
-                    ["Notifications", "Sending bill payment reminders and recurring transaction alerts"],
-                    ["Internet access", "Syncing your data with our servers"],
-                    ["Camera (optional)", "Scanning receipts for automatic transaction entry"],
-                  ].map(([permission, purpose]) => (
-                    <tr key={permission}>
-                      <td className="px-4 py-2.5 text-xs font-medium">{permission}</td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{purpose}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <section>
+            <h2 className="text-lg font-semibold mb-3">7. Data Sharing</h2>
+            <p className="text-muted-foreground mb-3">
+              We do <strong>NOT</strong> sell or share your personal data with third parties. The only third-party services used are:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-2">
+              <li>
+                <strong>Supabase</strong> (supabase.com): Database and authentication infrastructure. All user data is stored
+                on Supabase servers. Data may be stored in servers outside the Philippines.
+              </li>
+              <li>
+                <strong>Google Sign-In</strong> (optional): If you sign in with Google, we receive your name, email, and profile
+                photo. We do not access your Google Drive, Gmail, contacts, or any other Google service data.
+              </li>
+              <li>
+                <strong>ExchangeRate-API</strong> (open.er-api.com): Currency exchange rates. No personal data is sent.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold mb-3">8. Your Rights Under RA 10173</h2>
+            <p className="text-muted-foreground mb-3">As a data subject, you have the following rights:</p>
+            <div className="space-y-3 text-muted-foreground">
+              <div>
+                <p className="font-medium text-foreground">Right to be Informed:</p>
+                <p>Know what data we collect and why — this Privacy Policy fulfills that obligation.</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Right to Access:</p>
+                <p>Request a copy of all personal data we hold about you via the Data Export feature in Settings &gt; Privacy &amp; Data.</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Right to Object:</p>
+                <p>Object to processing by withdrawing consent (deleting your account).</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Right to Erasure:</p>
+                <p>Delete your account and all associated data permanently via Settings &gt; Privacy &amp; Data &gt; Delete Account.</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Right to Data Portability:</p>
+                <p>Export all your data in JSON format via Settings &gt; Privacy &amp; Data &gt; Download My Data.</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Right to Rectification:</p>
+                <p>Correct inaccurate data directly within the app at any time (edit your profile, transactions, accounts, etc.).</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Right to File a Complaint:</p>
+                <p>
+                  If you believe your rights under RA 10173 have been violated, you may file a complaint with the National
+                  Privacy Commission at <a href="https://www.privacy.gov.ph" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.privacy.gov.ph</a>.
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              All permissions are optional and can be revoked at any time through your device settings.
-              The app will continue to function with reduced functionality if permissions are denied.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">8. Data Retention</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              We retain your personal data for as long as your account is active. When you delete your account,
-              all associated data — including transactions, accounts, goals, debts, budgets, and contributions —
-              is permanently deleted from our systems within 30 days. Backups may retain data for up to 30 additional days
-              before being overwritten.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">9. Your Rights Under RA 10173</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">As a data subject, you have the following rights:</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {[
-                ["Right to be Informed", "Know what data we collect and why — this Privacy Policy fulfills that obligation."],
-                ["Right to Access", "Request a copy of all personal data we hold about you via the Data Export feature in Settings."],
-                ["Right to Rectification", "Correct inaccurate data directly within the app at any time."],
-                ["Right to Erasure", "Delete your account and all associated data permanently via Settings → Danger Zone."],
-                ["Right to Data Portability", "Export all your data in JSON format via Settings → Privacy."],
-                ["Right to Object", "Object to processing by withdrawing consent (deleting your account)."],
-              ].map(([right, desc]) => (
-                <div key={right} className="rounded-lg border border-border/60 p-3 space-y-1">
-                  <p className="text-xs font-semibold">{right}</p>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              To exercise any right not available in-app, email us at{" "}
-              <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>.
+            <p className="mt-3 text-muted-foreground">
+              To exercise any right not available in-app, email us at <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>.
               We will respond within 15 business days.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">10. Security Measures</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">We implement the following security measures to protect your data:</p>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              {[
-                "All data is encrypted in transit using TLS (HTTPS)",
-                "All data is encrypted at rest using AES-256 on Supabase infrastructure",
-                "Row-Level Security (RLS) ensures users can only access their own data",
-                "Passwords are hashed using bcrypt via Supabase Auth — we never store plaintext passwords",
-                "Administrative access is limited and does not include individual financial figures",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                  {item}
-                </li>
-              ))}
+          <section>
+            <h2 className="text-lg font-semibold mb-3">9. Data Security</h2>
+            <p className="text-muted-foreground mb-3">We implement the following security measures to protect your data:</p>
+            <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+              <li>All data is encrypted in transit using TLS (HTTPS)</li>
+              <li>All data is encrypted at rest using AES-256 on Supabase infrastructure</li>
+              <li>Row-Level Security (RLS) ensures users can only access their own data</li>
+              <li>Passwords are hashed using bcrypt via Supabase Auth — we never store plaintext passwords</li>
+              <li>Local database on your device is protected by the operating system&apos;s app sandbox</li>
+              <li>Administrative access is limited and does not include individual financial figures</li>
             </ul>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">11. Data Breach Notification</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              In the event of a personal data breach that is likely to result in harm to affected individuals,
-              we will notify the National Privacy Commission (NPC) within 72 hours of becoming aware of the breach,
-              and notify affected users within a reasonable period, in accordance with NPC Circular No. 16-03.
+          <section>
+            <h2 className="text-lg font-semibold mb-3">10. Data Breach Notification</h2>
+            <p className="text-muted-foreground">
+              In the event of a personal data breach that is likely to result in harm to affected individuals, we will
+              notify the National Privacy Commission (NPC) within 72 hours of becoming aware of the breach, and notify
+              affected users within a reasonable period, in accordance with NPC Circular No. 16-03.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">12. Children&apos;s Privacy</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Sandalan is not intended for individuals under 18 years of age. We do not knowingly collect
-              personal information from minors. If you believe a minor has created an account, please contact us
-              and we will delete the account promptly.
+          <section>
+            <h2 className="text-lg font-semibold mb-3">11. Children&apos;s Privacy</h2>
+            <p className="text-muted-foreground">
+              Sandalan is not intended for individuals under 13 years of age. We do not knowingly collect personal
+              information from children. If you believe a child has created an account, please contact us and we will
+              delete the account promptly.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">13. Changes to This Policy</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              We may update this Privacy Policy from time to time. We will notify you of material changes
-              by posting a notice within the app or by email. Your continued use of Sandalan after changes
-              take effect constitutes acceptance of the revised policy.
+          <section>
+            <h2 className="text-lg font-semibold mb-3">12. Changes to This Policy</h2>
+            <p className="text-muted-foreground">
+              We may update this Privacy Policy from time to time. We will notify you of material changes by posting a
+              notice within the app. Your continued use of Sandalan after changes take effect constitutes acceptance of
+              the revised policy.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">14. Contact & Complaints</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              For privacy-related concerns, contact our Data Protection Officer at{" "}
-              <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>.
+          <section>
+            <h2 className="text-lg font-semibold mb-3">13. Contact</h2>
+            <p className="text-muted-foreground">
+              For privacy-related concerns, contact us at:<br />
+              Email: <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a>
             </p>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              If you believe your rights under RA 10173 have been violated, you may file a complaint with the
-              National Privacy Commission at{" "}
-              <a href="https://www.privacy.gov.ph" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.privacy.gov.ph</a>.
+            <p className="mt-2 text-muted-foreground">
+              If you believe your rights under RA 10173 have been violated, you may file a complaint with the National
+              Privacy Commission at <a href="https://www.privacy.gov.ph" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.privacy.gov.ph</a>.
             </p>
           </section>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Sandalan. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-            <Link href="/home" className="hover:text-foreground transition-colors">Back to App</Link>
-          </div>
+        {/* Footer */}
+        <div className="mt-16 pt-8 border-t border-border/50 text-center">
+          <Link href="/" className="text-sm text-primary hover:underline">
+            ← Back to home
+          </Link>
         </div>
       </div>
     </div>

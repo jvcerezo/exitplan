@@ -26,7 +26,6 @@ import {
   Mountain,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
-import { SessionRedirectGuard } from "@/components/auth/session-redirect-guard";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useTranslation } from "@/lib/i18n";
@@ -83,10 +82,11 @@ export function LandingContent() {
     { step: "3", title: t.landing.howItWorks.step3, description: t.landing.howItWorks.step3Desc },
   ];
 
+  const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.jvcerezo.exitplan";
+  const PLAY_STORE_BADGE = "https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png";
+
   return (
     <div className="min-h-screen bg-background">
-      <SessionRedirectGuard to="/home" />
-
       {/* Hero with Philippine backdrop */}
       <section className="relative overflow-hidden">
         {/* Backdrop image */}
@@ -108,11 +108,11 @@ export function LandingContent() {
             </Link>
             <div className="flex items-center gap-3">
               <ThemeToggle />
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">{t.landing.nav.signIn}</Link>
-              </Button>
               <Button size="sm" asChild>
-                <Link href="/signup">{t.landing.nav.getStarted}</Link>
+                <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
+                  Download
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </a>
               </Button>
             </div>
           </nav>
@@ -136,31 +136,13 @@ export function LandingContent() {
               {t.landing.hero.subheadline}
             </p>
 
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" className="text-base px-8" asChild>
-                <Link href="/signup">
-                  {t.landing.hero.cta}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" className="text-base px-8 bg-background/50 backdrop-blur-sm" asChild>
-                <Link href="/login">{t.landing.hero.ctaSecondary}</Link>
-              </Button>
-            </div>
-
-            {/* Google Play Store badge */}
-            <div className="mt-8">
-              <a
-                href="https://play.google.com/store/apps/details?id=com.jvcerezo.exitplan"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-                  alt="Get it on Google Play"
-                  className="h-16 mx-auto"
-                />
+            {/* Google Play Store badge — primary CTA */}
+            <div className="mt-10">
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-block hover:opacity-90 transition-opacity">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={PLAY_STORE_BADGE} alt="Get it on Google Play" className="h-20" />
               </a>
+              <p className="mt-4 text-sm text-muted-foreground">Free download &middot; No credit card required</p>
             </div>
           </div>
         </div>
@@ -263,6 +245,41 @@ export function LandingContent() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* App Screenshots */}
+      <section className="border-t border-border/50 bg-muted/30">
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Take a <span className="text-primary">tour</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+              See what Sandalan looks like on your phone
+            </p>
+          </div>
+
+          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { src: "/images/screenshots/store-1-home.png", label: "Your snapshot" },
+              { src: "/images/screenshots/store-2-dashboard.png", label: "Track every peso" },
+              { src: "/images/screenshots/store-3-chat.png", label: "AI assistant" },
+              { src: "/images/screenshots/store-4-guide.png", label: "Adulting guide" },
+              { src: "/images/screenshots/store-5-features.png", label: "All features" },
+              { src: "/images/screenshots/store-6-quickadd.png", label: "Quick logging" },
+              { src: "/images/screenshots/store-7-achievements.png", label: "Achievements" },
+              { src: "/images/screenshots/store-8-goals.png", label: "Savings goals" },
+            ].map((shot) => (
+              <div key={shot.src} className="group">
+                <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-lg transition-transform group-hover:scale-[1.02]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={shot.src} alt={shot.label} className="w-full" />
+                </div>
+                <p className="mt-3 text-center text-sm font-medium text-muted-foreground">{shot.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -406,13 +423,12 @@ export function LandingContent() {
             <p className="mt-4 text-lg text-muted-foreground">
               {t.landing.cta.description}
             </p>
-            <div className="mt-10">
-              <Button size="lg" className="text-base px-10" asChild>
-                <Link href="/signup">
-                  {t.landing.cta.button}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            <div className="mt-10 flex flex-col items-center gap-4">
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-block hover:opacity-90 transition-opacity">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={PLAY_STORE_BADGE} alt="Get it on Google Play" className="h-20" />
+              </a>
+              <p className="text-sm text-muted-foreground">Free forever &middot; Premium at ₱79/month</p>
             </div>
           </div>
         </div>
@@ -426,16 +442,9 @@ export function LandingContent() {
               <p className="text-sm text-muted-foreground">
                 &copy; {new Date().getFullYear()} {t.landing.footer.copyright}
               </p>
-              <a
-                href="https://play.google.com/store/apps/details?id=com.jvcerezo.exitplan"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-                  alt="Get it on Google Play"
-                  className="h-12"
-                />
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={PLAY_STORE_BADGE} alt="Get it on Google Play" className="h-12" />
               </a>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
@@ -448,12 +457,6 @@ export function LandingContent() {
               <a href="mailto:support@sandalan.com" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                 Support
               </a>
-              <Link href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                {t.landing.footer.signIn}
-              </Link>
-              <Link href="/signup" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                {t.landing.footer.signUp}
-              </Link>
             </div>
           </div>
         </div>
