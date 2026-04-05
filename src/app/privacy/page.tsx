@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "How Sandalan collects, uses, and protects your personal information under the Data Privacy Act of 2012.",
 };
 
-const LAST_UPDATED = "March 21, 2026";
+const LAST_UPDATED = "April 5, 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -241,9 +241,11 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold mb-3">11. Children&apos;s Privacy</h2>
             <p className="text-muted-foreground">
-              Sandalan is not intended for individuals under 13 years of age. We do not knowingly collect personal
-              information from children. If you believe a child has created an account, please contact us and we will
-              delete the account promptly.
+              Sandalan is not intended for children under 13 years of age. We do not knowingly collect personal
+              information from children under 13. Users between 13 and 17 must have parent or guardian consent to use
+              the app, as stated in our Terms of Service. If you believe a child under 13 has created an account,
+              please contact us at <a href="mailto:privacy@sandalan.com" className="text-primary hover:underline">privacy@sandalan.com</a> and
+              we will delete the account promptly.
             </p>
           </section>
 

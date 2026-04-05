@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Terms and conditions for using Sandalan.",
 };
 
-const LAST_UPDATED = "March 21, 2026";
+const LAST_UPDATED = "April 5, 2026";
 
 export default function TermsPage() {
   return (
@@ -47,12 +47,19 @@ export default function TermsPage() {
               through the adulting checklist. Sandalan is a tracking tool only — it does not hold money, process
               payments, provide financial advice, or act as a bank, lending institution, or financial intermediary.
             </p>
+            <p className="mt-3 text-muted-foreground">
+              <strong>Sandalan is NOT regulated by the Bangko Sentral ng Pilipinas (BSP).</strong> We are not a bank,
+              electronic money issuer, virtual asset service provider, or any other BSP-regulated financial entity. We
+              do not hold, transfer, or process money on your behalf. All financial figures displayed in the app are
+              manually entered by you and are stored only as records — no actual funds are moved or managed by Sandalan.
+            </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold mb-3">3. Eligibility</h2>
             <p className="text-muted-foreground">
-              You must be at least 18 years old to use Sandalan. By using the app, you represent that you meet this requirement.
+              You must be at least 13 years old to use Sandalan. If you are under 18, you represent that you have
+              obtained consent from a parent or legal guardian to use the app and agree to these Terms.
             </p>
           </section>
 
@@ -112,11 +119,38 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3">9. Pricing</h2>
-            <p className="text-muted-foreground">
-              Sandalan is currently free to use. We reserve the right to introduce paid features, subscription plans, or
-              pricing changes in the future. If we do, existing features at the time of any pricing change will remain
-              accessible, and we will provide advance notice before any changes take effect.
+            <h2 className="text-lg font-semibold mb-3">9. Pricing &amp; Subscriptions</h2>
+            <p className="text-muted-foreground mb-3">
+              Sandalan offers a free tier and a Premium subscription. Core features (expense tracking, budgets, goals,
+              bills, debts, adulting guide, government contribution calculators) are free forever. Premium unlocks
+              additional features such as the AI Chat assistant, receipt scanner, investments tracker, advanced reports,
+              bill splitting, CSV import/export, and app vault.
+            </p>
+            <p className="text-muted-foreground mb-3">
+              Premium is offered via Google Play as an auto-renewing subscription:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+              <li>Monthly: ₱79 per month</li>
+              <li>Yearly: ₱649 per year (save ~32%)</li>
+              <li>A free trial may be offered at Google&apos;s discretion</li>
+            </ul>
+            <p className="mt-3 text-muted-foreground mb-3">
+              <strong>How subscriptions work:</strong>
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground ml-2 space-y-1">
+              <li>Billing begins immediately upon purchase confirmation by Google Play</li>
+              <li>
+                Subscriptions auto-renew at the end of each billing period unless you cancel at least 24 hours before
+                the renewal date
+              </li>
+              <li>You may cancel anytime through your Google Play account settings (Play Store → Profile → Payments &amp; subscriptions → Subscriptions)</li>
+              <li>Cancellation takes effect at the end of your current billing period — you keep Premium access until then</li>
+              <li>Once the subscription expires, Premium features revert to the Free tier automatically</li>
+              <li>Refund requests are handled by Google Play according to their refund policy — Sandalan does not process refunds directly</li>
+            </ul>
+            <p className="mt-3 text-muted-foreground">
+              We reserve the right to modify Premium pricing or the features included in each tier with at least 30
+              days&apos; advance notice. Changes will not affect your current billing period.
             </p>
           </section>
 
@@ -139,12 +173,17 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-lg font-semibold mb-3">12. Limitation of Liability</h2>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-3">
               To the maximum extent permitted by Philippine law, Sandalan and its operators shall not be liable for any
               indirect, incidental, special, or consequential damages arising from your use of the app, including but
               not limited to financial decisions made based on information displayed in the app. Our total liability for
-              any claim arising from or related to these Terms shall not exceed the amount you have paid us in the 12
-              months preceding the claim, or PHP 1,000, whichever is lower.
+              any claim arising from or related to these Terms shall not exceed the greater of (a) the amount you have
+              paid us in the 12 months preceding the claim, or (b) PHP 1,000.
+            </p>
+            <p className="text-muted-foreground">
+              <strong>This limitation does not apply to damages caused by our gross negligence, willful misconduct, or
+              violations of applicable Philippine law</strong> — including violations of the Data Privacy Act of 2012
+              (RA 10173) and the Consumer Act of the Philippines (RA 7394).
             </p>
           </section>
 
