@@ -151,24 +151,22 @@ export function LandingContent() {
       </section>
 
       {/* ── Screenshots ──────────────────────────────────────────── */}
-      <section className="overflow-hidden pb-24 sm:pb-32">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {screenshots.map((s) => (
-              <div
-                key={s.src}
-                className="overflow-hidden rounded-2xl border border-border/50 shadow-lg"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={s.src}
-                  alt={s.alt}
-                  className="w-full"
-                  loading="lazy"
-                />
-              </div>
-            ))}
-          </div>
+      <section className="pb-24 sm:pb-32">
+        <div className="flex gap-5 overflow-x-auto px-4 pb-4 snap-x snap-mandatory sm:justify-center sm:flex-wrap sm:gap-6 sm:px-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {screenshots.map((s) => (
+            <div
+              key={s.src}
+              className="w-[260px] shrink-0 snap-center overflow-hidden rounded-2xl border border-border/50 shadow-xl sm:w-[240px] lg:w-[220px]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={s.src}
+                alt={s.alt}
+                className="w-full"
+                loading="lazy"
+              />
+            </div>
+          ))}
         </div>
       </section>
 
