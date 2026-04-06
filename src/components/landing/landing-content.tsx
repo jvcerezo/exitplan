@@ -183,35 +183,35 @@ export function LandingContent() {
       </section>
 
       {/* ── App Preview — Browser-style panels ─────────────────── */}
-      <section className="mx-auto max-w-5xl px-4 pb-20 sm:px-6 sm:pb-28">
-        <div className="grid gap-5 lg:grid-cols-2">
+      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 sm:pb-32">
+        <div className="grid gap-6 lg:grid-cols-2">
           {/* Journey Map */}
-          <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-xl">
-            <div className="flex items-center gap-2 border-b border-border/40 px-4 py-2.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-              <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
-              <div className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-              <span className="ml-3 text-[10px] text-muted-foreground">sandalan.app/guide</span>
+          <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl">
+            <div className="flex items-center gap-2.5 border-b border-border/40 px-5 py-3">
+              <div className="h-3 w-3 rounded-full bg-red-400/70" />
+              <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
+              <div className="h-3 w-3 rounded-full bg-green-400/70" />
+              <span className="ml-4 text-xs text-muted-foreground">sandalan.app/guide</span>
             </div>
-            <div className="p-4 sm:p-5 space-y-4">
+            <div className="p-6 sm:p-8 space-y-5">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold">{t.landing.preview.journeyTitle}</p>
-                <span className="text-[10px] text-muted-foreground">{t.landing.preview.journeyProgress}</span>
+                <p className="text-lg font-bold">{t.landing.preview.journeyTitle}</p>
+                <span className="text-sm text-muted-foreground">{t.landing.preview.journeyProgress}</span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div className="h-full w-[5%] rounded-full bg-primary" />
               </div>
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-4 pt-2">
                 {stageKeys.map((stage, i) => {
                   const stageT = t.stages[stage.key];
                   return (
-                    <div key={stage.key} className="flex items-center gap-3">
-                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 ${i === 0 ? "border-primary bg-primary/10" : "border-muted-foreground/20 bg-muted/40"}`}>
-                        <stage.icon className={`h-3.5 w-3.5 ${i === 0 ? "text-primary" : "text-muted-foreground"}`} />
+                    <div key={stage.key} className="flex items-center gap-4">
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 ${i === 0 ? "border-primary bg-primary/10" : "border-muted-foreground/20 bg-muted/40"}`}>
+                        <stage.icon className={`h-5 w-5 ${i === 0 ? "text-primary" : "text-muted-foreground"}`} />
                       </div>
                       <div className="min-w-0">
-                        <p className={`text-xs font-semibold ${i === 0 ? "" : "text-muted-foreground"}`}>{stageT.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{stageT.subtitle}</p>
+                        <p className={`text-sm font-semibold ${i === 0 ? "" : "text-muted-foreground"}`}>{stageT.name}</p>
+                        <p className="text-xs text-muted-foreground">{stageT.subtitle} &middot; {stageT.description}</p>
                       </div>
                     </div>
                   );
@@ -221,32 +221,32 @@ export function LandingContent() {
           </div>
 
           {/* Upcoming + Transactions */}
-          <div className="space-y-5">
+          <div className="space-y-6">
             {/* Upcoming Payments */}
-            <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-xl">
-              <div className="flex items-center gap-2 border-b border-border/40 px-4 py-2.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-                <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
-                <div className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-                <span className="ml-3 text-[10px] text-muted-foreground">sandalan.app/home</span>
+            <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl">
+              <div className="flex items-center gap-2.5 border-b border-border/40 px-5 py-3">
+                <div className="h-3 w-3 rounded-full bg-red-400/70" />
+                <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
+                <div className="h-3 w-3 rounded-full bg-green-400/70" />
+                <span className="ml-4 text-xs text-muted-foreground">sandalan.app/home</span>
               </div>
-              <div className="p-4 sm:p-5 space-y-2.5">
+              <div className="p-6 sm:p-8 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold">{t.landing.preview.upcomingPayments}</p>
-                  <p className="text-xs font-semibold">₱7,475.00</p>
+                  <p className="text-lg font-bold">{t.landing.preview.upcomingPayments}</p>
+                  <p className="text-base font-bold">₱7,475.00</p>
                 </div>
                 {mockUpcoming.map((item) => (
-                  <div key={item.name} className="flex items-center gap-3 rounded-lg border border-border/30 bg-background px-3 py-2">
-                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${item.bg}`}>
-                      <Landmark className={`h-3.5 w-3.5 ${item.color}`} />
+                  <div key={item.name} className="flex items-center gap-4 rounded-xl border border-border/30 bg-background px-4 py-3.5">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.bg}`}>
+                      <Landmark className={`h-5 w-5 ${item.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-medium">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.type}</p>
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">{item.type}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[11px] font-semibold">₱{item.amount.toLocaleString()}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.days}d</p>
+                      <p className="text-sm font-semibold">₱{item.amount.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{item.days} days</p>
                     </div>
                   </div>
                 ))}
@@ -254,22 +254,22 @@ export function LandingContent() {
             </div>
 
             {/* Recent Transactions */}
-            <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-xl">
-              <div className="p-4 sm:p-5">
-                <p className="text-sm font-bold mb-3">{t.landing.preview.recentTransactions}</p>
-                <div className="space-y-2">
+            <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl">
+              <div className="p-6 sm:p-8">
+                <p className="text-lg font-bold mb-5">{t.landing.preview.recentTransactions}</p>
+                <div className="space-y-3.5">
                   {mockTransactions.map((tx) => (
-                    <div key={tx.desc} className="flex items-center gap-3">
-                      <div className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                    <div key={tx.desc} className="flex items-center gap-4">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
                         tx.amount > 0 ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-foreground"
                       }`}>
-                        {tx.amount > 0 ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
+                        {tx.amount > 0 ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-medium truncate">{tx.desc}</p>
-                        <p className="text-[10px] text-muted-foreground capitalize">{tx.cat} &middot; {tx.date}</p>
+                        <p className="text-sm font-medium truncate">{tx.desc}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{tx.cat} &middot; {tx.date}</p>
                       </div>
-                      <span className={`text-[11px] font-semibold shrink-0 ${tx.amount > 0 ? "text-green-600 dark:text-green-400" : "text-foreground"}`}>
+                      <span className={`text-sm font-semibold shrink-0 ${tx.amount > 0 ? "text-green-600 dark:text-green-400" : "text-foreground"}`}>
                         {tx.amount > 0 ? "+" : ""}₱{Math.abs(tx.amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
@@ -308,29 +308,29 @@ export function LandingContent() {
       </section>
 
       {/* ── Features ─────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-4 py-20 sm:px-6 sm:py-28">
-        <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">
+      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
+        <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
           Everything you need to{" "}
           <span className="bg-gradient-to-r from-primary to-green-500 bg-clip-text text-transparent">
             adult
           </span>{" "}
           in the Philippines
         </h2>
-        <p className="mx-auto mt-4 max-w-lg text-center text-sm text-muted-foreground">
+        <p className="mx-auto mt-5 max-w-xl text-center text-base text-muted-foreground">
           Built for Filipino realities — government IDs, SSS, PhilHealth, petsa de peligro, and all.
         </p>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
             <div
               key={f.title}
-              className="group rounded-xl border border-border/50 bg-card p-5 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+              className="group rounded-2xl border border-border/50 bg-card p-7 transition-all hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"
             >
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
-                <f.icon className="h-5 w-5" />
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                <f.icon className="h-6 w-6" />
               </div>
-              <h3 className="text-sm font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+              <h3 className="text-base font-semibold">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {f.desc}
               </p>
             </div>
@@ -343,9 +343,9 @@ export function LandingContent() {
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute bottom-0 left-1/2 h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-primary/6 blur-[120px]" />
         </div>
-        <div className="relative mx-auto max-w-5xl px-4 py-20 sm:px-6 sm:py-28">
+        <div className="relative mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
           <div className="mx-auto max-w-xl text-center">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Ready to figure out this adulting thing?
             </h2>
             <p className="mt-3 text-sm text-muted-foreground">
