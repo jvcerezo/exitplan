@@ -87,18 +87,10 @@ export function LandingContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero with Philippine backdrop */}
-      <section className="relative overflow-hidden">
-        {/* Backdrop image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/landing-backdrop.jpg')" }}
-        />
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/80 to-background" />
-
-        {/* Navigation — on top of backdrop */}
-        <header className="relative z-10 pt-[env(safe-area-inset-top)]">
+      {/* Hero — clean centered layout */}
+      <section className="relative min-h-[80vh] flex flex-col">
+        {/* Navigation */}
+        <header className="pt-[env(safe-area-inset-top)]">
           <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <Link href="/" className="inline-flex items-center gap-3 text-xl font-bold tracking-tight">
               <BrandMark className="h-11 w-11" />
@@ -108,56 +100,46 @@ export function LandingContent() {
             </Link>
             <div className="flex items-center gap-3">
               <ThemeToggle />
-              <Button size="sm" asChild>
-                <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
-                  Download
-                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                </a>
-              </Button>
             </div>
           </nav>
         </header>
 
-        {/* Hero content */}
-        <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center pt-12 pb-20 text-center sm:py-24 lg:py-32">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background/60 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-primary">
-              <Zap className="h-3.5 w-3.5" />
-              {t.landing.hero.badge}
-            </div>
-
-            <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+        {/* Centered hero content */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center text-center max-w-2xl">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               {t.landing.hero.headline.split(t.landing.hero.headlineHighlight)[0]}
               <span className="text-primary">{t.landing.hero.headlineHighlight}</span>
               {t.landing.hero.headline.split(t.landing.hero.headlineHighlight)[1]}
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground sm:text-xl">
               {t.landing.hero.subheadline}
             </p>
 
-            {/* App store badges — primary CTA */}
-            <div className="mt-10">
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-block hover:opacity-90 transition-opacity">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={PLAY_STORE_BADGE} alt="Get it on Google Play" className="h-20" />
-                </a>
-                {/* iOS coming soon — styled to match Play Store badge dimensions */}
-                <div
-                  aria-label="iOS coming soon"
-                  className="inline-flex h-[60px] items-center gap-2.5 rounded-lg border border-border/60 bg-foreground/90 px-4 text-background opacity-80 cursor-not-allowed"
-                >
-                  <svg viewBox="0 0 24 24" className="h-7 w-7 fill-current" aria-hidden="true">
-                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                  </svg>
-                  <div className="flex flex-col leading-tight text-left">
-                    <span className="text-[9px] uppercase tracking-wide opacity-75">Coming soon to</span>
-                    <span className="text-[17px] font-semibold -mt-0.5">App Store</span>
-                  </div>
+            {/* Store badges */}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex h-[52px] items-center gap-3 rounded-xl border border-foreground/80 bg-foreground px-5 text-background hover:opacity-90 transition-opacity">
+                <svg viewBox="0 0 24 24" className="h-7 w-7 fill-current" aria-hidden="true">
+                  <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.807 1.626a1 1 0 0 1 0 1.732l-2.808 1.626L15.206 12l2.492-2.492zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z" />
+                </svg>
+                <div className="flex flex-col leading-tight text-left">
+                  <span className="text-[10px] uppercase tracking-wide opacity-80">Get it on</span>
+                  <span className="text-[17px] font-semibold -mt-0.5">Google Play</span>
+                </div>
+              </a>
+              <div
+                aria-label="iOS coming soon"
+                className="inline-flex h-[52px] items-center gap-3 rounded-xl border border-border/60 bg-foreground/90 px-5 text-background opacity-70 cursor-not-allowed"
+              >
+                <svg viewBox="0 0 24 24" className="h-7 w-7 fill-current" aria-hidden="true">
+                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                </svg>
+                <div className="flex flex-col leading-tight text-left">
+                  <span className="text-[10px] uppercase tracking-wide opacity-80">Coming soon on</span>
+                  <span className="text-[17px] font-semibold -mt-0.5">App Store</span>
                 </div>
               </div>
-              <p className="mt-4 text-sm text-muted-foreground">Free download &middot; No credit card required</p>
             </div>
           </div>
         </div>

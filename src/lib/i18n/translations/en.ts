@@ -2,10 +2,10 @@ const en = {
   // ── Brand ──
   brand: {
     name: "Sandalan",
-    tagline: "Your Filipino Adulting Companion",
-    title: "Sandalan — Your Filipino Adulting Companion",
+    tagline: "Your Adulting Companion",
+    title: "Sandalan — Your Adulting Companion",
     description:
-      "Sandalan guides you through every stage of Filipino adult life — from getting your first IDs to retirement. Track finances, manage contributions, and follow step-by-step adulting guides.",
+      "Budget tracker, expense manager, and adulting guide for Filipinos. Track finances, manage contributions, and follow step-by-step adulting guides.",
     footer: "Built for Filipinos.",
   },
 
@@ -224,10 +224,10 @@ const en = {
   // ── Landing page ──
   landing: {
     hero: {
-      badge: "Built for Filipinos",
-      headline: "Your companion for every stage of Filipino adult life",
-      headlineHighlight: "every stage",
-      subheadline: "From your first government ID to retirement — step-by-step guides, financial tracking, and smart reminders in one app.",
+      badge: "Free on Google Play",
+      headline: "Your Adulting Companion",
+      headlineHighlight: "Adulting",
+      subheadline: "Budget tracker, expense manager, and adulting guide. From your first payslip to retirement.",
       cta: "Start Your Journey",
       ctaSecondary: "I already have an account",
     },
